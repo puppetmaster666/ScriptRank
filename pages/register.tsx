@@ -1,11 +1,9 @@
-// File: pages/register.tsx
-
+// pages/register.tsx
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
-// Firebase config from your .env.local file
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -41,10 +39,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
       <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Create Your Account</h1>
-      <form
-        className="w-full max-w-md bg-white p-8 rounded-lg shadow-md"
-        onSubmit={handleRegister}
-      >
+      <form className="w-full max-w-md bg-white p-8 rounded-lg shadow-md" onSubmit={handleRegister}>
         <label className="block mb-2 font-semibold">Email</label>
         <input
           type="email"
@@ -54,7 +49,6 @@ export default function RegisterPage() {
           onChange={e => setEmail(e.target.value)}
           required
         />
-
         <label className="block mb-2 font-semibold">Password</label>
         <input
           type="password"
@@ -64,9 +58,7 @@ export default function RegisterPage() {
           onChange={e => setPassword(e.target.value)}
           required
         />
-
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-
         <button
           type="submit"
           disabled={loading}
