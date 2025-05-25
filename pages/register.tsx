@@ -1,117 +1,75 @@
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
-import { app } from '../lib/firebase' // Assuming you've centralized Firebase config
-import Head from 'next/head'
-import Link from 'next/link'
+// pages/register.tsx
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
 
-const auth = getAuth(app)
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) router.push('/profile')
-    })
-    return () => unsubscribe()
-  }, [])
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
+    e.preventDefault();
+    setLoading(true);
+    setError('');
     try {
-      await createUserWithEmailAndPassword(auth, email, password)
-      router.push('/profile')
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push('/profile');
     } catch (err: any) {
-      setError(err.message.replace('Firebase: ', '')) // Clean up Firebase error messages
-    } finally {
-      setLoading(false)
+      setError(err.message);
     }
-  }
+    setLoading(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
-      <Head>
-        <title>Register | ScriptRank</title>
-      </Head>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
+      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Create Your Account</h1>
+      <form className="w-full max-w-md bg-white p-8 rounded-lg shadow-md" onSubmit={handleRegister}>
+        <label className="block mb-2 font-semibold">Email</label>
+        <input
+          type="email"
+          className="w-full mb-4 px-4 py-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+          placeholder="you@example.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
 
-      <header className="bg-blue-700 text-white p-4">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <Link href="/">
-            <a className="text-xl font-bold">🎥 ScriptRank</a>
-          </Link>
-          <nav className="space-x-4">
-            <Link href="/login">
-              <a className="hover:underline">Login</a>
-            </Link>
-          </nav>
-        </div>
-      </header>
+        <label className="block mb-2 font-semibold">Password</label>
+        <input
+          type="password"
+          className="w-full mb-4 px-4 py-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+          placeholder="••••••••"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
 
-      <main className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">Create Your Account</h1>
-          
-          <form onSubmit={handleRegister}>
-            <div className="mb-4">
-              <label className="block mb-2 font-semibold">Email</label>
-              <input
-                type="email"
-                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-            <div className="mb-6">
-              <label className="block mb-2 font-semibold">Password</label>
-              <input
-                type="password"
-                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 rounded font-bold transition-colors ${
-                loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {loading ? 'Creating account...' : 'Register'}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
-            <Link href="/login">
-              <a className="text-blue-600 hover:underline">Login here</a>
-            </Link>
-          </div>
-        </div>
-      </main>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+        >
+          {loading ? 'Registering...' : 'Register'}
+        </button>
+      </form>
     </div>
-  )
+  );
 }
