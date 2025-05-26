@@ -94,7 +94,10 @@ export default function ProfilePage() {
             <Link href="/upload" className="hover:underline">Upload</Link>
             <Link href="/leaderboard" className="hover:underline">Leaderboard</Link>
             <button
-              onClick={() => signOut().then(() => router.push('/'))}
+              onClick={async () => {
+                await signOut(auth)
+                router.push('/')
+              }}
               className="hover:underline"
             >
               Logout
