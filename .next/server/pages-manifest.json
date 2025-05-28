@@ -2,6 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/leaderboard": "pages/leaderboard.js"
+  "/submit": "pages/submit.js",
+  "/api/rate-idea": "pages/api/rate-idea.js",
+  "/dashboard": "pages/dashboard.js",
+  "/": "pages/index.js"
 }

@@ -2,228 +2,293 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc, arrayUnion, onSnapshot, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
 
-type Script = {
+type Idea = {
   id: string;
   title: string;
   genre: string;
-  synopsis: string;
-  aiScore?: number;
+  type: 'movie' | 'game' | 'business';
+  description: string;
+  aiScore: number;
   votes?: { userId: string; score: number }[];
   publicScore?: number;
-  critiques?: string[];
+  aiCritique: string;
+  createdAt: Date;
 };
 
 export default function LeaderboardPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [scripts, setScripts] = useState<Script[]>([]);
-  const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [voteValue, setVoteValue] = useState(5.00);
-  const [critiqueText, setCritiqueText] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('All');
+  const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'game' | 'business'>('all');
+  const [loading, setLoading] = useState(true);
 
+  // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
 
+  // Real-time data fetching
   useEffect(() => {
-    const fetchScripts = async () => {
-      const q = query(collection(db, 'scripts'), where('aiScore', '!=', null));
-      const snapshot = await getDocs(q);
+    setLoading(true);
+    let q;
+    
+    if (activeTab === 'all') {
+      q = query(collection(db, 'ideas'), orderBy('aiScore', 'desc'));
+    } else {
+      q = query(
+        collection(db, 'ideas'),
+        where('type', '==', activeTab),
+        orderBy('aiScore', 'desc')
+      );
+    }
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const results = snapshot.docs.map(doc => {
-        const data = doc.data() as Script;
+        const data = doc.data() as Idea;
         const publicScore = data.votes?.length 
           ? data.votes.reduce((sum, vote) => sum + vote.score, 0) / data.votes.length
-          : 0;
+          : data.aiScore; // Fallback to AI score if no votes
+        
         return { 
           id: doc.id, 
           ...data,
-          publicScore
+          publicScore: parseFloat(publicScore.toFixed(2))
         };
-      }) as Script[];
-      setScripts(results);
-    };
-    fetchScripts();
-  }, []);
+      });
+      
+      setIdeas(results);
+      setLoading(false);
+    });
 
-  const handleVote = async (scriptId: string) => {
+    return () => unsubscribe();
+  }, [activeTab]);
+
+  const handleVote = async (ideaId: string) => {
     if (!user) return alert('Please sign in to vote');
     
     try {
-      const scriptRef = doc(db, 'scripts', scriptId);
-      await updateDoc(scriptRef, {
+      const ideaRef = doc(db, 'ideas', ideaId);
+      await updateDoc(ideaRef, {
         votes: arrayUnion({
           userId: user.uid,
-          score: voteValue
+          score: voteValue,
+          timestamp: new Date()
         })
       });
-      alert('Vote submitted successfully!');
+      alert('Vote submitted!');
+      setSelectedIdea(null);
     } catch (error) {
-      console.error('Error submitting vote:', error);
+      console.error('Vote error:', error);
       alert('Failed to submit vote');
     }
   };
 
-  const getScoreColor = (score: number | undefined) => {
-    if (!score) return 'bg-gray-100';
-    if (score >= 6.5) return 'bg-green-200';
-    if (score >= 4.0) return 'bg-amber-200';
-    return 'bg-red-200';
+  const getScoreColor = (score: number) => {
+    if (score >= 8.0) return 'bg-gradient-to-r from-green-400 to-emerald-600 text-white';
+    if (score >= 6.0) return 'bg-green-100 text-green-800';
+    if (score >= 4.0) return 'bg-amber-100 text-amber-800';
+    return 'bg-red-100 text-red-800';
   };
 
-  const topScore = scripts.reduce((max, s) => Math.max(max, s.aiScore || 0), 0);
-  const mostVotes = Math.max(...scripts.map(s => s.votes?.length || 0), 0);
-  const totalScripts = scripts.length;
-  const genres = ['All', ...new Set(scripts.map(s => s.genre))];
-
-  const filteredScripts = selectedGenre === 'All' 
-    ? scripts 
-    : scripts.filter(s => s.genre === selectedGenre);
+  // Stats calculations
+  const topScore = ideas.reduce((max, idea) => Math.max(max, idea.aiScore), 0);
+  const mostVotes = Math.max(...ideas.map(idea => idea.votes?.length || 0), 0);
+  const totalIdeas = ideas.length;
+  const uniqueGenres = [...new Set(ideas.map(idea => idea.genre))].length;
 
   return (
     <>
       <Head>
-        <title>Script Leaderboard | scriptrank</title>
+        <title>Idea Leaderboard | MakeMeFamous</title>
       </Head>
-      <main className="flex flex-col lg:flex-row max-w-7xl mx-auto px-6 py-12 gap-12">
-        {/* Leaderboard Table */}
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Script Leaderboard</h1>
-            <select 
-              value={selectedGenre}
-              onChange={(e) => setSelectedGenre(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-gray-900 text-white shadow-sm"
-            >
-              {genres.map(genre => (
-                <option key={genre} value={genre}>{genre}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800 text-white text-sm uppercase">
-                <tr>
-                  <th className="px-6 py-3">#</th>
-                  <th className="px-6 py-3">Title</th>
-                  <th className="px-6 py-3">Genre</th>
-                  <th className="px-6 py-3">AI Score</th>
-                  <th className="px-6 py-3">Public Score</th>
-                  <th className="px-6 py-3">Votes</th>
-                  <th className="px-6 py-3">Vote</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredScripts
-                  .sort((a, b) => (b.aiScore || 0) - (a.aiScore || 0))
-                  .map((s, i) => (
-                  <tr key={s.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-bold">
-                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-                        i === 0 ? 'bg-yellow-500' :
-                        i === 1 ? 'bg-gray-400' :
-                        i === 2 ? 'bg-amber-700 text-white' :
-                        'bg-gray-100'
-                      }`}>
-                        {i + 1}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link href={`/scripts/${s.id}`} className="font-bold text-gray-900 hover:text-blue-600">
-                        {s.title}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-gray-900 text-white text-xs font-medium rounded-full">
-                        {s.genre}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`${getScoreColor(s.aiScore)} px-3 py-1 rounded font-bold text-gray-900`}>
-                        {s.aiScore?.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`${getScoreColor(s.publicScore)} px-3 py-1 rounded font-bold text-gray-900`}>
-                        {s.publicScore?.toFixed(2) || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-medium">{s.votes?.length || 0}</td>
-                    <td className="px-6 py-4">
-                      <button 
-                        onClick={() => setSelectedScript(s)}
-                        className="text-sm bg-gray-900 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
-                      >
-                        Rate
-                      </button>
-                    </td>
-                  </tr>
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main Leaderboard */}
+          <div className="flex-1">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <h1 className="text-3xl font-bold text-gray-900">Idea Leaderboard</h1>
+              
+              <div className="flex space-x-2">
+                <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
+                  All Ideas
+                </TabButton>
+                <TabButton active={activeTab === 'movie'} onClick={() => setActiveTab('movie')}>
+                  Movies
+                </TabButton>
+                <TabButton active={activeTab === 'game'} onClick={() => setActiveTab('game')}>
+                  Games
+                </TabButton>
+                <TabButton active={activeTab === 'business'} onClick={() => setActiveTab('business')}>
+                  Business
+                </TabButton>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="animate-pulse space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-200 rounded"></div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : ideas.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No ideas found in this category</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Score</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Public Score</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {ideas.map((idea, index) => (
+                      <tr key={idea.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <RankBadge rank={index + 1} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={`/ideas/${idea.id}`} className="font-medium text-blue-600 hover:text-blue-800">
+                            {idea.title}
+                          </Link>
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-1">{idea.description}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                            {idea.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <ScorePill score={idea.aiScore} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <ScorePill score={idea.publicScore || idea.aiScore} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {idea.votes?.length || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => setSelectedIdea(idea)}
+                            className="text-sm bg-gray-900 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
+                          >
+                            Vote
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-full lg:w-80 space-y-6">
+            {/* Stats Card */}
+            <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Leaderboard Stats</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <StatCard label="Total Ideas" value={totalIdeas} />
+                <StatCard label="Top AI Score" value={topScore.toFixed(2)} />
+                <StatCard label="Most Votes" value={mostVotes} />
+                <StatCard label="Unique Genres" value={uniqueGenres} />
+              </div>
+            </div>
+
+            {/* Voting Panel */}
+            {selectedIdea && (
+              <div className="bg-white p-6 rounded-xl shadow border border-gray-200 sticky top-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Rate This Idea</h2>
+                <p className="text-gray-700 mb-4 font-medium">{selectedIdea.title}</p>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Score: <span className="font-bold">{voteValue.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.01"
+                    max="10.00"
+                    step="0.01"
+                    value={voteValue}
+                    onChange={(e) => setVoteValue(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0.01 (Bad)</span>
+                    <span>10.00 (Perfect)</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleVote(selectedIdea.id)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Submit Your Vote
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Sidebar */}
-        <aside className="w-full lg:w-80 space-y-6">
-          {/* Stats Card */}
-          <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Leaderboard Stats</h2>
-            <ul className="space-y-4 text-sm text-gray-700">
-              <li className="flex justify-between items-center">
-                <span>Total Scripts</span>
-                <span className="font-bold">{totalScripts}</span>
-              </li>
-              <li className="flex justify-between items-center">
-                <span>Top AI Score</span>
-                <span className="font-bold">{topScore.toFixed(2)}</span>
-              </li>
-              <li className="flex justify-between items-center">
-                <span>Most Votes</span>
-                <span className="font-bold">{mostVotes}</span>
-              </li>
-              <li className="flex justify-between items-center">
-                <span>Unique Genres</span>
-                <span className="font-bold">{genres.length - 1}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Voting Card */}
-          {selectedScript && (
-            <div className="bg-white p-6 rounded-xl shadow border border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Rate {selectedScript.title}</h2>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Score (0.01-10.00)</label>
-                <input
-                  type="range"
-                  min="0.01"
-                  max="10.00"
-                  step="0.01"
-                  value={voteValue}
-                  onChange={(e) => setVoteValue(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>0.01</span>
-                  <span className="font-bold">{voteValue.toFixed(2)}</span>
-                  <span>10.00</span>
-                </div>
-              </div>
-              <button
-                onClick={() => handleVote(selectedScript.id)}
-                className="w-full bg-gray-900 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                Submit Vote
-              </button>
-            </div>
-          )}
-        </aside>
       </main>
     </>
   );
 }
+
+// Component: Tab Button
+const TabButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    className={`px-4 py-2 rounded-md text-sm font-medium ${
+      active ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    {children}
+  </button>
+);
+
+// Component: Rank Badge
+const RankBadge = ({ rank }: { rank: number }) => (
+  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
+    rank === 1 ? 'bg-yellow-400 text-gray-900 font-bold' :
+    rank === 2 ? 'bg-gray-300 text-gray-900 font-bold' :
+    rank === 3 ? 'bg-amber-600 text-white font-bold' :
+    'bg-gray-100 text-gray-700'
+  }`}>
+    {rank}
+  </span>
+);
+
+// Component: Score Pill
+const ScorePill = ({ score }: { score: number }) => (
+  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+    score >= 8.0 ? 'bg-green-100 text-green-800' :
+    score >= 6.0 ? 'bg-blue-100 text-blue-800' :
+    score >= 4.0 ? 'bg-amber-100 text-amber-800' :
+    'bg-red-100 text-red-800'
+  }`}>
+    {score.toFixed(2)}
+  </span>
+);
+
+// Component: Stat Card
+const StatCard = ({ label, value }: { label: string; value: string | number }) => (
+  <div className="bg-gray-50 p-3 rounded-lg">
+    <p className="text-xs text-gray-500">{label}</p>
+    <p className="text-lg font-bold text-gray-900">{value}</p>
+  </div>
+);
