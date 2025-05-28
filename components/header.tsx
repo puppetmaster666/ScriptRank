@@ -25,34 +25,49 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo + Brand */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-500 rounded-lg group-hover:from-purple-700 group-hover:to-pink-600 transition-all shadow-md">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 flex items-center justify-center">
               <svg
-                width="20"
-                height="20"
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-white"
+                className="text-gray-900"
               >
-                <path
-                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                {/* Abstract M formed by stacked bars */}
+                <path 
+                  d="M5 7H7V17H5V7Z" 
                   fill="currentColor"
+                  className="text-blue-600"
                 />
-                <path
-                  d="M12 17V22"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
+                <path 
+                  d="M9 4H11V17H9V4Z" 
+                  fill="currentColor"
+                  className="text-blue-500"
+                />
+                <path 
+                  d="M13 7H15V17H13V7Z" 
+                  fill="currentColor"
+                  className="text-blue-600"
+                />
+                <path 
+                  d="M17 4H19V17H17V4Z" 
+                  fill="currentColor"
+                  className="text-blue-500"
+                />
+                {/* Small AI indicator dot */}
+                <circle 
+                  cx="12" 
+                  cy="20" 
+                  r="1.5" 
+                  fill="currentColor"
+                  className="text-gray-600"
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900 lowercase" style={{ fontFamily: "'Inter', sans-serif", letterSpacing: '-0.5px' }}>
-              makemefamous
+            <span className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>
+              MakeMe<span className="text-blue-600">Famous</span>
             </span>
           </Link>
 
@@ -61,14 +76,14 @@ export default function Header() {
             <Link
               href="/leaderboard"
               className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
             >
               Leaderboard
             </Link>
             <Link
               href="/submit"
               className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
             >
               Submit
             </Link>
@@ -78,7 +93,7 @@ export default function Header() {
                 <Link
                   href="/dashboard"
                   className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
                 >
                   Dashboard
                 </Link>
@@ -86,26 +101,24 @@ export default function Header() {
                   type="button"
                   onClick={() => signOut(auth)}
                   className="text-gray-600 hover:text-red-600 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
                 >
                   Logout
                 </button>
               </>
             ) : (
               <div className="flex items-center space-x-3">
-                {/* Changed from /login to /register */}
                 <Link
                   href="/register"
                   className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
                 >
                   Sign Up
                 </Link>
-                {/* Changed from /login to /register */}
                 <Link
                   href="/register"
-                  className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-pink-600 transition text-sm sm:text-base shadow-sm"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-800 transition text-sm sm:text-base shadow-sm"
+                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
                 >
                   Get Started
                 </Link>
