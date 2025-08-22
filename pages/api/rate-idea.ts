@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'X-Title': 'MakeMeFamous' // Required by OpenRouter
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat:free",
+        model: "tngtech/deepseek-r1t-chimera:free",
         messages: [
           {
             role: 'user',
