@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Anyone authenticated can read basic user info (for public profiles)
+      allow read: if request.auth != null;
+    }
+    
+    // ============================================
+    // IDEAS COLLECTION  
+    // ============================================
+    match /ideas/{ideaId} {
+      // Anyone can read ideas (for leaderboard)
+      allow read: if true;
+      
+      // Only authenticated users can create ideas
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid
+        && validateIdeaData();
+      
+      // Users can update their own ideas (but not scores)
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.userId
+        && !('aiScores' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('publicScore' in request.resource.data.diff(resource.data).affectedKeys());
+      
+      // Users can delete their own ideas
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      function validateIdeaData() {
+        let data = request.resource.data;
+        return data.keys().hasAll(['userId', 'username', 'type', 'title', 'content'])
+          && data.type in ['movie', 'game', 'business']
+          && data.title is string 
+          && data.title.size() >= 1 
+          && data.title.size() <= 100
+          && data.content is string 
+          && data.content.size() >= 30 
+          && data.content.size() <= 2000
+          && data.userId is string
+          && data.username is string;
+      }
+    }
+    
+    // ============================================
+    // VOTES COLLECTION
+    // ============================================
+    match /votes/{voteId} {
+      // Anyone can read votes
+      allow read: if true;
+      
+      // Only authenticated users can create votes
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && voteId == (request.auth.uid + '_' + request.resource.data.ideaId)
+        && validateVoteData();
+      
+      // Users cannot update or delete votes (permanent)
+      allow update, delete: if false;
+      
+      function validateVoteData() {
+        let data = request.resource.data;
+        return data.keys().hasAll(['userId', 'ideaId', 'score']) 
+          && data.score is number 
+          && data.score >= 0.01 
+          && data.score <= 10.00
+          && data.userId is string
+          && data.ideaId is string;
+      }
+    }
+    
+    // ============================================
+    // NOTIFICATIONS COLLECTION
+    // ============================================
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // System can create notifications
+      allow create: if request.auth != null;
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Users can delete their own notifications
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // ============================================
+    // FOLLOWING COLLECTION
+    // ============================================
+    match /following/{followId} {
+      // Anyone can read follows
+      allow read: if true;
+      
+      // Users can create follows where they are the follower
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.followerId
+        && followId == (request.resource.data.followerId + '_' + request.resource.data.followedId);
+      
+      // Users can delete follows where they are the follower
+      allow delete: if request.auth != null && request.auth.uid == resource.data.followerId;
+    }
+    
+    // ============================================
+    // PAYMENTS COLLECTION
+    // ============================================
+    match /payments/{paymentId} {
+      // Users can read their own payment records
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Only admin/system can create payment records
+      allow create, update, delete: if false;
+    }
+  }
+}
