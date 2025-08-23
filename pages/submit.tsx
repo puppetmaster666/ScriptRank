@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { submitIdea, canUserSubmitIdea } from "@/lib/firebase-collections";
+import { doc, getDoc } from "firebase/firestore";
+import { submitIdea, canUserSubmitIdea, checkAndResetSubscription } from "@/lib/firebase-collections";
 
 type IdeaType = 'movie' | 'game' | 'business';
 
 export default function SubmitPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -18,7 +20,6 @@ export default function SubmitPage() {
   
   // Form fields
   const [title, setTitle] = useState("");
-  const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
   const [aiFeedback, setAiFeedback] = useState<any>(null);
 
@@ -28,28 +29,43 @@ export default function SubmitPage() {
       setUser(currentUser);
       if (currentUser) {
         try {
-          const canSubmit = await canUserSubmitIdea(currentUser.uid);
-          setSubmissionsRemaining(canSubmit.remaining || 0);
+          // Check and reset subscription if needed
+          await checkAndResetSubscription(currentUser.uid);
           
-          // Get user tier from local storage or Firebase
-          const profile = JSON.parse(localStorage.getItem(`profile_user_${currentUser.uid}`) || '{}');
-          setUserTier(profile.subscription?.tier || 'free');
+          // Get user profile from Firestore
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const profile = userDoc.data();
+            setUserProfile(profile);
+            setUserTier(profile.subscription?.tier || 'free');
+            
+            // Check submission status
+            const canSubmit = await canUserSubmitIdea(currentUser.uid);
+            setSubmissionsRemaining(canSubmit.remaining || 0);
+          } else {
+            // No profile exists
+            setError("Please complete your profile first");
+            setTimeout(() => router.push('/dashboard'), 2000);
+          }
         } catch (error) {
           console.error('Error checking submission status:', error);
+          setError("Error loading submission status");
         }
+      } else {
+        router.push('/register');
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleSubmit = async () => {
-    if (!user) {
+    if (!user || !userProfile) {
       setError("You must be logged in to submit an idea.");
       return;
     }
 
-    // Validation based on idea type
-    if (!title.trim() || !genre.trim() || !description.trim()) {
+    // Validation
+    if (!title.trim() || !description.trim()) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -57,11 +73,11 @@ export default function SubmitPage() {
     // Word count validation
     const wordCount = description.trim().split(/\s+/).length;
     if (wordCount < 30) {
-      setError("Description must be at least 30 words.");
+      setError(`Description must be at least 30 words (currently ${wordCount}).`);
       return;
     }
     if (wordCount > 500) {
-      setError("Description must be 500 words or less.");
+      setError(`Description must be 500 words or less (currently ${wordCount}).`);
       return;
     }
 
@@ -69,7 +85,7 @@ export default function SubmitPage() {
     setError("");
 
     try {
-      // Get AI rating with new multi-score system
+      // Get AI rating
       const aiRes = await fetch("/api/rate-idea", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,8 +111,8 @@ export default function SubmitPage() {
       // Submit to Firebase using new collections system
       const result = await submitIdea({
         userId: user.uid,
-        username: user.displayName || user.email || "Anonymous",
-        userPhotoURL: user.photoURL,
+        username: userProfile.username || user.email || "Anonymous",
+        userPhotoURL: userProfile.photoURL || user.photoURL,
         type: selectedType,
         title: title,
         content: description,
@@ -172,7 +188,7 @@ export default function SubmitPage() {
                 <p className="font-medium text-blue-900">Submissions Remaining: {submissionsRemaining}</p>
                 <p className="text-sm text-blue-700">Current Plan: {userTier.toUpperCase()}</p>
               </div>
-              {submissionsRemaining === 0 && (
+              {submissionsRemaining === 0 && userTier === 'free' && (
                 <button 
                   onClick={() => router.push('/pricing')}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
@@ -186,24 +202,37 @@ export default function SubmitPage() {
           {/* Action Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={() => router.push("/leaderboard")}
+              onClick={() => router.push("/dashboard")}
               className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium"
             >
-              View Leaderboard
+              View Dashboard
             </button>
-            <button
-              onClick={() => {
-                setSuccess(false);
-                setTitle("");
-                setGenre("");
-                setDescription("");
-                setAiFeedback(null);
-              }}
-              className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
-            >
-              Submit Another
-            </button>
+            {submissionsRemaining > 0 && (
+              <button
+                onClick={() => {
+                  setSuccess(false);
+                  setTitle("");
+                  setDescription("");
+                  setAiFeedback(null);
+                }}
+                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
+              >
+                Submit Another
+              </button>
+            )}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state while checking auth
+  if (!user || !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -220,10 +249,14 @@ export default function SubmitPage() {
         <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex justify-between items-center">
             <div>
-              <p className="font-medium text-blue-900">Submissions Remaining: {submissionsRemaining}</p>
+              <p className="font-medium text-blue-900">
+                Submissions Remaining: {submissionsRemaining}
+                {userTier === 'unlimited' ? ' (Unlimited)' : 
+                 userTier === 'starter' ? '/10' : '/3'}
+              </p>
               <p className="text-sm text-blue-700">Plan: {userTier.toUpperCase()}</p>
             </div>
-            {submissionsRemaining === 0 && (
+            {submissionsRemaining === 0 && userTier !== 'unlimited' && (
               <button 
                 onClick={() => router.push('/pricing')}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
@@ -241,20 +274,24 @@ export default function SubmitPage() {
         </div>
       )}
 
-      {submissionsRemaining === 0 ? (
-        <div className="text-center py-12">
+      {submissionsRemaining === 0 && userTier !== 'unlimited' ? (
+        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
           <div className="text-6xl mb-4">😴</div>
           <h2 className="text-2xl font-bold mb-2">No Submissions Left</h2>
-          <p className="text-gray-600 mb-6">Upgrade your plan to continue getting feedback</p>
+          <p className="text-gray-600 mb-6">
+            {userTier === 'free' 
+              ? "You've used all 3 free submissions this month" 
+              : "You've used all 10 submissions this month"}
+          </p>
           <button 
             onClick={() => router.push('/pricing')}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition"
           >
-            View Plans
+            {userTier === 'free' ? 'Upgrade to Continue' : 'Upgrade to Unlimited'}
           </button>
         </div>
       ) : (
-        <>
+        <div className="bg-white rounded-xl shadow-sm p-6">
           {/* Idea Type Selection */}
           <div className="mb-6">
             <label className="block mb-3 font-medium text-gray-900">Idea Type</label>
@@ -287,21 +324,12 @@ export default function SubmitPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={loading}
-              placeholder={`Your ${selectedType} title...`}
+              placeholder={
+                selectedType === 'movie' ? 'e.g. The Last Algorithm' :
+                selectedType === 'game' ? 'e.g. Cosmic Conquest' :
+                'e.g. AI-Powered Personal Chef'
+              }
               maxLength={100}
-            />
-          </div>
-
-          {/* Genre */}
-          <div className="mb-4">
-            <label className="block mb-2 font-medium text-gray-900">Genre/Category*</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
-              disabled={loading}
-              placeholder="e.g. Sci-Fi Thriller, RPG, SaaS"
             />
           </div>
 
@@ -316,13 +344,16 @@ export default function SubmitPage() {
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
               placeholder={
-                selectedType === 'movie' ? "Describe your movie plot and characters..." :
-                selectedType === 'game' ? "Explain your game concept, mechanics, and goals..." :
-                "Describe your business idea, target market, and value proposition..."
+                selectedType === 'movie' ? "Describe your movie plot, main characters, and unique selling points..." :
+                selectedType === 'game' ? "Explain your game concept, core mechanics, target audience, and what makes it unique..." :
+                "Describe your business idea, target market, problem it solves, and revenue model..."
               }
             />
-            <div className="mt-2 text-sm text-gray-500">
-              Word count: {description.trim().split(/\s+/).filter(w => w.length > 0).length}/500
+            <div className="mt-2 flex justify-between text-sm text-gray-500">
+              <span>Word count: {description.trim().split(/\s+/).filter(w => w.length > 0).length}/500</span>
+              <span className={description.trim().split(/\s+/).filter(w => w.length > 0).length < 30 ? 'text-red-500' : ''}>
+                Minimum: 30 words
+              </span>
             </div>
           </div>
 
@@ -344,7 +375,7 @@ export default function SubmitPage() {
               "Get VC Feedback"
             )}
           </button>
-        </>
+        </div>
       )}
     </div>
   );
