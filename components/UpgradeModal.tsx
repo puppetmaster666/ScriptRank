@@ -1,5 +1,3 @@
-// STEP 6: Upgrade Modal Component - components/UpgradeModal.tsx
-// ============================================
 // components/UpgradeModal.tsx
 
 import React, { useState } from 'react';
