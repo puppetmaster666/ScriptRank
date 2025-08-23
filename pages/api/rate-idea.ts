@@ -155,10 +155,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Calculate overall score
     const overallScore = calculateOverallScore(scores.market, scores.innovation, scores.execution);
 
-    // Prepare final response
+    // Prepare final response with matching structure
     const finalResponse = {
       success: true,
       wordCount: validation.wordCount,
+      score: overallScore,  // Add this for compatibility
+      comment: parsedResponse.verdict || "Not investment ready.", // Add this for compatibility
       aiScores: {
         market: scores.market,
         innovation: scores.innovation,
@@ -194,6 +196,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: error.message || 'Internal server error',
       // Provide a harsh fallback score
       fallback: {
+        score: 3.05,
+        comment: "Analysis failed. Resubmit with clearer value proposition.",
         aiScores: {
           market: 2.50,
           innovation: 3.00,
