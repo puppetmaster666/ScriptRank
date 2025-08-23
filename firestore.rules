@@ -9,7 +9,7 @@ service cloud.firestore {
       // Users can read and write their own profile
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Anyone can read basic user info (for public profiles)
+      // Anyone authenticated can read basic user info (for public profiles)
       allow read: if request.auth != null;
     }
     
@@ -22,12 +22,12 @@ service cloud.firestore {
       
       // Only authenticated users can create ideas
       allow create: if request.auth != null 
-        && request.resource.data.userId == request.auth.uid  // FIXED: Changed from resource.data to request.resource.data
+        && request.resource.data.userId == request.auth.uid
         && validateIdeaData();
       
       // Users can update their own ideas (but not scores)
       allow update: if request.auth != null 
-        && request.auth.uid == resource.data.userId  // This is correct for update
+        && request.auth.uid == resource.data.userId
         && !('aiScores' in request.resource.data.diff(resource.data).affectedKeys())
         && !('publicScore' in request.resource.data.diff(resource.data).affectedKeys());
       
@@ -36,7 +36,7 @@ service cloud.firestore {
       
       function validateIdeaData() {
         let data = request.resource.data;
-        return data.keys().hasAll(['userId', 'username', 'type', 'title', 'content']) // FIXED: Removed 'aiScores' from required fields
+        return data.keys().hasAll(['userId', 'username', 'type', 'title', 'content'])
           && data.type in ['movie', 'game', 'business']
           && data.title is string 
           && data.title.size() >= 1 
@@ -53,14 +53,13 @@ service cloud.firestore {
     // VOTES COLLECTION
     // ============================================
     match /votes/{voteId} {
-      // Anyone can read votes (for vote counts and displays)
+      // Anyone can read votes
       allow read: if true;
       
       // Only authenticated users can create votes
-      // Vote ID must be userId_ideaId format
       allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId  // FIXED: Changed from resource.data to request.resource.data
-        && voteId == (request.auth.uid + '_' + request.resource.data.ideaId)  // FIXED: Same here
+        && request.auth.uid == request.resource.data.userId
+        && voteId == (request.auth.uid + '_' + request.resource.data.ideaId)
         && validateVoteData();
       
       // Users cannot update or delete votes (permanent)
@@ -84,7 +83,7 @@ service cloud.firestore {
       // Users can only read their own notifications
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       
-      // System can create notifications (via Cloud Functions or admin)
+      // System can create notifications
       allow create: if request.auth != null;
       
       // Users can update their own notifications (mark as read)
@@ -95,67 +94,30 @@ service cloud.firestore {
     }
     
     // ============================================
-    // FOLLOWING COLLECTION (Social Features)
+    // FOLLOWING COLLECTION
     // ============================================
     match /following/{followId} {
-      // Anyone can read follows (for follower counts)
+      // Anyone can read follows
       allow read: if true;
       
       // Users can create follows where they are the follower
-      // Follow ID must be followerId_followedId format  
       allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.followerId  // FIXED: Changed from resource.data to request.resource.data
-        && followId == (request.resource.data.followerId + '_' + request.resource.data.followedId);  // FIXED: Same here
+        && request.auth.uid == request.resource.data.followerId
+        && followId == (request.resource.data.followerId + '_' + request.resource.data.followedId);
       
       // Users can delete follows where they are the follower
       allow delete: if request.auth != null && request.auth.uid == resource.data.followerId;
     }
     
     // ============================================
-    // PAYMENTS COLLECTION (Admin/Stripe Only)
+    // PAYMENTS COLLECTION
     // ============================================
     match /payments/{paymentId} {
       // Users can read their own payment records
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       
       // Only admin/system can create payment records
-      allow create: if false; // Will be created via Cloud Functions/Admin SDK
-      
-      // No updates or deletes allowed
-      allow update, delete: if false;
-    }
-    
-    // ============================================
-    // LEGACY COLLECTIONS (Your old structure)
-    // ============================================
-    // Keep your existing collections working
-    match /movies/{movieId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    match /games/{gameId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    match /business/{businessId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    // Generic ideas collection (if you had one)
-    match /ideas_old/{ideaId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    // ============================================
-    // TEMPORARY DEBUG COLLECTION
-    // ============================================
-    // Remove this in production - it's just for testing
-    match /debug/{document} {
-      allow read, write: if request.auth != null;
+      allow create, update, delete: if false;
     }
   }
 }
