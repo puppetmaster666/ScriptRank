@@ -1,27 +1,6 @@
-// STEP 3: Create checkout API - pages/api/create-checkout-session.ts
-// ============================================
 // pages/api/create-checkout-session.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../lib/stripe';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-
-// Initialize Firebase Admin (we'll set this up)
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
-
-const adminAuth = getAuth();
-const adminDb = getFirestore();
 
 export default async function handler(
   req: NextApiRequest,
@@ -31,39 +10,31 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { tier, idToken } = req.body;
+  const { tier, userId, userEmail } = req.body;
 
-  if (!tier || !idToken) {
+  if (!tier || !userId || !userEmail) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    // Verify Firebase auth token
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
-    const email = decodedToken.email;
+    // Check if customer exists
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1
+    });
 
-    // Get user data from Firestore
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    const userData = userDoc.data();
-
-    // Check if user already has a Stripe customer ID
-    let customerId = userData?.subscription?.stripeCustomerId;
-
-    if (!customerId) {
-      // Create new Stripe customer
+    let customerId;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+    } else {
+      // Create new customer
       const customer = await stripe.customers.create({
-        email: email,
+        email: userEmail,
         metadata: {
           firebaseUID: userId,
         },
       });
       customerId = customer.id;
-
-      // Save customer ID to Firestore
-      await adminDb.collection('users').doc(userId).update({
-        'subscription.stripeCustomerId': customerId,
-      });
     }
 
     // Determine price ID based on tier
@@ -83,7 +54,7 @@ export default async function handler(
       ],
       mode: 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/`,
       metadata: {
         userId: userId,
         tier: tier,
@@ -94,14 +65,13 @@ export default async function handler(
           tier: tier,
         },
       },
-      // Enable customer portal for subscription management
-      customer_update: {
-        address: 'auto',
-      },
       allow_promotion_codes: true,
     });
 
-    return res.status(200).json({ sessionId: session.id, url: session.url });
+    return res.status(200).json({ 
+      sessionId: session.id, 
+      url: session.url 
+    });
   } catch (error: any) {
     console.error('Checkout session error:', error);
     return res.status(500).json({ 
