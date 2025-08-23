@@ -358,3 +358,261 @@ service cloud.firestore {
   }
 }
 `;
+// Add these to your firebase-collections.ts file
+
+// ============================================
+// SUBSCRIPTION MANAGEMENT
+// ============================================
+
+interface UserSubscription {
+  tier: 'free' | 'starter' | 'unlimited';
+  submissionsRemaining: number;
+  submissionsUsedThisMonth: number;
+  resetDate: Timestamp; // 30 days from purchase/last reset
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  paymentDate?: Timestamp; // When they paid (for paid tiers)
+}
+
+/**
+ * Initialize subscription for new user (free tier)
+ */
+export async function initializeUserSubscription(userId: string) {
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  
+  const subscription: UserSubscription = {
+    tier: 'free',
+    submissionsRemaining: 3,
+    submissionsUsedThisMonth: 0,
+    resetDate: Timestamp.fromDate(thirtyDaysFromNow)
+  };
+  
+  await updateDoc(doc(db, 'users', userId), {
+    subscription: subscription
+  });
+}
+
+/**
+ * Check and reset subscription if 30 days have passed
+ */
+export async function checkAndResetSubscription(userId: string) {
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  const userData = userDoc.data();
+  
+  if (!userData?.subscription) {
+    // Initialize if doesn't exist
+    await initializeUserSubscription(userId);
+    return;
+  }
+  
+  const now = new Date();
+  const resetDate = userData.subscription.resetDate.toDate();
+  
+  // Check if 30 days have passed
+  if (now > resetDate) {
+    const newResetDate = new Date(resetDate);
+    newResetDate.setDate(newResetDate.getDate() + 30);
+    
+    // Reset based on tier
+    let submissionsLimit;
+    switch (userData.subscription.tier) {
+      case 'starter':
+        submissionsLimit = 10;
+        break;
+      case 'unlimited':
+        submissionsLimit = 9999; // Effectively unlimited
+        break;
+      default: // free
+        submissionsLimit = 3;
+    }
+    
+    await updateDoc(doc(db, 'users', userId), {
+      'subscription.submissionsRemaining': submissionsLimit,
+      'subscription.submissionsUsedThisMonth': 0,
+      'subscription.resetDate': Timestamp.fromDate(newResetDate)
+    });
+  }
+}
+
+/**
+ * Check if user can submit an idea
+ */
+export async function canUserSubmitIdea(userId: string): Promise<{
+  canSubmit: boolean;
+  reason?: string;
+  remaining?: number;
+}> {
+  // First check and reset if needed
+  await checkAndResetSubscription(userId);
+  
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  const userData = userDoc.data();
+  
+  if (!userData?.subscription) {
+    return { 
+      canSubmit: false, 
+      reason: 'No subscription found. Please contact support.' 
+    };
+  }
+  
+  const sub = userData.subscription;
+  
+  if (sub.tier === 'unlimited') {
+    return { canSubmit: true, remaining: 9999 };
+  }
+  
+  if (sub.submissionsRemaining > 0) {
+    return { 
+      canSubmit: true, 
+      remaining: sub.submissionsRemaining 
+    };
+  }
+  
+  return { 
+    canSubmit: false, 
+    reason: `You've used all ${sub.tier === 'free' ? '3 free' : '10'} submissions this month. Upgrade to continue.`,
+    remaining: 0
+  };
+}
+
+/**
+ * Use a submission when idea is created
+ */
+export async function useSubmission(userId: string) {
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  const userData = userDoc.data();
+  
+  if (!userData?.subscription) return;
+  
+  // Don't decrement if unlimited
+  if (userData.subscription.tier === 'unlimited') return;
+  
+  await updateDoc(doc(db, 'users', userId), {
+    'subscription.submissionsRemaining': increment(-1),
+    'subscription.submissionsUsedThisMonth': increment(1)
+  });
+}
+
+/**
+ * Upgrade user subscription (called after Stripe payment)
+ */
+export async function upgradeUserSubscription(
+  userId: string, 
+  tier: 'starter' | 'unlimited',
+  stripeCustomerId: string,
+  stripeSubscriptionId: string
+) {
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  
+  const submissionsLimit = tier === 'unlimited' ? 9999 : 10;
+  
+  await updateDoc(doc(db, 'users', userId), {
+    subscription: {
+      tier: tier,
+      submissionsRemaining: submissionsLimit,
+      submissionsUsedThisMonth: 0,
+      resetDate: Timestamp.fromDate(thirtyDaysFromNow),
+      stripeCustomerId: stripeCustomerId,
+      stripeSubscriptionId: stripeSubscriptionId,
+      paymentDate: serverTimestamp()
+    }
+  });
+  
+  // Record payment
+  await addDoc(collection(db, 'payments'), {
+    userId: userId,
+    amount: tier === 'unlimited' ? 10 : 5,
+    tier: tier,
+    stripeSubscriptionId: stripeSubscriptionId,
+    createdAt: serverTimestamp()
+  });
+}
+
+/**
+ * Modified submitIdea function with subscription check
+ */
+export async function submitIdeaWithSubscription(data: {
+  userId: string;
+  username: string;
+  userPhotoURL?: string;
+  type: string;
+  title: string;
+  content: string;
+  aiScores: {
+    market: number;
+    innovation: number;
+    execution: number;
+    overall: number;
+    marketFeedback: string;
+    innovationFeedback: string;
+    executionFeedback: string;
+    verdict: string;
+    investmentStatus: 'INVEST' | 'PASS' | 'MAYBE';
+  };
+}) {
+  // Check if user can submit
+  const canSubmit = await canUserSubmitIdea(data.userId);
+  
+  if (!canSubmit.canSubmit) {
+    throw new Error(canSubmit.reason || 'Cannot submit idea');
+  }
+  
+  try {
+    // Get current month for archiving
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Count words
+    const wordCount = data.content.trim().split(/\s+/).length;
+
+    // Create idea document
+    const ideaRef = await addDoc(collection(db, 'ideas'), {
+      userId: data.userId,
+      username: data.username,
+      userPhotoURL: data.userPhotoURL || null,
+      
+      // Content
+      type: data.type,
+      title: data.title.substring(0, 100),
+      content: data.content,
+      wordCount: wordCount,
+      
+      // AI Scores
+      aiScores: data.aiScores,
+      
+      // Initialize public voting
+      publicScore: {
+        average: 0,
+        count: 0,
+        sum: 0
+      },
+      
+      // Timestamps
+      createdAt: serverTimestamp(),
+      month: month,
+      
+      // Rankings will be updated by cloud function
+      rankings: {}
+    });
+
+    // Use a submission
+    await useSubmission(data.userId);
+
+    // Update user stats
+    await updateDoc(doc(db, 'users', data.userId), {
+      'stats.totalIdeas': increment(1),
+      'stats.monthlyIdeasCount': increment(1),
+    });
+
+    return { 
+      success: true, 
+      ideaId: ideaRef.id,
+      submissionsRemaining: canSubmit.remaining ? canSubmit.remaining - 1 : 0
+    };
+  } catch (error) {
+    console.error('Error submitting idea:', error);
+    throw error;
+  }
+}
