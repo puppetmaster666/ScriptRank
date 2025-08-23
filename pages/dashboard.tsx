@@ -76,18 +76,20 @@ export default function DashboardPage() {
       setLoading(true);
       
       try {
-        // Check and reset subscription if needed
-        await checkAndResetSubscription(u.uid);
-        
-        // Get user profile from Firestore
+        // Get user profile from Firestore first
         const userDoc = await getDoc(doc(db, 'users', u.uid));
         
         if (!userDoc.exists()) {
           // Profile doesn't exist, create it
           console.log('Creating new profile for existing user...');
           try {
+            // Generate unique username
+            const baseUsername = u.displayName || u.email?.split('@')[0] || 'user';
+            const timestamp = Date.now().toString().slice(-6);
+            const uniqueUsername = `${baseUsername}_${timestamp}`.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            
             await createUserProfile(u.uid, {
-              username: u.displayName || u.email?.split('@')[0] || 'user',
+              username: uniqueUsername,
               displayName: u.displayName || 'Anonymous',
               email: u.email || '',
               photoURL: u.photoURL || undefined
@@ -100,12 +102,41 @@ export default function DashboardPage() {
               setUsername(profileData.username);
               setDisplayName(profileData.displayName);
               setBio(profileData.bio || '');
+              
+              // NOW check and reset subscription after profile exists
+              await checkAndResetSubscription(u.uid);
             }
           } catch (error: any) {
             console.error('Error creating profile:', error);
-            setProfileError('Failed to create profile. ' + error.message);
+            if (error.message.includes('Username already taken')) {
+              // Try again with more unique username
+              const moreUniqueUsername = `user_${u.uid.slice(0, 8)}`.toLowerCase();
+              try {
+                await createUserProfile(u.uid, {
+                  username: moreUniqueUsername,
+                  displayName: u.displayName || 'Anonymous',
+                  email: u.email || '',
+                  photoURL: u.photoURL || undefined
+                });
+                const retryDoc = await getDoc(doc(db, 'users', u.uid));
+                if (retryDoc.exists()) {
+                  const profileData = retryDoc.data() as UserProfile;
+                  setProfile(profileData);
+                  setUsername(profileData.username);
+                  setDisplayName(profileData.displayName);
+                  setBio(profileData.bio || '');
+                  await checkAndResetSubscription(u.uid);
+                }
+              } catch (retryError) {
+                setProfileError('Failed to create profile. Please try again.');
+              }
+            } else {
+              setProfileError('Failed to create profile. ' + error.message);
+            }
           }
         } else {
+          // Profile exists, check and reset subscription
+          await checkAndResetSubscription(u.uid);
           // Profile exists, use it
           const profileData = userDoc.data() as UserProfile;
           setProfile(profileData);
