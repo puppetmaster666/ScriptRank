@@ -1,11 +1,8 @@
-// STEP 5: Customer Portal API - pages/api/create-portal-session.ts
-// ============================================
 // pages/api/create-portal-session.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../lib/stripe';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminAuth, adminDb } from '../../lib/firebase-admin';
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,12 +19,6 @@ export default async function handler(
   }
 
   try {
-    const { getAuth } = await import('firebase-admin/auth');
-    const { getFirestore } = await import('firebase-admin/firestore');
-    
-    const adminAuth = getAuth();
-    const adminDb = getFirestore();
-
     // Verify Firebase auth
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
