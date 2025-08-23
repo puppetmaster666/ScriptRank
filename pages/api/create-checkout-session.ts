@@ -1,6 +1,7 @@
 // pages/api/create-checkout-session.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../lib/stripe';
+import { adminAuth } from '../../lib/firebase-admin';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,13 +11,18 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { tier, userId, userEmail } = req.body;
+  const { tier, idToken } = req.body;
 
-  if (!tier || !userId || !userEmail) {
+  if (!tier || !idToken) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
+    // Verify the user's authentication
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    const userId = decodedToken.uid;
+    const userEmail = decodedToken.email;
+
     // Check if customer exists
     const customers = await stripe.customers.list({
       email: userEmail,
