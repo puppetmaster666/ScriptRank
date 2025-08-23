@@ -235,10 +235,8 @@ export default function LeaderboardPage() {
               <div className="text-center py-16 bg-white rounded-xl">
                 <h3 className="text-2xl font-bold mb-2">No Ideas Yet</h3>
                 <p className="text-gray-600 mb-6">Be the first to submit an idea this month!</p>
-                <Link href="/submit">
-                  <a className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
-                    Submit First Idea
-                  </a>
+                <Link href="/submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
+                  Submit First Idea
                 </Link>
               </div>
             ) : (
@@ -276,10 +274,8 @@ export default function LeaderboardPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div>
-                                <Link href={`/ideas/${idea.id}`}>
-                                  <a className="text-gray-900 font-medium hover:text-blue-600">
-                                    {idea.title}
-                                  </a>
+                                <Link href={`/ideas/${idea.id}`} className="text-gray-900 font-medium hover:text-blue-600">
+                                  {idea.title}
                                 </Link>
                                 <div className="text-sm text-gray-500 capitalize">{idea.type}</div>
                               </div>
@@ -319,10 +315,8 @@ export default function LeaderboardPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex gap-2">
-                                <Link href={`/ideas/${idea.id}`}>
-                                  <a className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    View
-                                  </a>
+                                <Link href={`/ideas/${idea.id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                  View
                                 </Link>
                                 {user && !hasVoted && (
                                   <button
@@ -450,10 +444,8 @@ export default function LeaderboardPage() {
                 <p className="text-sm text-gray-600 mb-4">
                   Get honest feedback and join the leaderboard
                 </p>
-                <Link href="/submit">
-                  <a className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium">
-                    Submit Your Idea
-                  </a>
+                <Link href="/submit" className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium">
+                  Submit Your Idea
                 </Link>
               </div>
             )}
