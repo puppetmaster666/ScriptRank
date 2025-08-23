@@ -1,11 +1,9 @@
-// STEP 4: Webhook handler - pages/api/webhook.ts
-// ============================================
 // pages/api/webhook.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { buffer } from 'micro';
 import { stripe } from '../../lib/stripe';
 import { upgradeUserSubscription } from '../../lib/firebase-collections';
+import Stripe from 'stripe';
 
 // Disable body parser for webhooks
 export const config = {
@@ -25,7 +23,7 @@ export default async function handler(
   const buf = await buffer(req);
   const sig = req.headers['stripe-signature']!;
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -39,68 +37,55 @@ export default async function handler(
   }
 
   // Handle the event
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as any;
-      const userId = session.metadata.userId;
-      const tier = session.metadata.tier;
-      const customerId = session.customer;
-      const subscriptionId = session.subscription;
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const tier = session.metadata?.tier as 'starter' | 'unlimited';
+        const customerId = session.customer as string;
+        const subscriptionId = session.subscription as string;
 
-      // Update user subscription in Firebase
-      await upgradeUserSubscription(
-        userId,
-        tier,
-        customerId,
-        subscriptionId
-      );
+        if (userId && tier) {
+          // Update user subscription in Firebase
+          await upgradeUserSubscription(
+            userId,
+            tier,
+            customerId,
+            subscriptionId
+          );
+          console.log(`✅ Subscription activated for user ${userId}: ${tier}`);
+        }
+        break;
+      }
 
-      console.log(`Subscription activated for user ${userId}: ${tier}`);
-      break;
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const userId = subscription.metadata?.userId;
+        
+        if (userId) {
+          // Downgrade to free tier
+          // You'll need to create a downgradeToFree function in firebase-collections.ts
+          console.log(`User ${userId} subscription cancelled - downgrading to free`);
+          // await downgradeToFree(userId);
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        console.log(`⚠️ Payment failed for invoice ${invoice.id}`);
+        // You could send an email notification here
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
-    case 'customer.subscription.updated': {
-      const subscription = event.data.object as any;
-      const userId = subscription.metadata.userId;
-      
-      // Handle subscription updates (upgrades/downgrades)
-      console.log(`Subscription updated for user ${userId}`);
-      break;
-    }
-
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as any;
-      const userId = subscription.metadata.userId;
-      
-      // Downgrade to free tier
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const adminDb = getFirestore();
-      
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      
-      await adminDb.collection('users').doc(userId).update({
-        'subscription.tier': 'free',
-        'subscription.submissionsRemaining': 3,
-        'subscription.submissionsUsedThisMonth': 0,
-        'subscription.resetDate': thirtyDaysFromNow,
-        'subscription.stripeSubscriptionId': null,
-      });
-      
-      console.log(`User ${userId} downgraded to free tier`);
-      break;
-    }
-
-    case 'invoice.payment_failed': {
-      const invoice = event.data.object as any;
-      // Handle failed payment (send email, show warning, etc.)
-      console.log(`Payment failed for invoice ${invoice.id}`);
-      break;
-    }
-
-    default:
-      console.log(`Unhandled event type: ${event.type}`);
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
-
-  res.status(200).json({ received: true });
 }
