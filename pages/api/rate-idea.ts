@@ -1,5 +1,5 @@
 // pages/api/rate-idea.ts
-// Gemini 2.0 Flash with harsh Silicon Valley VC-style multi-score rating
+// Harsh objective critic with simpler vocabulary
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -7,47 +7,47 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
 
-// VC-style prompt for harsh, realistic evaluation
-function getVCPrompt(type: string, content: string): string {
-  return `You are a top-tier Silicon Valley venture capitalist known for brutal honesty. You've seen thousands of pitches and have no time for mediocrity. Evaluate this ${type} idea with the harsh reality of the market.
+// Harsh but clear critic prompt
+function getCriticPrompt(type: string, content: string): string {
+  return `You are a brutally honest ${type} critic known for harsh objectivity. You don't sugarcoat anything but you use clear, simple language that anyone can understand. No fancy business jargon or pretentious vocabulary.
 
 IDEA: "${content}"
 
-Provide a detailed investment analysis with EXACTLY this JSON format (be extremely precise with decimals to 2 places):
+Provide harsh but clear analysis with EXACTLY this JSON format (use precise decimals like 4.73):
 
 {
   "scores": {
     "market": [0.00-10.00],
-    "innovation": [0.00-10.00],
+    "innovation": [0.00-10.00], 
     "execution": [0.00-10.00]
   },
   "feedback": {
-    "market": "[1-2 sentences on market viability, TAM, monetization potential]",
-    "innovation": "[1-2 sentences on uniqueness, differentiation, moat]",
-    "execution": "[1-2 sentences on technical feasibility, team requirements, timeline]"
+    "market": "[1-2 sentences about market demand in simple terms - be harsh about reality]",
+    "innovation": "[1-2 sentences about originality - call out if it's been done before]",
+    "execution": "[1-2 sentences about technical difficulty - be realistic about challenges]"
   },
-  "verdict": "[2-3 sentences of brutal honesty about why you'd pass or invest]",
+  "verdict": "[2-3 sentences of brutal honesty using simple, clear language. No sugarcoating but no fancy words either]",
   "investmentStatus": "[INVEST/PASS/MAYBE]"
 }
 
 Scoring Guidelines (BE HARSH):
-- Market (0-10): 0-3 = No market, 4-6 = Niche market, 7-8 = Large market, 9-10 = Massive TAM
-- Innovation (0-10): 0-3 = Complete copy, 4-6 = Minor twist, 7-8 = Novel approach, 9-10 = Revolutionary
-- Execution (0-10): 0-3 = Nearly impossible, 4-6 = Very hard, 7-8 = Doable with effort, 9-10 = Easy win
+- Market (0-10): 0-3 = Nobody wants this, 4-6 = Some people might care, 7-8 = Good demand, 9-10 = Everyone needs this
+- Innovation (0-10): 0-3 = Total copy, 4-6 = Small twist, 7-8 = Fresh approach, 9-10 = Never seen before
+- Execution (0-10): 0-3 = Nearly impossible, 4-6 = Very difficult, 7-8 = Doable with work, 9-10 = Easy to build
 
 Remember: 
-- Most ideas score 3-6. Scores above 7 are RARE.
-- Be specific about flaws. Founders need truth, not encouragement.
-- If it's been done before, say so. If it's impossible, say so.
-- Consider: Would YOU invest YOUR money in this?
-- Use precise decimals (e.g., 4.73, not 5.00) for more accurate scoring.`;
+- Most ideas deserve 3-6. Scores above 7 are RARE.
+- Use simple, clear language. No MBA buzzwords or Silicon Valley slang.
+- Be specific about problems. Say exactly what's wrong.
+- If it exists already, name it. If it won't work, explain why.
+- Would YOU actually use or invest in this? Be honest.`;
 }
 
 // Calculate weighted overall score
 function calculateOverallScore(market: number, innovation: number, execution: number): number {
-  // Market is king in VC world (40%), Innovation and Execution split the rest (30% each)
+  // Market matters most (40%), Innovation and Execution (30% each)
   const overall = (market * 0.40) + (innovation * 0.30) + (execution * 0.30);
-  return Math.round(overall * 100) / 100; // Round to 2 decimals
+  return Math.round(overall * 100) / 100;
 }
 
 // Validate word count
@@ -59,7 +59,7 @@ function validateWordCount(content: string): { valid: boolean; wordCount: number
     return {
       valid: false,
       wordCount,
-      error: `Too brief. Provide at least 30 words (currently ${wordCount}). VCs need substance, not tweets.`
+      error: `Too short. Need at least 30 words (you have ${wordCount}). Give us real details.`
     };
   }
   
@@ -67,7 +67,7 @@ function validateWordCount(content: string): { valid: boolean; wordCount: number
     return {
       valid: false,
       wordCount,
-      error: `Too long. Maximum 500 words (currently ${wordCount}). If you can't explain it simply, you don't understand it.`
+      error: `Too long. Maximum 500 words (you have ${wordCount}). Get to the point.`
     };
   }
   
@@ -97,17 +97,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Use Gemini 2.0 Flash (experimental) for latest capabilities
+    // Use Gemini 2.0 Flash
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash-exp",
       generationConfig: {
-        temperature: 0.7,  // Some creativity but mostly consistent
+        temperature: 0.7,
         maxOutputTokens: 800,
         topP: 0.95,
       }
     });
 
-    const prompt = getVCPrompt(type, content);
+    const prompt = getCriticPrompt(type, content);
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -115,15 +115,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Parse the JSON response
     let parsedResponse;
     try {
-      // Extract JSON from the response (in case there's extra text)
+      // Extract JSON from the response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
       parsedResponse = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
-      // Fallback to a harsh default response
+      console.error('Failed to parse response:', text);
+      // Fallback response
       parsedResponse = {
         scores: {
           market: 3.42,
@@ -131,11 +131,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           execution: 5.23
         },
         feedback: {
-          market: "Market viability unclear. No evidence of customer demand or willingness to pay.",
-          innovation: "Incremental improvement at best. Nothing here that doesn't already exist.",
-          execution: "Technically feasible but requires significant resources with uncertain ROI."
+          market: "No clear evidence anyone wants this. You haven't shown real demand.",
+          innovation: "This already exists in multiple forms. Nothing new here.",
+          execution: "Technically possible but way harder than you think."
         },
-        verdict: "Hard pass. This is a solution desperately searching for a problem. Come back when you've talked to 100 potential customers.",
+        verdict: "This idea needs serious work. You're solving a problem that doesn't really exist. Come back after talking to real customers.",
         investmentStatus: "PASS"
       };
     }
@@ -155,37 +155,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Calculate overall score
     const overallScore = calculateOverallScore(scores.market, scores.innovation, scores.execution);
 
-    // Prepare final response with matching structure
+    // Prepare final response
     const finalResponse = {
       success: true,
       wordCount: validation.wordCount,
-      score: overallScore,  // Add this for compatibility
-      comment: parsedResponse.verdict || "Not investment ready.", // Add this for compatibility
+      score: overallScore,
+      comment: parsedResponse.verdict || "Not ready yet.",
       aiScores: {
         market: scores.market,
         innovation: scores.innovation,
         execution: scores.execution,
         overall: overallScore,
-        marketFeedback: parsedResponse.feedback?.market || "No clear market opportunity identified.",
-        innovationFeedback: parsedResponse.feedback?.innovation || "Lacks meaningful differentiation.",
-        executionFeedback: parsedResponse.feedback?.execution || "Execution challenges underestimated.",
-        verdict: parsedResponse.verdict || "Not investment ready.",
+        marketFeedback: parsedResponse.feedback?.market || "No clear market identified.",
+        innovationFeedback: parsedResponse.feedback?.innovation || "Nothing new here.",
+        executionFeedback: parsedResponse.feedback?.execution || "Harder than you think.",
+        verdict: parsedResponse.verdict || "Not ready yet.",
         investmentStatus: parsedResponse.investmentStatus || "PASS"
       },
-      model: "Gemini 2.0 Flash (VC Mode)",
+      model: "Gemini 2.0 Flash",
       timestamp: new Date().toISOString()
     };
 
     return res.status(200).json(finalResponse);
 
   } catch (error: any) {
-    console.error('Gemini API error:', error);
+    console.error('API error:', error);
     
     // Check if it's a quota error
     if (error.message?.includes('quota') || error.message?.includes('limit')) {
       return res.status(429).json({
         error: 'Rate limit reached',
-        details: 'Too many requests. Please try again in a few moments.',
+        details: 'Too many requests. Try again in a minute.',
         retryAfter: 60
       });
     }
@@ -194,19 +194,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({
       error: 'Failed to analyze idea',
       details: error.message || 'Internal server error',
-      // Provide a harsh fallback score
       fallback: {
         score: 3.05,
-        comment: "Analysis failed. Resubmit with clearer value proposition.",
+        comment: "Analysis failed. Try again with a clearer description.",
         aiScores: {
           market: 2.50,
           innovation: 3.00,
           execution: 4.00,
           overall: 3.05,
-          marketFeedback: "Unable to properly assess market viability.",
+          marketFeedback: "Unable to assess market.",
           innovationFeedback: "Innovation level unclear.",
-          executionFeedback: "Execution complexity undetermined.",
-          verdict: "Analysis failed. Resubmit with clearer value proposition.",
+          executionFeedback: "Execution complexity unknown.",
+          verdict: "Analysis failed. Try again with a clearer description.",
           investmentStatus: "PASS"
         }
       }
