@@ -1,5 +1,5 @@
 // lib/firebase-collections.ts
-// This file defines the structure and helper functions for Firebase
+// This is a NEW FILE - create it in your lib folder
 
 import { 
   collection, 
@@ -17,14 +17,28 @@ import {
   increment,
   Timestamp
 } from 'firebase/firestore';
-import { db } from './firebase'; // Your existing firebase.ts file
+import { db } from './firebase'; // Import from your existing firebase.ts file
 
 // ============================================
-// HELPER FUNCTIONS TO WORK WITH COLLECTIONS
+// SUBSCRIPTION TYPES
+// ============================================
+
+interface UserSubscription {
+  tier: 'free' | 'starter' | 'unlimited';
+  submissionsRemaining: number;
+  submissionsUsedThisMonth: number;
+  resetDate: Timestamp;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  paymentDate?: Timestamp;
+}
+
+// ============================================
+// USER PROFILE FUNCTIONS
 // ============================================
 
 /**
- * Create a new user profile
+ * Create a new user profile with free tier subscription
  */
 export async function createUserProfile(userId: string, data: {
   username: string;
@@ -44,6 +58,10 @@ export async function createUserProfile(userId: string, data: {
       throw new Error('Username already taken');
     }
 
+    // Calculate 30 days from now for free tier reset
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
     // Create the user document
     await setDoc(doc(db, 'users', userId), {
       uid: userId,
@@ -52,6 +70,14 @@ export async function createUserProfile(userId: string, data: {
       photoURL: data.photoURL || null,
       bio: '',
       createdAt: serverTimestamp(),
+      
+      // Initialize subscription (FREE TIER)
+      subscription: {
+        tier: 'free',
+        submissionsRemaining: 3,
+        submissionsUsedThisMonth: 0,
+        resetDate: Timestamp.fromDate(thirtyDaysFromNow)
+      },
       
       // Initialize stats
       stats: {
@@ -78,320 +104,9 @@ export async function createUserProfile(userId: string, data: {
   }
 }
 
-/**
- * Submit a new idea and get AI rating
- */
-export async function submitIdea(data: {
-  userId: string;
-  username: string;
-  userPhotoURL?: string;
-  type: string;
-  title: string;
-  content: string;
-  aiScores: {
-    market: number;
-    innovation: number;
-    execution: number;
-    overall: number;
-    marketFeedback: string;
-    innovationFeedback: string;
-    executionFeedback: string;
-    verdict: string;
-    investmentStatus: 'INVEST' | 'PASS' | 'MAYBE';
-  };
-}) {
-  try {
-    // Get current month for archiving
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Count words
-    const wordCount = data.content.trim().split(/\s+/).length;
-
-    // Create idea document
-    const ideaRef = await addDoc(collection(db, 'ideas'), {
-      userId: data.userId,
-      username: data.username,
-      userPhotoURL: data.userPhotoURL || null,
-      
-      // Content
-      type: data.type,
-      title: data.title.substring(0, 100), // Enforce max length
-      content: data.content,
-      wordCount: wordCount,
-      
-      // AI Scores
-      aiScores: data.aiScores,
-      
-      // Initialize public voting
-      publicScore: {
-        average: 0,
-        count: 0,
-        sum: 0
-      },
-      
-      // Timestamps
-      createdAt: serverTimestamp(),
-      month: month,
-      
-      // Rankings will be updated by cloud function
-      rankings: {}
-    });
-
-    // Update user stats
-    await updateDoc(doc(db, 'users', data.userId), {
-      'stats.totalIdeas': increment(1),
-      'stats.monthlyIdeasCount': increment(1),
-      // Average scores will be recalculated by cloud function
-    });
-
-    return { 
-      success: true, 
-      ideaId: ideaRef.id 
-    };
-  } catch (error) {
-    console.error('Error submitting idea:', error);
-    throw error;
-  }
-}
-
-/**
- * Cast a vote on an idea
- */
-export async function castVote(
-  userId: string,
-  ideaId: string,
-  score: number // 0.00 to 10.00
-) {
-  try {
-    // Check if user already voted
-    const voteId = `${userId}_${ideaId}`;
-    const existingVote = await getDoc(doc(db, 'votes', voteId));
-    
-    if (existingVote.exists()) {
-      throw new Error('You have already voted on this idea');
-    }
-
-    // Ensure score is valid
-    const validScore = Math.max(0, Math.min(10, score));
-    const roundedScore = Math.round(validScore * 100) / 100; // 2 decimals
-
-    // Create vote document
-    await setDoc(doc(db, 'votes', voteId), {
-      userId: userId,
-      ideaId: ideaId,
-      score: roundedScore,
-      createdAt: serverTimestamp()
-    });
-
-    // Update idea's public score
-    await updateDoc(doc(db, 'ideas', ideaId), {
-      'publicScore.sum': increment(roundedScore),
-      'publicScore.count': increment(1),
-      // Average will be recalculated by cloud function
-    });
-
-    // Update user's vote count
-    await updateDoc(doc(db, 'users', userId), {
-      'stats.totalVotesCast': increment(1)
-    });
-
-    return { success: true, score: roundedScore };
-  } catch (error) {
-    console.error('Error casting vote:', error);
-    throw error;
-  }
-}
-
-/**
- * Get current month's leaderboard
- */
-export async function getCurrentMonthLeaderboard(
-  category: 'overall' | 'market' | 'innovation' | 'execution' | 'public' = 'overall',
-  limitCount: number = 10
-) {
-  try {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    let orderByField;
-    switch (category) {
-      case 'market':
-        orderByField = 'aiScores.market';
-        break;
-      case 'innovation':
-        orderByField = 'aiScores.innovation';
-        break;
-      case 'execution':
-        orderByField = 'aiScores.execution';
-        break;
-      case 'public':
-        orderByField = 'publicScore.average';
-        break;
-      default:
-        orderByField = 'aiScores.overall';
-    }
-
-    const q = query(
-      collection(db, 'ideas'),
-      where('month', '==', currentMonth),
-      orderBy(orderByField, 'desc'),
-      limit(limitCount)
-    );
-
-    const snapshot = await getDocs(q);
-    const ideas = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    return ideas;
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    throw error;
-  }
-}
-
-/**
- * Follow/Unfollow a user
- */
-export async function toggleFollow(
-  followerId: string,
-  followedId: string,
-  action: 'follow' | 'unfollow'
-) {
-  try {
-    const followingId = `${followerId}_${followedId}`;
-    
-    if (action === 'follow') {
-      // Create following relationship
-      await setDoc(doc(db, 'following', followingId), {
-        followerId: followerId,
-        followedId: followedId,
-        createdAt: serverTimestamp()
-      });
-
-      // Update counts
-      await updateDoc(doc(db, 'users', followerId), {
-        followingCount: increment(1)
-      });
-      await updateDoc(doc(db, 'users', followedId), {
-        followersCount: increment(1)
-      });
-
-      // Create notification
-      await addDoc(collection(db, 'notifications'), {
-        userId: followedId,
-        type: 'new_follower',
-        title: 'New Follower',
-        message: `Someone started following you`,
-        fromUserId: followerId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-
-    } else {
-      // Remove following relationship
-      // (You'd implement the delete here)
-      
-      // Update counts
-      await updateDoc(doc(db, 'users', followerId), {
-        followingCount: increment(-1)
-      });
-      await updateDoc(doc(db, 'users', followedId), {
-        followersCount: increment(-1)
-      });
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error toggling follow:', error);
-    throw error;
-  }
-}
-
-// ============================================
-// FIREBASE SECURITY RULES
-// ============================================
-
-export const FIREBASE_RULES = `
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Anyone can read, only authenticated can write
-    match /users/{userId} {
-      allow read: if true;
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    match /ideas/{ideaId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    
-    match /votes/{voteId} {
-      allow read: if true;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId
-        && request.resource.data.score >= 0 
-        && request.resource.data.score <= 10;
-      allow update, delete: if false; // Votes are final
-    }
-    
-    match /notifications/{notificationId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    
-    match /following/{followId} {
-      allow read: if true;
-      allow create, delete: if request.auth != null 
-        && request.auth.uid == resource.data.followerId;
-    }
-    
-    match /monthly_archives/{archiveId} {
-      allow read: if true;
-      allow write: if false; // Only admin
-    }
-  }
-}
-`;
-// Add these to your firebase-collections.ts file
-
 // ============================================
 // SUBSCRIPTION MANAGEMENT
 // ============================================
-
-interface UserSubscription {
-  tier: 'free' | 'starter' | 'unlimited';
-  submissionsRemaining: number;
-  submissionsUsedThisMonth: number;
-  resetDate: Timestamp; // 30 days from purchase/last reset
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  paymentDate?: Timestamp; // When they paid (for paid tiers)
-}
-
-/**
- * Initialize subscription for new user (free tier)
- */
-export async function initializeUserSubscription(userId: string) {
-  const thirtyDaysFromNow = new Date();
-  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-  
-  const subscription: UserSubscription = {
-    tier: 'free',
-    submissionsRemaining: 3,
-    submissionsUsedThisMonth: 0,
-    resetDate: Timestamp.fromDate(thirtyDaysFromNow)
-  };
-  
-  await updateDoc(doc(db, 'users', userId), {
-    subscription: subscription
-  });
-}
 
 /**
  * Check and reset subscription if 30 days have passed
@@ -402,7 +117,17 @@ export async function checkAndResetSubscription(userId: string) {
   
   if (!userData?.subscription) {
     // Initialize if doesn't exist
-    await initializeUserSubscription(userId);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    
+    await updateDoc(doc(db, 'users', userId), {
+      subscription: {
+        tier: 'free',
+        submissionsRemaining: 3,
+        submissionsUsedThisMonth: 0,
+        resetDate: Timestamp.fromDate(thirtyDaysFromNow)
+      }
+    });
     return;
   }
   
@@ -421,7 +146,7 @@ export async function checkAndResetSubscription(userId: string) {
         submissionsLimit = 10;
         break;
       case 'unlimited':
-        submissionsLimit = 9999; // Effectively unlimited
+        submissionsLimit = 9999;
         break;
       default: // free
         submissionsLimit = 3;
@@ -479,7 +204,7 @@ export async function canUserSubmitIdea(userId: string): Promise<{
 /**
  * Use a submission when idea is created
  */
-export async function useSubmission(userId: string) {
+async function useSubmission(userId: string) {
   const userDoc = await getDoc(doc(db, 'users', userId));
   const userData = userDoc.data();
   
@@ -494,46 +219,14 @@ export async function useSubmission(userId: string) {
   });
 }
 
-/**
- * Upgrade user subscription (called after Stripe payment)
- */
-export async function upgradeUserSubscription(
-  userId: string, 
-  tier: 'starter' | 'unlimited',
-  stripeCustomerId: string,
-  stripeSubscriptionId: string
-) {
-  const thirtyDaysFromNow = new Date();
-  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-  
-  const submissionsLimit = tier === 'unlimited' ? 9999 : 10;
-  
-  await updateDoc(doc(db, 'users', userId), {
-    subscription: {
-      tier: tier,
-      submissionsRemaining: submissionsLimit,
-      submissionsUsedThisMonth: 0,
-      resetDate: Timestamp.fromDate(thirtyDaysFromNow),
-      stripeCustomerId: stripeCustomerId,
-      stripeSubscriptionId: stripeSubscriptionId,
-      paymentDate: serverTimestamp()
-    }
-  });
-  
-  // Record payment
-  await addDoc(collection(db, 'payments'), {
-    userId: userId,
-    amount: tier === 'unlimited' ? 10 : 5,
-    tier: tier,
-    stripeSubscriptionId: stripeSubscriptionId,
-    createdAt: serverTimestamp()
-  });
-}
+// ============================================
+// IDEA SUBMISSION
+// ============================================
 
 /**
- * Modified submitIdea function with subscription check
+ * Submit a new idea with subscription check
  */
-export async function submitIdeaWithSubscription(data: {
+export async function submitIdea(data: {
   userId: string;
   username: string;
   userPhotoURL?: string;
@@ -615,4 +308,221 @@ export async function submitIdeaWithSubscription(data: {
     console.error('Error submitting idea:', error);
     throw error;
   }
+}
+
+// ============================================
+// VOTING SYSTEM
+// ============================================
+
+/**
+ * Cast a vote on an idea
+ */
+export async function castVote(
+  userId: string,
+  ideaId: string,
+  score: number // 0.00 to 10.00
+) {
+  try {
+    // Check if user already voted
+    const voteId = `${userId}_${ideaId}`;
+    const existingVote = await getDoc(doc(db, 'votes', voteId));
+    
+    if (existingVote.exists()) {
+      throw new Error('You have already voted on this idea');
+    }
+
+    // Ensure score is valid
+    const validScore = Math.max(0, Math.min(10, score));
+    const roundedScore = Math.round(validScore * 100) / 100;
+
+    // Create vote document
+    await setDoc(doc(db, 'votes', voteId), {
+      userId: userId,
+      ideaId: ideaId,
+      score: roundedScore,
+      createdAt: serverTimestamp()
+    });
+
+    // Get current idea data to update average
+    const ideaDoc = await getDoc(doc(db, 'ideas', ideaId));
+    const ideaData = ideaDoc.data();
+    
+    if (ideaData) {
+      const newSum = (ideaData.publicScore?.sum || 0) + roundedScore;
+      const newCount = (ideaData.publicScore?.count || 0) + 1;
+      const newAverage = Math.round((newSum / newCount) * 100) / 100;
+      
+      // Update idea's public score
+      await updateDoc(doc(db, 'ideas', ideaId), {
+        'publicScore.sum': newSum,
+        'publicScore.count': newCount,
+        'publicScore.average': newAverage
+      });
+    }
+
+    // Update user's vote count
+    await updateDoc(doc(db, 'users', userId), {
+      'stats.totalVotesCast': increment(1)
+    });
+
+    return { success: true, score: roundedScore };
+  } catch (error) {
+    console.error('Error casting vote:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// LEADERBOARD FUNCTIONS
+// ============================================
+
+/**
+ * Get current month's leaderboard
+ */
+export async function getCurrentMonthLeaderboard(
+  category: 'overall' | 'market' | 'innovation' | 'execution' | 'public' = 'overall',
+  limitCount: number = 10
+) {
+  try {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    let orderByField;
+    switch (category) {
+      case 'market':
+        orderByField = 'aiScores.market';
+        break;
+      case 'innovation':
+        orderByField = 'aiScores.innovation';
+        break;
+      case 'execution':
+        orderByField = 'aiScores.execution';
+        break;
+      case 'public':
+        orderByField = 'publicScore.average';
+        break;
+      default:
+        orderByField = 'aiScores.overall';
+    }
+
+    const q = query(
+      collection(db, 'ideas'),
+      where('month', '==', currentMonth),
+      orderBy(orderByField, 'desc'),
+      limit(limitCount)
+    );
+
+    const snapshot = await getDocs(q);
+    const ideas = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return ideas;
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// SOCIAL FEATURES
+// ============================================
+
+/**
+ * Follow/Unfollow a user
+ */
+export async function toggleFollow(
+  followerId: string,
+  followedId: string,
+  action: 'follow' | 'unfollow'
+) {
+  try {
+    const followingId = `${followerId}_${followedId}`;
+    
+    if (action === 'follow') {
+      // Create following relationship
+      await setDoc(doc(db, 'following', followingId), {
+        followerId: followerId,
+        followedId: followedId,
+        createdAt: serverTimestamp()
+      });
+
+      // Update counts
+      await updateDoc(doc(db, 'users', followerId), {
+        followingCount: increment(1)
+      });
+      await updateDoc(doc(db, 'users', followedId), {
+        followersCount: increment(1)
+      });
+
+      // Create notification
+      await addDoc(collection(db, 'notifications'), {
+        userId: followedId,
+        type: 'new_follower',
+        title: 'New Follower',
+        message: `Someone started following you`,
+        fromUserId: followerId,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+
+    } else {
+      // Remove following relationship would go here
+      // (You'd implement the delete)
+      
+      // Update counts
+      await updateDoc(doc(db, 'users', followerId), {
+        followingCount: increment(-1)
+      });
+      await updateDoc(doc(db, 'users', followedId), {
+        followersCount: increment(-1)
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error toggling follow:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// PAYMENT FUNCTIONS (for Stripe integration)
+// ============================================
+
+/**
+ * Upgrade user subscription after Stripe payment
+ */
+export async function upgradeUserSubscription(
+  userId: string, 
+  tier: 'starter' | 'unlimited',
+  stripeCustomerId: string,
+  stripeSubscriptionId: string
+) {
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  
+  const submissionsLimit = tier === 'unlimited' ? 9999 : 10;
+  
+  await updateDoc(doc(db, 'users', userId), {
+    subscription: {
+      tier: tier,
+      submissionsRemaining: submissionsLimit,
+      submissionsUsedThisMonth: 0,
+      resetDate: Timestamp.fromDate(thirtyDaysFromNow),
+      stripeCustomerId: stripeCustomerId,
+      stripeSubscriptionId: stripeSubscriptionId,
+      paymentDate: serverTimestamp()
+    }
+  });
+  
+  // Record payment
+  await addDoc(collection(db, 'payments'), {
+    userId: userId,
+    amount: tier === 'unlimited' ? 10 : 5,
+    tier: tier,
+    stripeSubscriptionId: stripeSubscriptionId,
+    createdAt: serverTimestamp()
+  });
 }
