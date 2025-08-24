@@ -87,6 +87,12 @@ export default function Header() {
               <>
                 <Link
                   href="/dashboard"
+                  className="nav-link"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/notifications"
                   className="nav-link relative"
                 >
                   <span className="text-xl">🔔</span>
