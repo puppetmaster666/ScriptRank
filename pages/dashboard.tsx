@@ -1,3 +1,4 @@
+// pages/dashboard.tsx - COMPLETE FILE
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect, ChangeEvent, useRef } from 'react';
@@ -6,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { createUserProfile, checkAndResetSubscription } from '@/lib/firebase-collections';
+import { validateProfileImage, compressImage } from '@/lib/profile-utils';
 
 type IdeaType = 'movie' | 'game' | 'business';
 
@@ -64,6 +66,7 @@ export default function DashboardPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | IdeaType>('all');
   const [profileError, setProfileError] = useState('');
+  const [uploadStatus, setUploadStatus] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -169,6 +172,65 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, [router]);
 
+  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    // Validate file
+    const validation = validateProfileImage(file);
+    
+    if (!validation.valid) {
+      alert(validation.error);
+      e.target.value = ''; // Clear the input
+      return;
+    }
+    
+    // Show warning if file is large
+    if (validation.warning) {
+      const proceed = confirm(`${validation.warning}\n\nDo you want to continue?`);
+      if (!proceed) {
+        e.target.value = '';
+        return;
+      }
+    }
+    
+    try {
+      // Show loading state
+      setUploadStatus('Uploading image...');
+      
+      // Compress image if it's over 1MB
+      let photoURL: string;
+      if (file.size > 1024 * 1024) {
+        photoURL = await compressImage(file);
+      } else {
+        // Read file directly if small
+        const reader = new FileReader();
+        photoURL = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+      
+      // Update in Firestore
+      await updateDoc(doc(db, 'users', user.uid), {
+        photoURL: photoURL
+      });
+      
+      if (profile) {
+        setProfile({
+          ...profile,
+          photoURL: photoURL
+        });
+      }
+      
+      setUploadStatus('Photo updated successfully!');
+      setTimeout(() => setUploadStatus(''), 3000);
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      setUploadStatus('Failed to update profile picture');
+    }
+  };
+
   const saveProfile = async () => {
     if (!user || !profile) return;
     
@@ -191,30 +253,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const photoURL = reader.result as string;
-      try {
-        await updateDoc(doc(db, 'users', user.uid), {
-          photoURL: photoURL
-        });
-        if (profile) {
-          setProfile({
-            ...profile,
-            photoURL: photoURL
-          });
-        }
-      } catch (error) {
-        console.error('Error updating photo:', error);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/');
@@ -231,7 +269,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (profileError) {
+  if (profileError && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -258,11 +296,6 @@ export default function DashboardPage() {
     : 'N/A';
 
   const ideasByAI = [...filteredIdeas].sort((a, b) => b.aiScores.overall - a.aiScores.overall);
-  const ideasByPublic = [...filteredIdeas].sort((a, b) => {
-    const avgA = a.publicScore?.average || 0;
-    const avgB = b.publicScore?.average || 0;
-    return avgB - avgA;
-  });
 
   const getTypeIcon = (type: IdeaType) => {
     switch (type) {
@@ -288,6 +321,17 @@ export default function DashboardPage() {
       </Head>
       
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Upload Status Message */}
+        {uploadStatus && (
+          <div className={`mb-4 p-3 rounded-lg ${
+            uploadStatus.includes('Failed') ? 'bg-red-50 text-red-800' : 
+            uploadStatus.includes('Uploading') ? 'bg-blue-50 text-blue-800' : 
+            'bg-green-50 text-green-800'
+          }`}>
+            {uploadStatus}
+          </div>
+        )}
+
         {/* Profile Header */}
         <section className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8 bg-white rounded-xl p-6 shadow-sm">
           <div className="relative">
@@ -297,12 +341,18 @@ export default function DashboardPage() {
               className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
             />
             {editMode && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition"
-              >
-                📷
-              </button>
+              <>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition"
+                  title="Upload new photo (max 5MB)"
+                >
+                  📷
+                </button>
+                <div className="absolute -bottom-6 left-0 right-0 text-center">
+                  <span className="text-xs text-gray-500">Max 5MB</span>
+                </div>
+              </>
             )}
             <input
               type="file"
@@ -360,7 +410,6 @@ export default function DashboardPage() {
             ) : (
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{profile?.displayName || 'Anonymous Creator'}</h1>
-                <p className="text-sm text-gray-500">@{profile?.username}</p>
                 {profile?.bio && <p className="mt-2 text-gray-600">{profile.bio}</p>}
                 <div className="mt-4 flex gap-2">
                   <button
