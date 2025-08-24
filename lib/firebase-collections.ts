@@ -1,5 +1,5 @@
-// lib/firebase-collections.ts
-// Fixed version with proper username handling and no email exposure
+// lib/firebase-collections.ts - COMPLETE FILE
+// Fixed version with proper username handling and notification support
 
 import { 
   collection, 
@@ -18,6 +18,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { createVoteNotification, createMilestoneNotification } from './notification-system';
 
 // ============================================
 // SUBSCRIPTION TYPES
@@ -325,6 +326,16 @@ export async function submitIdea(data: {
       'stats.monthlyIdeasCount': increment(1),
     });
 
+    // Check for investment milestone
+    if (data.aiScores.investmentStatus === 'INVEST') {
+      await createMilestoneNotification(
+        data.userId,
+        `Congratulations! Your idea "${data.title}" got an INVEST rating! 💰`,
+        ideaRef.id,
+        data.title
+      );
+    }
+
     return { 
       success: true, 
       ideaId: ideaRef.id,
@@ -341,7 +352,7 @@ export async function submitIdea(data: {
 // ============================================
 
 /**
- * Cast a vote on an idea
+ * Cast a vote on an idea with notifications
  */
 export async function castVote(
   userId: string,
@@ -357,6 +368,10 @@ export async function castVote(
       throw new Error('You have already voted on this idea');
     }
 
+    // Get voter's profile for notification
+    const voterDoc = await getDoc(doc(db, 'users', userId));
+    const voterData = voterDoc.data();
+    
     // Ensure score is valid
     const validScore = Math.max(0, Math.min(10, score));
     const roundedScore = Math.round(validScore * 100) / 100;
@@ -384,6 +399,60 @@ export async function castVote(
         'publicScore.count': newCount,
         'publicScore.average': newAverage
       });
+      
+      // Create notification for idea owner
+      if (ideaData.userId !== userId) {
+        await createVoteNotification(
+          ideaData.userId,
+          userId,
+          voterData?.username || 'Someone',
+          voterData?.photoURL,
+          ideaId,
+          ideaData.title,
+          roundedScore
+        );
+        
+        // Check for milestones
+        if (newCount === 10) {
+          await createMilestoneNotification(
+            ideaData.userId,
+            `Your idea "${ideaData.title}" reached 10 votes!`,
+            ideaId,
+            ideaData.title
+          );
+        } else if (newCount === 25) {
+          await createMilestoneNotification(
+            ideaData.userId,
+            `Your idea "${ideaData.title}" reached 25 votes! 🎉`,
+            ideaId,
+            ideaData.title
+          );
+        } else if (newCount === 50) {
+          await createMilestoneNotification(
+            ideaData.userId,
+            `Your idea "${ideaData.title}" reached 50 votes! 🔥`,
+            ideaId,
+            ideaData.title
+          );
+        } else if (newCount === 100) {
+          await createMilestoneNotification(
+            ideaData.userId,
+            `INCREDIBLE! Your idea "${ideaData.title}" reached 100 votes! 🚀`,
+            ideaId,
+            ideaData.title
+          );
+        }
+        
+        // High score milestone
+        if (roundedScore >= 9.0) {
+          await createMilestoneNotification(
+            ideaData.userId,
+            `Wow! ${voterData?.username || 'Someone'} gave your idea "${ideaData.title}" a ${roundedScore}/10! 🌟`,
+            ideaId,
+            ideaData.title
+          );
+        }
+      }
     }
 
     // Update user's vote count
@@ -452,66 +521,9 @@ export async function getCurrentMonthLeaderboard(
 }
 
 // ============================================
-// SOCIAL FEATURES
+// SOCIAL FEATURES (Moved to notification-system.ts)
 // ============================================
-
-/**
- * Follow/Unfollow a user
- */
-export async function toggleFollow(
-  followerId: string,
-  followedId: string,
-  action: 'follow' | 'unfollow'
-) {
-  try {
-    const followingId = `${followerId}_${followedId}`;
-    
-    if (action === 'follow') {
-      // Create following relationship
-      await setDoc(doc(db, 'following', followingId), {
-        followerId: followerId,
-        followedId: followedId,
-        createdAt: serverTimestamp()
-      });
-
-      // Update counts
-      await updateDoc(doc(db, 'users', followerId), {
-        followingCount: increment(1)
-      });
-      await updateDoc(doc(db, 'users', followedId), {
-        followersCount: increment(1)
-      });
-
-      // Create notification
-      await addDoc(collection(db, 'notifications'), {
-        userId: followedId,
-        type: 'new_follower',
-        title: 'New Follower',
-        message: `Someone started following you`,
-        fromUserId: followerId,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-
-    } else {
-      // Remove following relationship would go here
-      // (You'd implement the delete)
-      
-      // Update counts
-      await updateDoc(doc(db, 'users', followerId), {
-        followingCount: increment(-1)
-      });
-      await updateDoc(doc(db, 'users', followedId), {
-        followersCount: increment(-1)
-      });
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error toggling follow:', error);
-    throw error;
-  }
-}
+// Following functions are now in notification-system.ts
 
 // ============================================
 // PAYMENT FUNCTIONS (for Stripe integration)
@@ -551,4 +563,10 @@ export async function upgradeUserSubscription(
     stripeSubscriptionId: stripeSubscriptionId,
     createdAt: serverTimestamp()
   });
+  
+  // Send upgrade notification
+  await createMilestoneNotification(
+    userId,
+    `Welcome to ${tier === 'unlimited' ? 'Unlimited' : 'Starter'} tier! 🎉 You now have ${tier === 'unlimited' ? 'unlimited' : '10'} submissions per month.`
+  );
 }
