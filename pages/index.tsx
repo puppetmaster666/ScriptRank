@@ -17,9 +17,24 @@ interface IdeaPreview {
 export default function HomePage() {
   const [topIdeas, setTopIdeas] = useState<IdeaPreview[]>([])
   const [loading, setLoading] = useState(true)
+  const [typedText, setTypedText] = useState('')
+  const fullText = 'DO YOU HAVE THE NEXT TARANTINO SCRIPT?'
 
   useEffect(() => {
     fetchTopIdeas()
+    
+    // Typing animation
+    let index = 0
+    const typingInterval = setInterval(() => {
+      if (index <= fullText.length) {
+        setTypedText(fullText.slice(0, index))
+        index++
+      } else {
+        clearInterval(typingInterval)
+      }
+    }, 50) // Adjust speed here
+
+    return () => clearInterval(typingInterval)
   }, [])
 
   const fetchTopIdeas = async () => {
@@ -60,14 +75,14 @@ export default function HomePage() {
         <meta name="description" content="Do you have the next Tarantino script? Submit your idea and get scored by our AI. Join the leaderboard for prizes and opportunities." />
       </Head>
 
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white" style={{ paddingTop: '96px' }}> {/* Added padding for bigger header */}
         {/* Navigation */}
-        <nav className="flex justify-between items-center px-8 py-6 border-b-2 border-black">
+        <nav className="flex justify-between items-center px-8 py-6 border-b-2 border-black bg-white">
           <Link href="/">
             <img 
               src="/images/logo.png" 
               alt="Make Me Famous" 
-              className="h-12 w-auto"
+              className="h-16 sm:h-20 w-auto"
               style={{ objectFit: 'contain' }}
             />
           </Link>
@@ -85,12 +100,13 @@ export default function HomePage() {
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <section className="px-8 py-16 border-b-2 border-black">
-          <h1 className="hero-title text-center">
-            DO YOU HAVE THE NEXT TARANTINO SCRIPT?
+        {/* Hero Section - Black background with white text */}
+        <section className="px-8 py-20 bg-black text-white">
+          <h1 className="hero-title text-center text-white min-h-[64px]">
+            {typedText}
+            <span className="typing-cursor">|</span>
           </h1>
-          <p className="hero-subtitle text-center mt-8">
+          <p className="hero-subtitle text-center mt-8 text-white opacity-90">
             SUBMIT YOUR IDEA AND GET SCORED BY OUR AI.<br />
             JOIN THE LEADERBOARD FOR<br />
             PRIZES AND OPPORTUNITIES
@@ -166,6 +182,17 @@ export default function HomePage() {
       </div>
 
       <style jsx>{`
+        .typing-cursor {
+          animation: blink 1s infinite;
+          font-weight: 100;
+          color: white;
+        }
+
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+
         .nav-button {
           font-family: 'Bahnschrift', sans-serif;
           font-size: 16px;
