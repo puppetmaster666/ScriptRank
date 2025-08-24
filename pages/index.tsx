@@ -1,6 +1,8 @@
+// pages/index.tsx - COMPLETE FILE
 import Head from 'next/head'
 import Link from 'next/link'
 import LeaderboardPage from './leaderboard'
+import ArchiveSidebar from '@/components/ArchiveSidebar'
 
 export default function HomePage() {
   return (
@@ -35,10 +37,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Leaderboard Section */}
+      {/* Leaderboard Section with Archive Sidebar */}
       <section id="leaderboard" className="py-20 px-6 bg-gray-100">
-        <div className="max-w-6xl mx-auto">
-          <LeaderboardPage />
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-4 gap-8">
+            {/* Main Leaderboard - Takes 3 columns */}
+            <div className="lg:col-span-3">
+              <LeaderboardPage />
+            </div>
+            
+            {/* Archive Sidebar - Takes 1 column */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span>📚</span> Previous Months
+                </h2>
+                <ArchiveSidebar />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -90,17 +107,17 @@ export default function HomePage() {
             {[
               {
                 name: 'Lena M.',
-                quote: '“Brutally honest. Exactly what I needed to sharpen my story.”',
+                quote: '"Brutally honest. Exactly what I needed to sharpen my story."',
                 title: 'Screenwriter, Berlin'
               },
               {
                 name: 'Jamal K.',
-                quote: '“This AI gave me a 4.2 and I’m not even mad. It was right.”',
+                quote: '"This AI gave me a 4.2 and I'm not even mad. It was right."',
                 title: 'Game Developer, London'
               },
               {
                 name: 'Daisy P.',
-                quote: '“The leaderboard is addictive. It pushed me to rewrite twice.”',
+                quote: '"The leaderboard is addictive. It pushed me to rewrite twice."',
                 title: 'Entrepreneur, NYC'
               }
             ].map((review, index) => (
