@@ -75,31 +75,7 @@ export default function HomePage() {
         <meta name="description" content="Do you have the next Tarantino script? Submit your idea and get scored by our AI. Join the leaderboard for prizes and opportunities." />
       </Head>
 
-      <div className="min-h-screen bg-white" style={{ paddingTop: '96px' }}> {/* Added padding for bigger header */}
-        {/* Navigation */}
-        <nav className="flex justify-between items-center px-8 py-6 border-b-2 border-black bg-white">
-          <Link href="/">
-            <img 
-              src="/images/logo.png" 
-              alt="Make Me Famous" 
-              className="h-16 sm:h-20 w-auto"
-              style={{ objectFit: 'contain' }}
-            />
-          </Link>
-          
-          <div className="flex gap-4">
-            <Link href="/submit" className="nav-button">
-              Submit
-            </Link>
-            <Link href="/dashboard" className="nav-button">
-              Dashboard
-            </Link>
-            <Link href="/login" className="nav-button">
-              Login
-            </Link>
-          </div>
-        </nav>
-
+      <div className="min-h-screen bg-white">
         {/* Hero Section - Black background with white text */}
         <section className="px-8 py-20 bg-black text-white">
           <h1 className="hero-title text-center text-white min-h-[64px]">
