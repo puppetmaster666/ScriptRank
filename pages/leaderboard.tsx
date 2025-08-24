@@ -272,7 +272,7 @@ export default function LeaderboardPage() {
                 const isTop3 = index < 3
 
                 return (
-                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                  <Link key={idea.id} href={`/ideas/${idea.id}`}>
                     <Card 
                       hover
                       className={`${isTop3 ? 'border-3 border-black' : ''}`}
