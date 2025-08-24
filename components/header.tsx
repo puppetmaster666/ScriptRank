@@ -195,16 +195,6 @@ export default function Header() {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <Link
-                      href={`/profile/${user.displayName || user.email?.split('@')[0] || user.uid}`}
-                      className="flex items-center space-x-2"
-                    >
-                      <img
-                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'User'}&background=000&color=fff`}
-                        alt={user.displayName || 'Profile'}
-                        className="w-8 h-8 rounded-full border-2 border-black"
-                      />
-                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="nav-button-outline"
