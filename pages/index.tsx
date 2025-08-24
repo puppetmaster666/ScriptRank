@@ -136,24 +136,28 @@ export default function HomePage() {
 
           {/* Right: 3D TV */}
           <div className="relative">
-            {/* @ts-ignore - model-viewer is loaded via Script tag */}
-            <model-viewer 
-              src="/models/tv.glb"
-              alt="3D TV Model"
-              auto-rotate
-              camera-controls
-              shadow-intensity="1"
-              exposure="1.2"
-              style={{ width: '100%', height: '400px' }}
-              poster="/images/tv-poster.png"
-            >
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl animate-pulse">
-                <div className="text-center text-white">
-                  <div className="text-6xl mb-4">📺</div>
-                  <p className="text-xl">Loading 3D Model...</p>
-                </div>
-              </div>
-            </model-viewer>
+            <div 
+              dangerouslySetInnerHTML={{
+                __html: `
+                  <model-viewer 
+                    src="/models/tv.glb"
+                    alt="3D TV Model"
+                    auto-rotate
+                    camera-controls
+                    shadow-intensity="1"
+                    exposure="1.2"
+                    style="width: 100%; height: 400px; border-radius: 12px;"
+                    poster="/images/tv-poster.png">
+                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(to right, #9333ea, #ec4899); border-radius: 12px;">
+                      <div style="text-align: center; color: white;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📺</div>
+                        <p style="font-size: 1.25rem;">Loading 3D Model...</p>
+                      </div>
+                    </div>
+                  </model-viewer>
+                `
+              }}
+            />
           </div>
         </div>
       </section>
