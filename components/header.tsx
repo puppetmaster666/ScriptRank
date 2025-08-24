@@ -1,7 +1,9 @@
+// components/header.tsx - COMPLETE FILE
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -97,6 +99,10 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
+                
+                {/* Notification Bell */}
+                <NotificationBell />
+                
                 <button
                   type="button"
                   onClick={() => signOut(auth)}
