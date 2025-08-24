@@ -8,10 +8,16 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 interface IdeaPreview {
   id: string
   title: string
+  type: string
   aiScore: number
-  publicVotes: number
-  totalVotes: number
+  publicScore?: {
+    average: number
+    count: number
+  }
+  votes?: any[]
+  voteCount?: number
   creatorName: string
+  userName?: string
 }
 
 export default function HomePage() {
@@ -40,29 +46,60 @@ export default function HomePage() {
   const fetchTopIdeas = async () => {
     try {
       const ideasRef = collection(db, 'ideas')
-      const q = query(ideasRef, orderBy('votes', 'desc'), limit(10))
+      const q = query(ideasRef, orderBy('aiScore', 'desc'), limit(10))
       const snapshot = await getDocs(q)
       
-      const ideas = snapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        aiScore: doc.data().aiScore || 0,
-        publicVotes: doc.data().votes?.length || 0,
-        totalVotes: (doc.data().aiScore || 0) + (doc.data().votes?.length || 0),
-        creatorName: doc.data().userName || 'Anonymous'
-      }))
-      
-      setTopIdeas(ideas)
+      if (!snapshot.empty) {
+        const ideas = snapshot.docs.map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            title: data.title,
+            type: data.type,
+            aiScore: data.aiScore || data.aiScores?.overall || 0,
+            publicScore: data.publicScore,
+            votes: data.votes,
+            voteCount: data.voteCount || data.votes?.length || 0,
+            creatorName: data.userName || data.username || 'Anonymous',
+            userName: data.userName || data.username
+          }
+        })
+        setTopIdeas(ideas)
+      } else {
+        // No data - fetch from ALL collections
+        const collections = ['ideas', 'movies', 'games', 'business']
+        let allIdeas: IdeaPreview[] = []
+        
+        for (const col of collections) {
+          try {
+            const colRef = collection(db, col)
+            const colQuery = query(colRef, limit(3))
+            const colSnapshot = await getDocs(colQuery)
+            
+            colSnapshot.docs.forEach(doc => {
+              const data = doc.data()
+              allIdeas.push({
+                id: doc.id,
+                title: data.title,
+                type: col === 'movies' ? 'entertainment' : col,
+                aiScore: data.aiScore || data.aiScores?.overall || 0,
+                publicScore: data.publicScore,
+                votes: data.votes,
+                voteCount: data.voteCount || data.votes?.length || 0,
+                creatorName: data.userName || data.username || 'Anonymous',
+                userName: data.userName || data.username
+              })
+            })
+          } catch (err) {
+            console.log(`No ${col} collection yet`)
+          }
+        }
+        
+        setTopIdeas(allIdeas.sort((a, b) => b.aiScore - a.aiScore).slice(0, 10))
+      }
     } catch (error) {
       console.error('Error fetching ideas:', error)
-      // Set fake data as fallback
-      setTopIdeas([
-        { id: '1', title: 'The Memory Thief', aiScore: 8.5, publicVotes: 245, totalVotes: 253.5, creatorName: 'Sarah Chen' },
-        { id: '2', title: 'Neon Nights', aiScore: 8.2, publicVotes: 189, totalVotes: 197.2, creatorName: 'Michael Rodriguez' },
-        { id: '3', title: 'Quantum Break', aiScore: 7.9, publicVotes: 156, totalVotes: 163.9, creatorName: 'Alex Thompson' },
-        { id: '4', title: 'The Last Algorithm', aiScore: 7.8, publicVotes: 134, totalVotes: 141.8, creatorName: 'Emily Davis' },
-        { id: '5', title: 'Mind Maze VR', aiScore: 7.5, publicVotes: 128, totalVotes: 135.5, creatorName: 'David Park' }
-      ])
+      setTopIdeas([])
     } finally {
       setLoading(false)
     }
@@ -103,30 +140,41 @@ export default function HomePage() {
               <div className="leaderboard-header">
                 <div className="flex-1">Name</div>
                 <div className="w-20 text-center">AI</div>
-                <div className="w-20 text-center">Public</div>
-                <div className="w-20 text-center">Votes</div>
+                <div className="w-24 text-center">Public</div>
+                <div className="w-20 text-center">Total</div>
               </div>
 
               {/* Table Body */}
               {loading ? (
                 <div className="p-8 text-center">Loading...</div>
+              ) : topIdeas.length > 0 ? (
+                topIdeas.map((idea, index) => {
+                  const publicScore = idea.publicScore?.average || 0
+                  const totalScore = ((idea.aiScore + publicScore) / 2).toFixed(1)
+                  
+                  return (
+                    <Link 
+                      key={idea.id}
+                      href={`/ideas/${idea.id}`}
+                      className="leaderboard-row"
+                    >
+                      <div className="flex-1">
+                        <span className="mr-4">{index + 1}.</span>
+                        {idea.title}
+                        <span className="creator-name"> by {idea.creatorName}</span>
+                      </div>
+                      <div className="w-20 text-center">{idea.aiScore.toFixed(1)}</div>
+                      <div className="w-24 text-center">
+                        {idea.publicScore ? `${publicScore.toFixed(1)} (${idea.publicScore.count})` : 'No votes'}
+                      </div>
+                      <div className="w-20 text-center font-bold">{totalScore}</div>
+                    </Link>
+                  )
+                })
               ) : (
-                topIdeas.map((idea, index) => (
-                  <Link 
-                    key={idea.id}
-                    href={`/ideas/${idea.id}`}
-                    className="leaderboard-row"
-                  >
-                    <div className="flex-1">
-                      <span className="mr-4">{index + 1}.</span>
-                      {idea.title}
-                      <span className="creator-name"> by {idea.creatorName}</span>
-                    </div>
-                    <div className="w-20 text-center">{idea.aiScore.toFixed(1)}</div>
-                    <div className="w-20 text-center">{idea.publicVotes}</div>
-                    <div className="w-20 text-center font-bold">{idea.totalVotes.toFixed(1)}</div>
-                  </Link>
-                ))
+                <div className="p-8 text-center text-gray-500">
+                  No ideas submitted yet. Be the first!
+                </div>
               )}
               
               {/* View All Link */}
