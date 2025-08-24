@@ -293,7 +293,7 @@ export default function LeaderboardPage() {
                             }`}>
                               {index + 1}
                             </div>
-                            <div className="text-2xl">{getTypeIcon(idea.type)}</div>
+                            <div className="text-sm font-ui text-gray-600">{getTypeLabel(idea.type)}</div>
                           </div>
                           {getStatusBadge(idea.status)}
                         </div>
@@ -317,10 +317,7 @@ export default function LeaderboardPage() {
                             index === 2 ? 'text-orange-600' :
                             'text-black'
                           }`}>
-                            {index === 0 ? '🥇' : 
-                             index === 1 ? '🥈' : 
-                             index === 2 ? '🥉' : 
-                             index + 1}
+                            {index + 1}
                           </div>
                         </div>
                         
