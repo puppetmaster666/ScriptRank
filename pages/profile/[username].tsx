@@ -1,346 +1,548 @@
-// pages/profile/[username].tsx - COMPLETE FILE
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import Link from 'next/link';
-import { auth, db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { followUser, unfollowUser } from '@/lib/notification-system';
+// pages/profile/[username].tsx
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
+import Link from 'next/link'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { auth, db } from '@/lib/firebase'
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { signOut } from 'firebase/auth'
+import { PageLayout, Button, Card, Badge, Tabs, EmptyState, Input, Textarea } from '@/components/designSystem'
 
 interface UserProfile {
-  uid: string;
-  username: string;
-  displayName: string;
-  bio?: string;
-  photoURL?: string;
-  stats: {
-    totalIdeas: number;
-    averageAIScore: number;
-    bestIdeaScore: number;
-    totalVotesCast: number;
-  };
-  followersCount: number;
-  followingCount: number;
-  createdAt: any;
+  uid: string
+  displayName: string
+  username: string
+  email: string
+  photoURL: string
+  bio: string
+  location: string
+  website: string
+  isPremium: boolean
+  createdAt: any
+  followers: string[]
+  following: string[]
 }
 
 interface Idea {
-  id: string;
-  title: string;
-  type: 'movie' | 'game' | 'business';
-  aiScores: {
-    overall: number;
-    investmentStatus: 'INVEST' | 'PASS' | 'MAYBE';
-  };
-  publicScore?: {
-    average: number;
-    count: number;
-  };
-  createdAt: Date;
+  id: string
+  title: string
+  type: string
+  content: string
+  aiScore: number
+  voteCount: number
+  status: string
+  createdAt: any
 }
 
-export default function UserProfilePage() {
-  const router = useRouter();
-  const { username } = router.query;
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
+export default function ProfilePage() {
+  const router = useRouter()
+  const { username } = router.query
+  const [currentUser] = useAuthState(auth)
+  
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [ideas, setIdeas] = useState<Idea[]>([])
+  const [votedIdeas, setVotedIdeas] = useState<Idea[]>([])
+  const [followers, setFollowers] = useState<UserProfile[]>([])
+  const [following, setFollowing] = useState<UserProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('ideas')
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [editData, setEditData] = useState({
+    bio: '',
+    location: '',
+    website: ''
+  })
+
+  const isOwnProfile = currentUser?.displayName?.toLowerCase().replace(' ', '.') === username ||
+                       currentUser?.email?.split('@')[0] === username
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setCurrentUser);
-    return () => unsubscribe();
-  }, []);
+    if (username) {
+      fetchProfile()
+    }
+  }, [username])
 
   useEffect(() => {
-    if (!username || typeof username !== 'string') return;
+    if (profile && currentUser) {
+      setIsFollowing(profile.followers.includes(currentUser.uid))
+    }
+  }, [profile, currentUser])
 
-    const loadProfile = async () => {
-      try {
-        // Find user by username
-        const usersQuery = query(
-          collection(db, 'users'),
-          where('username', '==', username.toLowerCase())
-        );
-        const userSnapshot = await getDocs(usersQuery);
+  const fetchProfile = async () => {
+    try {
+      // Find user by username
+      const usersQuery = query(collection(db, 'users'), where('username', '==', username))
+      const userSnapshot = await getDocs(usersQuery)
+      
+      if (!userSnapshot.empty) {
+        const userData = userSnapshot.docs[0].data() as UserProfile
+        setProfile(userData)
+        setEditData({
+          bio: userData.bio || '',
+          location: userData.location || '',
+          website: userData.website || ''
+        })
         
-        if (userSnapshot.empty) {
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
-
-        const userData = userSnapshot.docs[0].data() as UserProfile;
-        const userId = userSnapshot.docs[0].id;
-        userData.uid = userId;
-        setProfile(userData);
-
-        // Check if current user follows this user
-        if (currentUser) {
-          const followingId = `${currentUser.uid}_${userId}`;
-          const followDoc = await getDoc(doc(db, 'following', followingId));
-          setIsFollowing(followDoc.exists());
-        }
-
-        // Load user's ideas
-        const ideasQuery = query(
-          collection(db, 'ideas'),
-          where('userId', '==', userId),
-          orderBy('createdAt', 'desc'),
-          limit(10)
-        );
-        const ideasSnapshot = await getDocs(ideasQuery);
-        const userIdeas = ideasSnapshot.docs.map(doc => ({
+        // Fetch user's ideas
+        const ideasQuery = query(collection(db, 'ideas'), where('userId', '==', userData.uid))
+        const ideasSnapshot = await getDocs(ideasQuery)
+        const ideasData = ideasSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date()
-        })) as Idea[];
+          ...doc.data()
+        })) as Idea[]
+        setIdeas(ideasData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds))
         
-        setIdeas(userIdeas);
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      } finally {
-        setLoading(false);
+        // Fetch followers/following profiles
+        if (userData.followers.length > 0) {
+          const followersQuery = query(collection(db, 'users'), where('uid', 'in', userData.followers.slice(0, 10)))
+          const followersSnapshot = await getDocs(followersQuery)
+          setFollowers(followersSnapshot.docs.map(doc => doc.data() as UserProfile))
+        }
+        
+        if (userData.following.length > 0) {
+          const followingQuery = query(collection(db, 'users'), where('uid', 'in', userData.following.slice(0, 10)))
+          const followingSnapshot = await getDocs(followingQuery)
+          setFollowing(followingSnapshot.docs.map(doc => doc.data() as UserProfile))
+        }
+      } else {
+        router.push('/404')
       }
-    };
-
-    loadProfile();
-  }, [username, currentUser]);
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleFollow = async () => {
-    if (!currentUser || !profile) {
-      alert('Please sign in to follow users');
-      return;
-    }
-
-    if (followLoading) return;
-    setFollowLoading(true);
-
+    if (!currentUser || !profile) return
+    
     try {
-      // Get current user's profile for username and photo
-      const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      const currentUserData = currentUserDoc.data();
+      const userRef = doc(db, 'users', profile.uid)
+      const currentUserRef = doc(db, 'users', currentUser.uid)
       
       if (isFollowing) {
         // Unfollow
-        await unfollowUser(currentUser.uid, profile.uid);
-        setIsFollowing(false);
-        
-        // Update local follower count
-        setProfile(prev => prev ? {
-          ...prev,
-          followersCount: Math.max(0, (prev.followersCount || 1) - 1)
-        } : null);
+        await updateDoc(userRef, {
+          followers: arrayRemove(currentUser.uid)
+        })
+        await updateDoc(currentUserRef, {
+          following: arrayRemove(profile.uid)
+        })
+        setIsFollowing(false)
+        setProfile(prev => prev ? {...prev, followers: prev.followers.filter(id => id !== currentUser.uid)} : null)
       } else {
         // Follow
-        await followUser(
-          currentUser.uid, 
-          profile.uid,
-          currentUserData?.username || 'Anonymous',
-          currentUserData?.photoURL
-        );
-        setIsFollowing(true);
-        
-        // Update local follower count
-        setProfile(prev => prev ? {
-          ...prev,
-          followersCount: (prev.followersCount || 0) + 1
-        } : null);
+        await updateDoc(userRef, {
+          followers: arrayUnion(currentUser.uid)
+        })
+        await updateDoc(currentUserRef, {
+          following: arrayUnion(profile.uid)
+        })
+        setIsFollowing(true)
+        setProfile(prev => prev ? {...prev, followers: [...prev.followers, currentUser.uid]} : null)
       }
-    } catch (error: any) {
-      console.error('Error toggling follow:', error);
-      alert(error.message || 'Failed to update follow status');
-    } finally {
-      setFollowLoading(false);
+    } catch (error) {
+      console.error('Error following/unfollowing:', error)
     }
-  };
+  }
+
+  const handleEditProfile = async () => {
+    if (!currentUser || !profile) return
+    
+    try {
+      const userRef = doc(db, 'users', profile.uid)
+      await updateDoc(userRef, editData)
+      setProfile(prev => prev ? {...prev, ...editData} : null)
+      setEditMode(false)
+    } catch (error) {
+      console.error('Error updating profile:', error)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
+  const calculateStats = () => {
+    const totalVotes = ideas.reduce((sum, idea) => sum + idea.voteCount, 0)
+    const avgScore = ideas.length > 0 
+      ? (ideas.reduce((sum, idea) => sum + idea.aiScore, 0) / ideas.length).toFixed(1)
+      : '0.0'
+    
+    return { totalVotes, avgScore }
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+      <PageLayout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageLayout>
+    )
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
-          <p className="text-gray-600 mb-4">No user with username "{username}"</p>
-          <Link href="/leaderboard">
-            <a className="text-blue-600 hover:text-blue-700">Back to Leaderboard</a>
-          </Link>
-        </div>
-      </div>
-    );
+      <PageLayout>
+        <EmptyState 
+          title="User not found"
+          description="This user doesn't exist or has been removed."
+          action={{ label: "Go Home", href: "/" }}
+        />
+      </PageLayout>
+    )
   }
 
-  const isOwnProfile = currentUser?.uid === profile.uid;
+  const { totalVotes, avgScore } = calculateStats()
 
   return (
     <>
       <Head>
-        <title>{profile.displayName} | ScriptRank</title>
-        <meta name="description" content={`View ${profile.displayName}'s ideas and stats`} />
+        <title>{profile.displayName} | Make Me Famous</title>
+        <meta name="description" content={profile.bio || `View ${profile.displayName}'s ideas and profile`} />
       </Head>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 pt-20">
-        {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-          <div className="flex items-start gap-6">
-            <img
-              src={profile.photoURL || '/default-avatar.png'}
-              alt={profile.displayName}
-              className="w-32 h-32 rounded-full object-cover border-4 border-gray-100"
-            />
-            
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {profile.displayName}
-                  </h1>
-                  <p className="text-gray-500 mb-3">@{profile.username}</p>
-                  {profile.bio && (
-                    <p className="text-gray-700 max-w-2xl">{profile.bio}</p>
-                  )}
+      <PageLayout>
+        {/* Profile Header - Black Section */}
+        <div className="bg-black text-white py-12 px-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row items-start gap-8">
+              {/* Profile Info */}
+              <div className="flex-1">
+                <div className="flex items-start gap-6">
+                  <img 
+                    src={profile.photoURL || `https://ui-avatars.com/api/?name=${profile.displayName}&background=000&color=fff`}
+                    alt={profile.displayName}
+                    className="w-24 h-24 rounded-full border-4 border-white"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-2">
+                      <h1 className="text-4xl font-display font-black">
+                        {profile.displayName}
+                      </h1>
+                      {profile.isPremium && (
+                        <Badge variant="warning">PRO</Badge>
+                      )}
+                    </div>
+                    <p className="font-body text-gray-300 mb-4">@{profile.username}</p>
+                    
+                    {editMode ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          label=""
+                          value={editData.bio}
+                          onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                          placeholder="Tell us about yourself..."
+                          rows={3}
+                        />
+                        <Input
+                          label=""
+                          value={editData.location}
+                          onChange={(e) => setEditData({...editData, location: e.target.value})}
+                          placeholder="Location"
+                        />
+                        <Input
+                          label=""
+                          value={editData.website}
+                          onChange={(e) => setEditData({...editData, website: e.target.value})}
+                          placeholder="Website URL"
+                        />
+                        <div className="flex gap-2">
+                          <Button variant="secondary" size="sm" onClick={handleEditProfile}>
+                            Save
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {profile.bio && (
+                          <p className="font-body text-white mb-4">{profile.bio}</p>
+                        )}
+                        <div className="flex flex-wrap gap-4 font-body text-sm text-gray-300">
+                          {profile.location && (
+                            <span>📍 {profile.location}</span>
+                          )}
+                          {profile.website && (
+                            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                              🔗 {profile.website.replace(/^https?:\/\//, '')}
+                            </a>
+                          )}
+                          <span>📅 Joined {profile.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="flex gap-3">
-                  {isOwnProfile ? (
-                    <Link href="/dashboard">
-                      <a className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
-                        Edit Profile
-                      </a>
-                    </Link>
-                  ) : currentUser && (
-                    <button
-                      onClick={handleFollow}
-                      disabled={followLoading}
-                      className={`px-6 py-2 rounded-lg transition disabled:opacity-50 ${
-                        isFollowing 
-                          ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
-                      }`}
-                    >
-                      {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                    </button>
-                  )}
+
+                {/* Stats */}
+                <div className="grid grid-cols-4 gap-6 mt-8">
+                  <div>
+                    <div className="text-2xl font-bold font-ui">{ideas.length}</div>
+                    <div className="font-body text-sm text-gray-400">Ideas</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-ui">{totalVotes}</div>
+                    <div className="font-body text-sm text-gray-400">Total Votes</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-ui">{avgScore}</div>
+                    <div className="font-body text-sm text-gray-400">Avg Score</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-ui">{profile.followers.length}</div>
+                    <div className="font-body text-sm text-gray-400">Followers</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="flex gap-8 mt-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {profile.stats.totalIdeas}
-                  </div>
-                  <div className="text-sm text-gray-500">Ideas</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {profile.stats.averageAIScore > 0 
-                      ? profile.stats.averageAIScore.toFixed(2) 
-                      : 'N/A'}
-                  </div>
-                  <div className="text-sm text-gray-500">Avg Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {profile.stats.bestIdeaScore > 0 
-                      ? profile.stats.bestIdeaScore.toFixed(2) 
-                      : 'N/A'}
-                  </div>
-                  <div className="text-sm text-gray-500">Best Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {profile.followersCount || 0}
-                  </div>
-                  <div className="text-sm text-gray-500">Followers</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {profile.followingCount || 0}
-                  </div>
-                  <div className="text-sm text-gray-500">Following</div>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
+                {isOwnProfile ? (
+                  <>
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => setEditMode(!editMode)}
+                    >
+                      {editMode ? 'Cancel Edit' : 'Edit Profile'}
+                    </Button>
+                    <Button variant="outline" href="/submit">
+                      Submit New Idea
+                    </Button>
+                    <Button variant="outline" onClick={handleSignOut}>
+                      Sign Out
+                    </Button>
+                  </>
+                ) : currentUser ? (
+                  <Button 
+                    variant={isFollowing ? 'secondary' : 'primary'}
+                    onClick={handleFollow}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+                ) : (
+                  <Button variant="primary" href="/login">
+                    Sign In to Follow
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* User's Ideas */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-bold mb-4">Recent Ideas</h2>
-          
-          {ideas.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No ideas submitted yet
-            </p>
-          ) : (
+        {/* Tabs */}
+        <div className="border-b-2 border-black bg-gray-50">
+          <div className="max-w-5xl mx-auto px-8">
+            <Tabs
+              tabs={[
+                { id: 'ideas', label: `Ideas (${ideas.length})` },
+                { id: 'voted', label: 'Voted' },
+                { id: 'followers', label: `Followers (${profile.followers.length})` },
+                { id: 'following', label: `Following (${profile.following.length})` },
+                ...(isOwnProfile ? [{ id: 'settings', label: 'Settings' }] : [])
+              ]}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="max-w-5xl mx-auto px-8 py-12">
+          {/* Ideas Tab */}
+          {activeTab === 'ideas' && (
             <div className="space-y-4">
-              {ideas.map((idea) => (
-                <Link key={idea.id} href={`/ideas/${idea.id}`}>
-                  <a className="block p-4 border rounded-lg hover:bg-gray-50 transition">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {idea.title}
-                        </h3>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                          <span className="capitalize">
-                            {idea.type === 'movie' ? '🎬' : 
-                             idea.type === 'game' ? '🎮' : '💼'} {idea.type}
-                          </span>
-                          <span>
-                            {idea.createdAt.toLocaleDateString()}
-                          </span>
+              {ideas.length > 0 ? (
+                ideas.map(idea => (
+                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                    <Card hover>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-display font-bold mb-2">
+                            {idea.title}
+                          </h3>
+                          <p className="font-body text-gray-600 mb-4">
+                            {idea.content.substring(0, 150)}...
+                          </p>
+                          <div className="flex gap-6 text-sm font-ui">
+                            <span>AI Score: <strong>{idea.aiScore}</strong></span>
+                            <span>Votes: <strong>{idea.voteCount}</strong></span>
+                            <Badge variant={
+                              idea.status === 'INVEST' ? 'success' :
+                              idea.status === 'MAYBE' ? 'warning' : 'danger'
+                            }>
+                              {idea.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          View →
+                        </Button>
+                      </div>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState 
+                  title="No ideas yet"
+                  description={isOwnProfile ? "Submit your first idea to get started!" : "This user hasn't submitted any ideas yet."}
+                  action={isOwnProfile ? { label: "Submit Idea", href: "/submit" } : undefined}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Voted Tab */}
+          {activeTab === 'voted' && (
+            <div className="space-y-4">
+              {votedIdeas.length > 0 ? (
+                votedIdeas.map(idea => (
+                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                    <Card hover>
+                      <h3 className="font-display font-bold">{idea.title}</h3>
+                      <p className="font-body text-sm text-gray-600">
+                        Voted on {idea.createdAt?.toDate?.()?.toLocaleDateString()}
+                      </p>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState 
+                  title="No votes yet"
+                  description="Ideas voted on will appear here."
+                />
+              )}
+            </div>
+          )}
+
+          {/* Followers Tab */}
+          {activeTab === 'followers' && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {followers.length > 0 ? (
+                followers.map(follower => (
+                  <Link key={follower.uid} href={`/profile/${follower.username}`}>
+                    <Card hover>
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={follower.photoURL || `https://ui-avatars.com/api/?name=${follower.displayName}&background=000&color=fff`}
+                          alt={follower.displayName}
+                          className="w-12 h-12 rounded-full border-2 border-black"
+                        />
+                        <div>
+                          <p className="font-ui font-medium">{follower.displayName}</p>
+                          <p className="font-body text-xs text-gray-600">@{follower.username}</p>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-blue-600">
-                            {idea.aiScores.overall.toFixed(2)}
-                          </div>
-                          <div className="text-xs text-gray-500">AI Score</div>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <div className="md:col-span-2">
+                  <EmptyState 
+                    title="No followers yet"
+                    description="Followers will appear here."
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Following Tab */}
+          {activeTab === 'following' && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {following.length > 0 ? (
+                following.map(user => (
+                  <Link key={user.uid} href={`/profile/${user.username}`}>
+                    <Card hover>
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=000&color=fff`}
+                          alt={user.displayName}
+                          className="w-12 h-12 rounded-full border-2 border-black"
+                        />
+                        <div>
+                          <p className="font-ui font-medium">{user.displayName}</p>
+                          <p className="font-body text-xs text-gray-600">@{user.username}</p>
                         </div>
-                        
-                        {idea.publicScore && idea.publicScore.count > 0 && (
-                          <div className="text-center">
-                            <div className="text-lg font-bold text-purple-600">
-                              {idea.publicScore.average.toFixed(2)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Public ({idea.publicScore.count})
-                            </div>
-                          </div>
-                        )}
-                        
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          idea.aiScores.investmentStatus === 'INVEST' 
-                            ? 'bg-green-100 text-green-800'
-                            : idea.aiScores.investmentStatus === 'MAYBE'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {idea.aiScores.investmentStatus}
-                        </span>
                       </div>
-                    </div>
-                  </a>
-                </Link>
-              ))}
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <div className="md:col-span-2">
+                  <EmptyState 
+                    title="Not following anyone"
+                    description="Users you follow will appear here."
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Settings Tab (Own Profile Only) */}
+          {activeTab === 'settings' && isOwnProfile && (
+            <div className="max-w-2xl">
+              <Card>
+                <h2 className="text-2xl font-display font-bold mb-6">ACCOUNT SETTINGS</h2>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-ui font-bold mb-2">Email</h3>
+                    <p className="font-body text-gray-600">{profile.email}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-ui font-bold mb-2">Username</h3>
+                    <p className="font-body text-gray-600">@{profile.username}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-ui font-bold mb-2">Account Type</h3>
+                    <p className="font-body text-gray-600">
+                      {profile.isPremium ? 'Premium Account' : 'Free Account'}
+                    </p>
+                    {!profile.isPremium && (
+                      <Button variant="primary" className="mt-3">
+                        Upgrade to Premium
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="pt-6 border-t-2 border-gray-200">
+                    <h3 className="font-ui font-bold mb-2 text-red-600">Danger Zone</h3>
+                    <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white">
+                      Delete Account
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             </div>
           )}
         </div>
-      </main>
+      </PageLayout>
+
+      <style jsx>{`
+        .font-display {
+          font-family: 'DrukWide', Impact, sans-serif;
+        }
+        .font-ui {
+          font-family: 'Bahnschrift', system-ui, sans-serif;
+        }
+        .font-body {
+          font-family: 'Courier', 'Courier New', monospace;
+        }
+      `}</style>
     </>
-  );
+  )
 }
