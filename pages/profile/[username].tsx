@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useAuthState } from 'react-firebase-hooks/auth'
+import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
@@ -38,7 +38,8 @@ interface Idea {
 export default function ProfilePage() {
   const router = useRouter()
   const { username } = router.query
-  const [currentUser] = useAuthState(auth)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [ideas, setIdeas] = useState<Idea[]>([])
@@ -54,6 +55,14 @@ export default function ProfilePage() {
     location: '',
     website: ''
   })
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user)
+      setAuthLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   const isOwnProfile = currentUser?.displayName?.toLowerCase().replace(' ', '.') === username ||
                        currentUser?.email?.split('@')[0] === username
