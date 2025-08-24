@@ -107,22 +107,22 @@ export default function HomePage() {
             {[
               {
                 name: 'Lena M.',
-                quote: '"Brutally honest. Exactly what I needed to sharpen my story."',
+                quote: 'Brutally honest. Exactly what I needed to sharpen my story.',
                 title: 'Screenwriter, Berlin'
               },
               {
                 name: 'Jamal K.',
-                quote: '"This AI gave me a 4.2 and I'm not even mad. It was right."',
+                quote: 'This AI gave me a 4.2 and I am not even mad. It was right.',
                 title: 'Game Developer, London'
               },
               {
                 name: 'Daisy P.',
-                quote: '"The leaderboard is addictive. It pushed me to rewrite twice."',
+                quote: 'The leaderboard is addictive. It pushed me to rewrite twice.',
                 title: 'Entrepreneur, NYC'
               }
             ].map((review, index) => (
               <div key={index} className="bg-gray-50 p-6 rounded-xl shadow transition-transform hover:-translate-y-1 hover:shadow-xl">
-                <p className="text-gray-800 text-lg italic mb-4">{review.quote}</p>
+                <p className="text-gray-800 text-lg italic mb-4">"{review.quote}"</p>
                 <div className="text-sm text-gray-500">
                   <strong className="text-gray-900">{review.name}</strong> — {review.title}
                 </div>
