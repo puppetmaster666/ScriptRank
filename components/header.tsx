@@ -1,91 +1,84 @@
-// components/header.tsx - COMPLETE FILE
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import NotificationBell from "./NotificationBell";
+// components/header.tsx
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { auth, db } from '@/lib/firebase'
+import { onAuthStateChanged, signOut, User } from 'firebase/auth'
+import { useRouter } from 'next/router'
+import { doc, onSnapshot } from 'firebase/firestore'
 
 export default function Header() {
-  const [user, setUser] = useState<User | null>(null);
-  const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null)
+  const [scrolled, setScrolled] = useState(false)
+  const [notifications, setNotifications] = useState(0)
+  const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+    })
 
-  useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setScrolled(window.scrollY > 10)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => {
+      unsubscribe()
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      const notifDoc = doc(db, 'notifications', user.uid)
+      const unsubscribe = onSnapshot(notifDoc, (doc) => {
+        if (doc.exists()) {
+          const unreadCount = doc.data().notifications?.filter((n: any) => !n.read).length || 0
+          setNotifications(unreadCount)
+        }
+      }, (error) => {
+        console.log('Notifications listener error (expected if no notifications yet):', error)
+      })
+      return () => unsubscribe()
+    }
+  }, [user])
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm' : 'bg-white border-b border-gray-100'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled ? 'bg-white/95 backdrop-blur-md border-b-2 border-black shadow-sm' : 'bg-white border-b-2 border-black'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo + Brand */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 flex items-center justify-center">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-gray-900"
-              >
-                {/* Abstract M formed by stacked bars */}
-                <path 
-                  d="M5 7H7V17H5V7Z" 
-                  fill="currentColor"
-                  className="text-blue-600"
-                />
-                <path 
-                  d="M9 4H11V17H9V4Z" 
-                  fill="currentColor"
-                  className="text-blue-500"
-                />
-                <path 
-                  d="M13 7H15V17H13V7Z" 
-                  fill="currentColor"
-                  className="text-blue-600"
-                />
-                <path 
-                  d="M17 4H19V17H17V4Z" 
-                  fill="currentColor"
-                  className="text-blue-500"
-                />
-                {/* Small AI indicator dot */}
-                <circle 
-                  cx="12" 
-                  cy="20" 
-                  r="1.5" 
-                  fill="currentColor"
-                  className="text-gray-600"
-                />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>
-              MakeMe<span className="text-blue-600">Famous</span>
-            </span>
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <img 
+              src="/images/logo.png" 
+              alt="Make Me Famous" 
+              className="h-10 w-auto"
+              style={{ objectFit: 'contain' }}
+            />
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center space-x-4 sm:space-x-6">
+          <nav className="flex items-center space-x-3 sm:space-x-4">
             <Link
               href="/leaderboard"
-              className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+              className="nav-link"
             >
               Leaderboard
             </Link>
             <Link
               href="/submit"
-              className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+              className="nav-link"
             >
               Submit
             </Link>
@@ -94,45 +87,124 @@ export default function Header() {
               <>
                 <Link
                   href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+                  className="nav-link relative"
                 >
                   Dashboard
+                  {notifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications}
+                    </span>
+                  )}
                 </Link>
-                
-                {/* Notification Bell */}
-                <NotificationBell />
-                
-                <button
-                  type="button"
-                  onClick={() => signOut(auth)}
-                  className="text-gray-600 hover:text-red-600 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
-                >
-                  Logout
-                </button>
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href={`/profile/${user.uid}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <img
+                      src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'User'}&background=000&color=fff`}
+                      alt={user.displayName || 'Profile'}
+                      className="w-8 h-8 rounded-full border-2 border-black"
+                    />
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="nav-button-outline"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </>
             ) : (
-              <div className="flex items-center space-x-3">
+              <>
+                <Link
+                  href="/login"
+                  className="nav-link"
+                >
+                  Login
+                </Link>
                 <Link
                   href="/register"
-                  className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
+                  className="nav-button"
                 >
                   Sign Up
                 </Link>
-                <Link
-                  href="/register"
-                  className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-800 transition text-sm sm:text-base shadow-sm"
-                  style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
-                >
-                  Get Started
-                </Link>
-              </div>
+              </>
             )}
           </nav>
         </div>
       </div>
+
+      <style jsx>{`
+        .nav-link {
+          font-family: 'Bahnschrift', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: 15px;
+          color: black;
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          position: relative;
+          font-weight: 500;
+        }
+
+        .nav-link:hover {
+          background: #f0f0f0;
+        }
+
+        .nav-button {
+          font-family: 'Bahnschrift', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: 15px;
+          padding: 8px 20px;
+          border: 2px solid black;
+          border-radius: 6px;
+          background: black;
+          color: white;
+          text-decoration: none;
+          transition: all 0.2s;
+          font-weight: 500;
+        }
+
+        .nav-button:hover {
+          background: white;
+          color: black;
+        }
+
+        .nav-button-outline {
+          font-family: 'Bahnschrift', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: 14px;
+          padding: 6px 16px;
+          border: 2px solid black;
+          border-radius: 6px;
+          background: white;
+          color: black;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-weight: 500;
+        }
+
+        .nav-button-outline:hover {
+          background: black;
+          color: white;
+        }
+
+        @media (max-width: 640px) {
+          .nav-link {
+            font-size: 14px;
+            padding: 4px 8px;
+          }
+
+          .nav-button {
+            font-size: 14px;
+            padding: 6px 14px;
+          }
+
+          .nav-button-outline {
+            font-size: 13px;
+            padding: 4px 12px;
+          }
+        }
+      `}</style>
     </header>
-  );
+  )
 }
