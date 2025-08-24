@@ -3,13 +3,13 @@ name: Deploy Firebase Rules
 
 on:
   push:
-    branches: [ main, master ]  # Added master in case that's your branch
+    branches: [ main, master ]
     paths:
       - 'firestore.rules'
       - 'firestore.indexes.json'
       - 'firebase.json'
-      - '.github/workflows/firebase-deploy.yml'  # Added so changes to this file trigger it
-  workflow_dispatch:  # Added manual trigger option
+      - '.github/workflows/firebase-deploy.yml'
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -29,7 +29,7 @@ jobs:
         run: npm install -g firebase-tools
       
       - name: Deploy Firestore Rules
-        run: |
-          firebase deploy --only firestore:rules --token "$FIREBASE_TOKEN" --project scriptrank-5885f
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase deploy --only firestore:rules --project scriptrank-5885f --token "${{ secrets.FIREBASE_TOKEN }}"
