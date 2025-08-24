@@ -11,3 +11,43 @@ body {
 h1, h2, h3 {
   letter-spacing: -0.025em;
 }
+/* Add to styles/globals.css */
+
+/* Custom font classes */
+.page-title {
+  font-family: 'DrukWide', Impact, sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.page-content {
+  position: relative;
+}
+
+.font-display {
+  font-family: 'DrukWide', Impact, sans-serif;
+}
+
+.font-ui {
+  font-family: 'Bahnschrift', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: 'Courier', 'Courier New', monospace;
+}
+
+/* Ensure minimalist design - no shadows or gradients */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Consistent focus states */
+*:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
