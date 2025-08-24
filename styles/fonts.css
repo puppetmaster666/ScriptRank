@@ -1,0 +1,24 @@
+/* styles/fonts.css */
+@font-face {
+  font-family: 'DrukWide';
+  src: url('/fonts/DrukWide-Heavy-Trial.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Courier';
+  src: url('/fonts/cour.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bahnschrift';
+  src: url('/fonts/bahnschrift.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
