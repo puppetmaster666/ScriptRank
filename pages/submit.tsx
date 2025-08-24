@@ -100,7 +100,7 @@ export default function SubmitPage() {
       const docRef = await addDoc(collection(db, 'ideas'), ideaData)
       
       // Redirect to the idea page
-      router.push(`/idea/${docRef.id}`)
+      router.push(`/ideas/${docRef.id}`)
     } catch (err: any) {
       setError(err.message || 'Failed to submit idea. Please try again.')
       setSubmitting(false)
