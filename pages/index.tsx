@@ -63,8 +63,13 @@ export default function HomePage() {
       <div className="min-h-screen bg-white">
         {/* Navigation */}
         <nav className="flex justify-between items-center px-8 py-6 border-b-2 border-black">
-          <Link href="/" className="logo-text">
-            MAKE ME<br />FAMOUS
+          <Link href="/">
+            <img 
+              src="/images/logo.png" 
+              alt="Make Me Famous" 
+              className="h-12 w-auto"
+              style={{ objectFit: 'contain' }}
+            />
           </Link>
           
           <div className="flex gap-4">
@@ -161,15 +166,6 @@ export default function HomePage() {
       </div>
 
       <style jsx>{`
-        .logo-text {
-          font-family: 'DrukWide', sans-serif;
-          font-size: 24px;
-          line-height: 0.9;
-          font-weight: 900;
-          color: black;
-          text-decoration: none;
-        }
-
         .nav-button {
           font-family: 'Bahnschrift', sans-serif;
           font-size: 16px;
