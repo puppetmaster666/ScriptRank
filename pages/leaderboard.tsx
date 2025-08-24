@@ -281,19 +281,23 @@ export default function LeaderboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                {idea.userPhotoURL && (
-                                  <img 
-                                    src={idea.userPhotoURL} 
-                                    alt={idea.username}
-                                    className="w-8 h-8 rounded-full"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
-                                )}
-                                <span className="text-sm text-gray-900">{idea.username}</span>
-                              </div>
+                              <Link href={`/profile/${idea.username}`}>
+                                <a className="flex items-center gap-2 hover:text-blue-600 transition">
+                                  {idea.userPhotoURL && (
+                                    <img 
+                                      src={idea.userPhotoURL} 
+                                      alt={idea.username}
+                                      className="w-8 h-8 rounded-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  <span className="text-sm text-gray-900 hover:text-blue-600">
+                                    {idea.username}
+                                  </span>
+                                </a>
+                              </Link>
                             </td>
                             <td className="px-6 py-4">
                               <ScorePill score={idea.aiScores.overall} />
@@ -410,7 +414,7 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* Archive Section - NEW */}
+            {/* Archive Section */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <span>📚</span> Previous Months
