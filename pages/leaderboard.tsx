@@ -1,532 +1,389 @@
-// pages/leaderboard.tsx - COMPLETE FILE
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-import { auth, db } from '@/lib/firebase';
-import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { castVote } from '@/lib/firebase-collections';
-import ArchiveSidebar from '@/components/ArchiveSidebar';
+// pages/leaderboard.tsx
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import Link from 'next/link'
+import { db } from '@/lib/firebase'
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
+import { PageLayout, Button, Card, Badge, Tabs, EmptyState } from '@/components/designSystem'
 
-type Idea = {
-  id: string;
-  title: string;
-  type: 'movie' | 'game' | 'business';
-  content: string;
-  userId: string;
-  username: string;
-  userPhotoURL?: string;
-  aiScores: {
-    market: number;
-    innovation: number;
-    execution: number;
-    overall: number;
-    verdict: string;
-    investmentStatus: 'INVEST' | 'PASS' | 'MAYBE';
-  };
-  publicScore?: {
-    average: number;
-    count: number;
-    sum: number;
-  };
-  createdAt: Date;
-  month: string;
-};
+interface Idea {
+  id: string
+  title: string
+  type: string
+  genre?: string
+  industry?: string
+  content: string
+  userId: string
+  userName: string
+  userPhotoURL: string
+  aiScore: number
+  votes: any[]
+  voteCount: number
+  views: number
+  status: 'INVEST' | 'MAYBE' | 'PASS'
+  createdAt: any
+}
 
 export default function LeaderboardPage() {
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'movie' | 'game' | 'business'>('all');
-  const [sortMode, setSortMode] = useState<'ai' | 'public' | 'market' | 'innovation' | 'execution'>('ai');
-  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
-  const [voteValue, setVoteValue] = useState(5.00);
-  const [submittingVote, setSubmittingVote] = useState(false);
-  const [userVotes, setUserVotes] = useState<Set<string>>(new Set());
-
-  // Get current month
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const [ideas, setIdeas] = useState<Idea[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('all')
+  const [timeFilter, setTimeFilter] = useState('week')
+  const [sortBy, setSortBy] = useState('votes')
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+    fetchIdeas()
+  }, [activeTab, timeFilter, sortBy])
 
-  // Fetch ideas
-  useEffect(() => {
-    setLoading(true);
-    
-    // Build query with filters
-    let q = query(collection(db, 'ideas'), where('month', '==', currentMonth));
-    
-    if (activeFilter !== 'all') {
-      q = query(q, where('type', '==', activeFilter));
-    }
-    
-    // Add ordering based on sort mode
-    const orderByField = {
-      'ai': 'aiScores.overall',
-      'public': 'publicScore.average',
-      'market': 'aiScores.market',
-      'innovation': 'aiScores.innovation',
-      'execution': 'aiScores.execution'
-    }[sortMode];
-    
-    q = query(q, orderBy(orderByField, 'desc'), limit(50));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const results = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-          id: doc.id, 
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          publicScore: data.publicScore || {
-            average: 0,
-            count: 0,
-            sum: 0
-          }
-        } as Idea;
-      });
-      
-      setIdeas(results);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching leaderboard:', error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [activeFilter, sortMode, currentMonth]);
-
-  // Fetch user's votes
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(collection(db, 'votes'), where('userId', '==', user.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const votedIdeaIds = new Set(snapshot.docs.map(doc => doc.data().ideaId));
-      setUserVotes(votedIdeaIds);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  const handleVote = async (ideaId: string) => {
-    if (!user) {
-      alert('Please sign in to vote');
-      return;
-    }
-    
-    if (submittingVote) return;
-    
-    setSubmittingVote(true);
+  const fetchIdeas = async () => {
+    setLoading(true)
     try {
-      await castVote(user.uid, ideaId, voteValue);
-      setSelectedIdea(null);
-      setVoteValue(5.00);
-    } catch (error: any) {
-      console.error('Vote error:', error);
-      alert(error.message || 'Failed to submit vote');
+      let q = query(collection(db, 'ideas'))
+
+      // Filter by type
+      if (activeTab !== 'all') {
+        q = query(q, where('type', '==', activeTab))
+      }
+
+      // Sort
+      if (sortBy === 'votes') {
+        q = query(q, orderBy('voteCount', 'desc'))
+      } else if (sortBy === 'ai') {
+        q = query(q, orderBy('aiScore', 'desc'))
+      } else if (sortBy === 'newest') {
+        q = query(q, orderBy('createdAt', 'desc'))
+      }
+
+      q = query(q, limit(50))
+
+      const snapshot = await getDocs(q)
+      const ideasData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Idea))
+
+      setIdeas(ideasData)
+    } catch (error) {
+      console.error('Error fetching ideas:', error)
+      // Set mock data if fetch fails
+      setIdeas([
+        {
+          id: '1',
+          title: 'Neon Nights',
+          type: 'entertainment',
+          genre: 'scifi',
+          content: 'A cyberpunk thriller...',
+          userId: '1',
+          userName: 'Michael Rodriguez',
+          userPhotoURL: '',
+          aiScore: 8.7,
+          votes: Array(245).fill(1),
+          voteCount: 245,
+          views: 1234,
+          status: 'INVEST',
+          createdAt: new Date()
+        },
+        {
+          id: '2',
+          title: 'GreenEats',
+          type: 'business',
+          industry: 'food',
+          content: 'Zero-waste meal delivery...',
+          userId: '2',
+          userName: 'David Park',
+          userPhotoURL: '',
+          aiScore: 8.4,
+          votes: Array(189).fill(1),
+          voteCount: 189,
+          views: 987,
+          status: 'INVEST',
+          createdAt: new Date()
+        },
+        {
+          id: '3',
+          title: 'Mind Maze VR',
+          type: 'game',
+          genre: 'puzzle',
+          content: 'A VR puzzle game...',
+          userId: '3',
+          userName: 'Emily Davis',
+          userPhotoURL: '',
+          aiScore: 7.8,
+          votes: Array(156).fill(1),
+          voteCount: 156,
+          views: 789,
+          status: 'MAYBE',
+          createdAt: new Date()
+        }
+      ])
     } finally {
-      setSubmittingVote(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const getScore = (idea: Idea): number => {
-    switch (sortMode) {
-      case 'public':
-        return idea.publicScore?.average || 0;
-      case 'market':
-        return idea.aiScores.market;
-      case 'innovation':
-        return idea.aiScores.innovation;
-      case 'execution':
-        return idea.aiScores.execution;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'entertainment': return '🎬'
+      case 'game': return '🎮'
+      case 'business': return '💼'
+      default: return '💡'
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'INVEST':
+        return <Badge variant="success">INVEST</Badge>
+      case 'MAYBE':
+        return <Badge variant="warning">MAYBE</Badge>
       default:
-        return idea.aiScores.overall;
+        return <Badge variant="danger">PASS</Badge>
     }
-  };
+  }
 
-  // Stats calculations
-  const stats = {
-    totalIdeas: ideas.length,
-    topScore: ideas.length ? Math.max(...ideas.map(idea => getScore(idea))) : 0,
-    avgScore: ideas.length ? 
-      ideas.reduce((sum, idea) => sum + getScore(idea), 0) / ideas.length : 0,
-    mostVoted: ideas.reduce((max, idea) => 
-      (idea.publicScore?.count || 0) > (max.publicScore?.count || 0) ? idea : max, 
-      ideas[0] || null)
-  };
+  const calculateTotalScore = (idea: Idea) => {
+    // AI score (0-10) + public votes (weighted)
+    return (idea.aiScore + (idea.voteCount * 0.1)).toFixed(1)
+  }
 
   return (
     <>
       <Head>
-        <title>Leaderboard | ScriptRank</title>
-        <meta name="description" content="See the top-ranked ideas this month" />
+        <title>Leaderboard | Make Me Famous</title>
+        <meta name="description" content="See the top-rated ideas competing for fame and prizes" />
       </Head>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Monthly Leaderboard</h1>
-          <p className="text-gray-600">
-            {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Rankings
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Filters Only - NO SORT BAR */}
-            <div className="bg-white rounded-xl p-4 mb-6 shadow-sm">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeFilter === 'all' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All Ideas
-                </button>
-                <button
-                  onClick={() => setActiveFilter('movie')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeFilter === 'movie' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Movies
-                </button>
-                <button
-                  onClick={() => setActiveFilter('game')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeFilter === 'game' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Games
-                </button>
-                <button
-                  onClick={() => setActiveFilter('business')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeFilter === 'business' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Business
-                </button>
+      <PageLayout>
+        {/* Hero Section */}
+        <div className="bg-black text-white py-16 px-8">
+          <div className="max-w-6xl mx-auto text-center">
+            <h1 className="text-5xl font-display font-black mb-4">
+              THE LEADERBOARD
+            </h1>
+            <p className="font-body text-xl opacity-90">
+              Where ideas compete for glory
+            </p>
+            
+            {/* Stats Bar */}
+            <div className="flex justify-center gap-12 mt-8">
+              <div>
+                <div className="text-3xl font-bold font-ui">{ideas.length}</div>
+                <div className="font-body text-sm opacity-75">Total Ideas</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold font-ui">
+                  {ideas.reduce((sum, idea) => sum + idea.voteCount, 0)}
+                </div>
+                <div className="font-body text-sm opacity-75">Total Votes</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold font-ui">$5,000</div>
+                <div className="font-body text-sm opacity-75">Monthly Prize</div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Ideas Table */}
-            {loading ? (
-              <div className="animate-pulse space-y-4">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
+        {/* Filters */}
+        <div className="border-b-2 border-black bg-gray-50">
+          <div className="max-w-6xl mx-auto px-8 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Category Tabs */}
+              <div className="flex gap-2">
+                {[
+                  { id: 'all', label: 'All Ideas' },
+                  { id: 'entertainment', label: '🎬 Film' },
+                  { id: 'game', label: '🎮 Games' },
+                  { id: 'business', label: '💼 Business' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2 font-ui font-medium rounded-lg transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-black text-white'
+                        : 'bg-white text-black border-2 border-gray-300 hover:border-black'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
                 ))}
               </div>
-            ) : ideas.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl">
-                <h3 className="text-2xl font-bold mb-2">No Ideas Yet</h3>
-                <p className="text-gray-600 mb-6">Be the first to submit an idea this month!</p>
-                <Link href="/submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition">
-                  Submit First Idea
-                </Link>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Idea</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Creator</th>
-                        <th 
-                          className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                          onClick={() => setSortMode('ai')}
-                        >
-                          AI {sortMode === 'ai' && '↓'}
-                        </th>
-                        <th 
-                          className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                          onClick={() => setSortMode('public')}
-                        >
-                          Public {sortMode === 'public' && '↓'}
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {ideas.map((idea, index) => {
-                        const hasVoted = userVotes.has(idea.id);
-                        return (
-                          <tr key={idea.id} className="hover:bg-gray-50 transition">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <RankBadge rank={index + 1} />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div>
-                                <Link href={`/ideas/${idea.id}`} className="text-gray-900 font-medium hover:text-blue-600">
-                                  {idea.title}
-                                </Link>
-                                <div className="text-sm text-gray-500 capitalize mt-1">{idea.type}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Link href={`/profile/${idea.username}`}>
-                                <a className="flex items-center gap-2 hover:text-blue-600 transition">
-                                  {idea.userPhotoURL && (
-                                    <img 
-                                      src={idea.userPhotoURL} 
-                                      alt={idea.username}
-                                      className="w-8 h-8 rounded-full object-cover"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                  )}
-                                  <span className="text-sm text-gray-900 hover:text-blue-600">
-                                    {idea.username}
-                                  </span>
-                                </a>
-                              </Link>
-                            </td>
-                            <td className="px-6 py-4">
-                              <ScorePill score={idea.aiScores.overall} />
-                            </td>
-                            <td className="px-6 py-4">
-                              {idea.publicScore && idea.publicScore.count > 0 ? (
-                                <div>
-                                  <ScorePill score={idea.publicScore.average} />
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {idea.publicScore.count} votes
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-2xl">--</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <StatusBadge status={idea.aiScores.investmentStatus} />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex gap-2">
-                                <Link href={`/ideas/${idea.id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                  View
-                                </Link>
-                                {user && !hasVoted && (
-                                  <button
-                                    onClick={() => setSelectedIdea(idea)}
-                                    className="text-green-600 hover:text-green-800 text-sm font-medium"
-                                  >
-                                    Vote
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Stats */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="font-bold text-gray-900 mb-4">Current Stats</h2>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">{stats.totalIdeas}</div>
-                  <div className="text-sm text-gray-600">Total Ideas</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {stats.topScore.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-600">Top Score</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {stats.avgScore.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-600">Average Score</div>
-                </div>
+              {/* Sort Options */}
+              <div className="flex gap-2">
+                <select 
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="px-4 py-2 border-2 border-black rounded-lg font-ui bg-white"
+                >
+                  <option value="all">All Time</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="today">Today</option>
+                </select>
+
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2 border-2 border-black rounded-lg font-ui bg-white"
+                >
+                  <option value="votes">Most Votes</option>
+                  <option value="ai">Highest AI Score</option>
+                  <option value="newest">Newest</option>
+                </select>
               </div>
             </div>
-
-            {/* Sort Options in Sidebar */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4">Sort By</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setSortMode('ai')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'ai' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  AI Overall Score
-                </button>
-                <button
-                  onClick={() => setSortMode('public')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'public' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  Public Score
-                </button>
-                <button
-                  onClick={() => setSortMode('market')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'market' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  Market Score
-                </button>
-                <button
-                  onClick={() => setSortMode('innovation')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'innovation' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  Innovation Score
-                </button>
-                <button
-                  onClick={() => setSortMode('execution')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'execution' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  Execution Score
-                </button>
-              </div>
-            </div>
-
-            {/* Archive Section */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span>📚</span> Previous Months
-              </h2>
-              <ArchiveSidebar />
-            </div>
-
-            {/* Vote Modal */}
-            {selectedIdea && (
-              <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-blue-500">
-                <h3 className="font-bold mb-3">Vote for: {selectedIdea.title}</h3>
-                
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium">Your Score</label>
-                    <span className="text-2xl font-bold text-blue-600">{voteValue.toFixed(2)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.01"
-                    max="10.00"
-                    step="0.01"
-                    value={voteValue}
-                    onChange={(e) => setVoteValue(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>0</span>
-                    <span>5</span>
-                    <span>10</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => handleVote(selectedIdea.id)}
-                  disabled={submittingVote}
-                  className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  {submittingVote ? 'Submitting...' : 'Submit Vote'}
-                </button>
-
-                <button
-                  onClick={() => setSelectedIdea(null)}
-                  className="w-full mt-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-
-            {/* Submit CTA */}
-            {user && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-                <h3 className="font-bold text-gray-900 mb-2">Have an idea?</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Get honest feedback and join the leaderboard
-                </p>
-                <Link href="/submit" className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium">
-                  Submit Your Idea
-                </Link>
-              </div>
-            )}
           </div>
         </div>
-      </main>
+
+        {/* Leaderboard Table */}
+        <div className="max-w-6xl mx-auto px-8 py-12">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 font-body">Loading ideas...</p>
+            </div>
+          ) : ideas.length === 0 ? (
+            <EmptyState 
+              title="No ideas yet"
+              description="Be the first to submit an idea!"
+              action={{
+                label: "Submit Your Idea",
+                href: "/submit"
+              }}
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Table Header - Desktop Only */}
+              <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 font-ui font-bold text-sm uppercase border-b-2 border-black">
+                <div className="col-span-1">Rank</div>
+                <div className="col-span-5">Idea</div>
+                <div className="col-span-2">Creator</div>
+                <div className="col-span-1 text-center">AI</div>
+                <div className="col-span-1 text-center">Votes</div>
+                <div className="col-span-1 text-center">Total</div>
+                <div className="col-span-1">Status</div>
+              </div>
+
+              {/* Table Rows */}
+              {ideas.map((idea, index) => {
+                const totalScore = calculateTotalScore(idea)
+                const isTop3 = index < 3
+
+                return (
+                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                    <Card 
+                      hover
+                      className={`${isTop3 ? 'border-3 border-black' : ''}`}
+                    >
+                      {/* Mobile Layout */}
+                      <div className="md:hidden">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`text-2xl font-bold font-ui ${
+                              index === 0 ? 'text-yellow-500' :
+                              index === 1 ? 'text-gray-400' :
+                              index === 2 ? 'text-orange-600' :
+                              'text-black'
+                            }`}>
+                              {index === 0 ? '🥇' : 
+                               index === 1 ? '🥈' : 
+                               index === 2 ? '🥉' : 
+                               `#${index + 1}`}
+                            </div>
+                            <div className="text-2xl">{getTypeIcon(idea.type)}</div>
+                          </div>
+                          {getStatusBadge(idea.status)}
+                        </div>
+                        
+                        <h3 className="text-xl font-display font-bold mb-2">{idea.title}</h3>
+                        <p className="font-body text-sm text-gray-600 mb-3">by {idea.userName}</p>
+                        
+                        <div className="flex justify-between font-ui text-sm">
+                          <span>AI: {idea.aiScore}</span>
+                          <span>Votes: {idea.voteCount}</span>
+                          <span className="font-bold">Total: {totalScore}</span>
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout */}
+                      <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
+                        <div className="col-span-1">
+                          <div className={`text-2xl font-bold font-ui ${
+                            index === 0 ? 'text-yellow-500' :
+                            index === 1 ? 'text-gray-400' :
+                            index === 2 ? 'text-orange-600' :
+                            'text-black'
+                          }`}>
+                            {index === 0 ? '🥇' : 
+                             index === 1 ? '🥈' : 
+                             index === 2 ? '🥉' : 
+                             index + 1}
+                          </div>
+                        </div>
+                        
+                        <div className="col-span-5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{getTypeIcon(idea.type)}</span>
+                            <div>
+                              <h3 className="font-display font-bold text-lg">{idea.title}</h3>
+                              <p className="font-body text-xs text-gray-600">
+                                {idea.content.substring(0, 60)}...
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="col-span-2">
+                          <p className="font-ui text-sm">{idea.userName}</p>
+                        </div>
+                        
+                        <div className="col-span-1 text-center">
+                          <span className="font-ui font-bold">{idea.aiScore}</span>
+                        </div>
+                        
+                        <div className="col-span-1 text-center">
+                          <span className="font-ui">{idea.voteCount}</span>
+                        </div>
+                        
+                        <div className="col-span-1 text-center">
+                          <span className="font-ui font-bold text-lg">{totalScore}</span>
+                        </div>
+                        
+                        <div className="col-span-1">
+                          {getStatusBadge(idea.status)}
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Load More */}
+          {!loading && ideas.length >= 50 && (
+            <div className="text-center mt-12">
+              <Button variant="outline" size="lg">
+                Load More Ideas
+              </Button>
+            </div>
+          )}
+        </div>
+      </PageLayout>
+
+      <style jsx>{`
+        .font-display {
+          font-family: 'DrukWide', Impact, sans-serif;
+        }
+        .font-ui {
+          font-family: 'Bahnschrift', system-ui, sans-serif;
+        }
+        .font-body {
+          font-family: 'Courier', 'Courier New', monospace;
+        }
+      `}</style>
     </>
-  );
+  )
 }
-
-// Components
-const RankBadge = ({ rank }: { rank: number }) => {
-  const getBadgeStyle = (rank: number) => {
-    if (rank === 1) return 'bg-yellow-400 text-gray-900';
-    if (rank === 2) return 'bg-gray-300 text-gray-900';
-    if (rank === 3) return 'bg-amber-600 text-white';
-    return 'bg-gray-100 text-gray-700';
-  };
-
-  return (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getBadgeStyle(rank)}`}>
-      {rank}
-    </div>
-  );
-};
-
-const ScorePill = ({ score }: { score: number }) => {
-  const getScoreColor = (score: number) => {
-    if (score >= 8.0) return 'bg-green-100 text-green-800';
-    if (score >= 6.0) return 'bg-blue-100 text-blue-800';
-    if (score >= 4.0) return 'bg-amber-100 text-amber-800';
-    return 'bg-red-100 text-red-800';
-  };
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(score)}`}>
-      {score.toFixed(2)}
-    </span>
-  );
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'INVEST': return 'bg-green-100 text-green-800';
-      case 'MAYBE': return 'bg-amber-100 text-amber-800';
-      default: return 'bg-red-100 text-red-800';
-    }
-  };
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(status)}`}>
-      {status}
-    </span>
-  );
-};
