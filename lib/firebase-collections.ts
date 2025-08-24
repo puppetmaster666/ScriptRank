@@ -1,5 +1,5 @@
 // lib/firebase-collections.ts
-// This is a NEW FILE - create it in your lib folder
+// Fixed version with proper username handling and no email exposure
 
 import { 
   collection, 
@@ -17,7 +17,7 @@ import {
   increment,
   Timestamp
 } from 'firebase/firestore';
-import { db } from './firebase'; // Import from your existing firebase.ts file
+import { db } from './firebase';
 
 // ============================================
 // SUBSCRIPTION TYPES
@@ -39,6 +39,7 @@ interface UserSubscription {
 
 /**
  * Create a new user profile with free tier subscription
+ * FIXED: Properly handles usernames without exposing emails
  */
 export async function createUserProfile(userId: string, data: {
   username: string;
@@ -47,15 +48,39 @@ export async function createUserProfile(userId: string, data: {
   photoURL?: string;
 }) {
   try {
+    // Clean and validate username - remove any email parts
+    let cleanUsername = data.username.toLowerCase();
+    
+    // If username contains @ (email was used), extract only the part before @
+    if (cleanUsername.includes('@')) {
+      cleanUsername = cleanUsername.split('@')[0];
+    }
+    
+    // Remove any problematic characters and numbers at the end
+    cleanUsername = cleanUsername.replace(/[^a-z0-9_]/g, '');
+    cleanUsername = cleanUsername.replace(/_\d+$/, ''); // Remove trailing _numbers
+    
+    // Ensure username is valid length
+    if (cleanUsername.length < 3) {
+      cleanUsername = `user${Date.now().toString().slice(-6)}`;
+    }
+    
+    // Truncate if too long
+    if (cleanUsername.length > 20) {
+      cleanUsername = cleanUsername.substring(0, 20);
+    }
+    
     // Check if username is already taken
     const usernameQuery = query(
       collection(db, 'users'),
-      where('username', '==', data.username)
+      where('username', '==', cleanUsername)
     );
     const usernameCheck = await getDocs(usernameQuery);
     
+    // If taken, add unique suffix (but not visible email numbers)
     if (!usernameCheck.empty) {
-      throw new Error('Username already taken');
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      cleanUsername = `${cleanUsername}_${randomSuffix}`;
     }
 
     // Calculate 30 days from now for free tier reset
@@ -65,8 +90,9 @@ export async function createUserProfile(userId: string, data: {
     // Create the user document
     await setDoc(doc(db, 'users', userId), {
       uid: userId,
-      username: data.username.toLowerCase(),
-      displayName: data.displayName,
+      username: cleanUsername, // Use cleaned username, never expose email
+      displayName: data.displayName || cleanUsername,
+      email: data.email, // Store email privately, never display publicly
       photoURL: data.photoURL || null,
       bio: '',
       createdAt: serverTimestamp(),
@@ -97,7 +123,7 @@ export async function createUserProfile(userId: string, data: {
       followingCount: 0
     });
 
-    return { success: true };
+    return { success: true, username: cleanUsername };
   } catch (error: any) {
     console.error('Error creating user profile:', error);
     throw error;

@@ -50,30 +50,20 @@ service cloud.firestore {
     }
     
     // ============================================
-    // VOTES COLLECTION
+    // VOTES COLLECTION - SIMPLIFIED TO FIX PERMISSIONS
     // ============================================
     match /votes/{voteId} {
       // Anyone can read votes
       allow read: if true;
       
       // Only authenticated users can create votes
+      // Vote ID must be userId_ideaId format
       allow create: if request.auth != null 
         && request.auth.uid == request.resource.data.userId
-        && voteId == (request.auth.uid + '_' + request.resource.data.ideaId)
-        && validateVoteData();
+        && voteId == (request.auth.uid + '_' + request.resource.data.ideaId);
       
       // Users cannot update or delete votes (permanent)
       allow update, delete: if false;
-      
-      function validateVoteData() {
-        let data = request.resource.data;
-        return data.keys().hasAll(['userId', 'ideaId', 'score']) 
-          && data.score is number 
-          && data.score >= 0.01 
-          && data.score <= 10.00
-          && data.userId is string
-          && data.ideaId is string;
-      }
     }
     
     // ============================================

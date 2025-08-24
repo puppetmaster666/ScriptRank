@@ -176,51 +176,49 @@ export default function LeaderboardPage() {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Filters */}
+            {/* Filters Only - NO SORT BAR */}
             <div className="bg-white rounded-xl p-4 mb-6 shadow-sm">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveFilter('all')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                      activeFilter === 'all' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    All Ideas
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('movie')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                      activeFilter === 'movie' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Movies
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('game')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                      activeFilter === 'game' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Games
-                  </button>
-                  <button
-                    onClick={() => setActiveFilter('business')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                      activeFilter === 'business' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Business
-                  </button>
-                </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    activeFilter === 'all' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All Ideas
+                </button>
+                <button
+                  onClick={() => setActiveFilter('movie')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    activeFilter === 'movie' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Movies
+                </button>
+                <button
+                  onClick={() => setActiveFilter('game')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    activeFilter === 'game' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Games
+                </button>
+                <button
+                  onClick={() => setActiveFilter('business')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    activeFilter === 'business' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Business
+                </button>
               </div>
             </div>
 
@@ -252,7 +250,7 @@ export default function LeaderboardPage() {
                           className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
                           onClick={() => setSortMode('ai')}
                         >
-                          AI Score {sortMode === 'ai' && '↓'}
+                          AI {sortMode === 'ai' && '↓'}
                         </th>
                         <th 
                           className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
@@ -277,7 +275,7 @@ export default function LeaderboardPage() {
                                 <Link href={`/ideas/${idea.id}`} className="text-gray-900 font-medium hover:text-blue-600">
                                   {idea.title}
                                 </Link>
-                                <div className="text-sm text-gray-500 capitalize">{idea.type}</div>
+                                <div className="text-sm text-gray-500 capitalize mt-1">{idea.type}</div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
@@ -307,7 +305,7 @@ export default function LeaderboardPage() {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="text-gray-400">--</span>
+                                <span className="text-gray-400 text-2xl">--</span>
                               )}
                             </td>
                             <td className="px-6 py-4">
@@ -363,14 +361,30 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* Score Categories */}
+            {/* Sort Options in Sidebar */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4">Score Categories</h3>
+              <h3 className="font-bold text-gray-900 mb-4">Sort By</h3>
               <div className="space-y-2">
+                <button
+                  onClick={() => setSortMode('ai')}
+                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                    sortMode === 'ai' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  AI Overall Score
+                </button>
+                <button
+                  onClick={() => setSortMode('public')}
+                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                    sortMode === 'public' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  Public Score
+                </button>
                 <button
                   onClick={() => setSortMode('market')}
                   className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'market' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                    sortMode === 'market' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
                   }`}
                 >
                   Market Score
@@ -378,7 +392,7 @@ export default function LeaderboardPage() {
                 <button
                   onClick={() => setSortMode('innovation')}
                   className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'innovation' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                    sortMode === 'innovation' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
                   }`}
                 >
                   Innovation Score
@@ -386,7 +400,7 @@ export default function LeaderboardPage() {
                 <button
                   onClick={() => setSortMode('execution')}
                   className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    sortMode === 'execution' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                    sortMode === 'execution' ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50'
                   }`}
                 >
                   Execution Score
