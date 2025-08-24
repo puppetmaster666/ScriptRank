@@ -8,23 +8,13 @@ import { doc, onSnapshot } from 'firebase/firestore'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
-  const [username, setUsername] = useState<string>('')
   const [scrolled, setScrolled] = useState(false)
   const [notifications, setNotifications] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
-      if (user) {
-        // Get username from profiles collection
-        const profileDoc = doc(db, 'profiles', user.uid)
-        onSnapshot(profileDoc, (doc) => {
-          if (doc.exists()) {
-            setUsername(doc.data().username || '')
-          }
-        })
-      }
     })
 
     const handleScroll = () => {
@@ -67,13 +57,13 @@ export default function Header() {
       scrolled ? 'bg-white/95 backdrop-blur-md border-b-2 border-black shadow-sm' : 'bg-white border-b-2 border-black'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 sm:h-24">{/* Increased height for bigger logo */}
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <img 
               src="/images/logo.png" 
               alt="Make Me Famous" 
-              className="h-16 sm:h-20 w-auto"
+              className="h-12 sm:h-16 md:h-20 w-auto"
               style={{ objectFit: 'contain' }}
             />
           </Link>
@@ -96,7 +86,7 @@ export default function Header() {
             {user ? (
               <>
                 <Link
-                  href="/notifications"
+                  href="/dashboard"
                   className="nav-link relative"
                 >
                   <span className="text-xl">🔔</span>
@@ -106,15 +96,9 @@ export default function Header() {
                     </span>
                   )}
                 </Link>
-                <Link
-                  href="/dashboard"
-                  className="nav-link"
-                >
-                  Dashboard
-                </Link>
                 <div className="flex items-center space-x-3">
                   <Link
-                    href={`/profile/${username || user.uid}`}
+                    href={`/profile/${user.displayName || user.email?.split('@')[0] || user.uid}`}
                     className="flex items-center space-x-2"
                   >
                     <img
