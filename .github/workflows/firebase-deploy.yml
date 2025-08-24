@@ -3,11 +3,13 @@ name: Deploy Firebase Rules
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]  # Added master in case that's your branch
     paths:
       - 'firestore.rules'
       - 'firestore.indexes.json'
       - 'firebase.json'
+      - '.github/workflows/firebase-deploy.yml'  # Added so changes to this file trigger it
+  workflow_dispatch:  # Added manual trigger option
 
 jobs:
   deploy:
