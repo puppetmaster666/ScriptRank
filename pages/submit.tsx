@@ -1,412 +1,395 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import { auth, db } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { submitIdea, canUserSubmitIdea, checkAndResetSubscription } from "@/lib/firebase-collections";
-
-type IdeaType = 'movie' | 'game' | 'business';
+// pages/submit.tsx
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import { useRouter } from 'next/router'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { auth, db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { PageLayout, Button, Input, Textarea, Select, Card } from '@/components/designSystem'
 
 export default function SubmitPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [selectedType, setSelectedType] = useState<IdeaType>('movie');
-  const [submissionsRemaining, setSubmissionsRemaining] = useState<number>(0);
-  const [userTier, setUserTier] = useState<'free' | 'starter' | 'unlimited'>('free');
+  const [user, loading] = useAuthState(auth)
+  const router = useRouter()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [currentStep, setCurrentStep] = useState(1)
   
-  // Form fields
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [aiFeedback, setAiFeedback] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    type: '',
+    title: '',
+    genre: '',
+    industry: '',
+    content: '',
+    targetAudience: '',
+    uniqueValue: ''
+  })
 
-  // Check subscription status
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          // Check and reset subscription if needed
-          await checkAndResetSubscription(currentUser.uid);
-          
-          // Get user profile from Firestore
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const profile = userDoc.data();
-            setUserProfile(profile);
-            setUserTier(profile.subscription?.tier || 'free');
-            
-            // Check submission status
-            const canSubmit = await canUserSubmitIdea(currentUser.uid);
-            setSubmissionsRemaining(canSubmit.remaining || 0);
-          } else {
-            // No profile exists
-            setError("Please complete your profile first");
-            setTimeout(() => router.push('/dashboard'), 2000);
-          }
-        } catch (error) {
-          console.error('Error checking submission status:', error);
-          setError("Error loading submission status");
-        }
-      } else {
-        router.push('/register');
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  const handleSubmit = async () => {
-    if (!user || !userProfile) {
-      setError("You must be logged in to submit an idea.");
-      return;
+    if (!loading && !user) {
+      router.push('/login')
     }
+  }, [user, loading, router])
 
-    // Validation
-    if (!title.trim() || !description.trim()) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
 
-    // Word count validation
-    const wordCount = description.trim().split(/\s+/).length;
-    if (wordCount < 30) {
-      setError(`Description must be at least 30 words (currently ${wordCount}).`);
-      return;
+  const nextStep = () => {
+    if (currentStep === 1 && !formData.type) {
+      setError('Please select an idea type')
+      return
     }
-    if (wordCount > 500) {
-      setError(`Description must be 500 words or less (currently ${wordCount}).`);
-      return;
+    if (currentStep === 2 && !formData.title) {
+      setError('Please enter a title')
+      return
     }
+    setError('')
+    setCurrentStep(prev => prev + 1)
+  }
 
-    setLoading(true);
-    setError("");
+  const prevStep = () => {
+    setError('')
+    setCurrentStep(prev => prev - 1)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    setSubmitting(true)
+    setError('')
 
     try {
-      // Get AI rating
-      const aiRes = await fetch("/api/rate-idea", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          type: selectedType,
-          title: title,
-          content: description
-        }),
-      });
+      // Get AI analysis
+      const response = await fetch('/api/analyze-idea', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: formData.type,
+          title: formData.title,
+          content: formData.content,
+          genre: formData.genre,
+          industry: formData.industry
+        })
+      })
 
-      if (!aiRes.ok) {
-        const errorData = await aiRes.json();
-        throw new Error(errorData.error || "AI analysis failed");
+      const analysis = await response.json()
+
+      if (!analysis.score) {
+        throw new Error('AI analysis failed')
       }
 
-      const aiData = await aiRes.json();
-      console.log("AI response:", aiData);
-
-      if (!aiData.success || !aiData.aiScores) {
-        throw new Error("Invalid AI response format");
-      }
-
-      // Submit to Firebase using new collections system
-      const result = await submitIdea({
+      // Save to Firestore
+      const ideaData = {
+        ...formData,
         userId: user.uid,
-        username: userProfile.username || user.email || "Anonymous",
-        userPhotoURL: userProfile.photoURL || user.photoURL,
-        type: selectedType,
-        title: title,
-        content: description,
-        aiScores: aiData.aiScores
-      });
-
-      if (result.success) {
-        setAiFeedback(aiData);
-        setSubmissionsRemaining(result.submissionsRemaining || 0);
-        setSuccess(true);
+        userName: user.displayName || 'Anonymous',
+        userPhotoURL: user.photoURL || '',
+        aiScore: analysis.score,
+        aiComment: analysis.comment,
+        status: analysis.status,
+        votes: [],
+        voteCount: 0,
+        views: 0,
+        createdAt: serverTimestamp()
       }
 
-    } catch (err: any) {
-      console.error("Submission failed:", err);
-      setError(err.message || "Failed to submit. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Success screen
-  if (success && aiFeedback) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">
-              {aiFeedback.aiScores.investmentStatus === 'INVEST' ? '🎉' : 
-               aiFeedback.aiScores.investmentStatus === 'MAYBE' ? '🤔' : '💔'}
-            </div>
-            <h1 className="text-3xl font-bold mb-2">
-              {aiFeedback.aiScores.investmentStatus === 'INVEST' ? 'Investment Ready!' : 
-               aiFeedback.aiScores.investmentStatus === 'MAYBE' ? 'Promising, But...' : 'Hard Pass'}
-            </h1>
-            <p className="text-gray-600">Your idea has been analyzed by our VC AI</p>
-          </div>
-
-          {/* Score Breakdown */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <ScoreCard 
-              label="Market" 
-              score={aiFeedback.aiScores.market} 
-              feedback={aiFeedback.aiScores.marketFeedback}
-            />
-            <ScoreCard 
-              label="Innovation" 
-              score={aiFeedback.aiScores.innovation} 
-              feedback={aiFeedback.aiScores.innovationFeedback}
-            />
-            <ScoreCard 
-              label="Execution" 
-              score={aiFeedback.aiScores.execution} 
-              feedback={aiFeedback.aiScores.executionFeedback}
-            />
-            <ScoreCard 
-              label="Overall" 
-              score={aiFeedback.aiScores.overall} 
-              feedback="Weighted average"
-              isOverall={true}
-            />
-          </div>
-
-          {/* Verdict */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-bold mb-3 text-gray-900">VC Verdict:</h3>
-            <p className="text-gray-800 leading-relaxed">{aiFeedback.aiScores.verdict}</p>
-          </div>
-
-          {/* Submission Status */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium text-blue-900">Submissions Remaining: {submissionsRemaining}</p>
-                <p className="text-sm text-blue-700">Current Plan: {userTier.toUpperCase()}</p>
-              </div>
-              {submissionsRemaining === 0 && userTier === 'free' && (
-                <button 
-                  onClick={() => router.push('/pricing')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Upgrade Plan
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium"
-            >
-              View Dashboard
-            </button>
-            {submissionsRemaining > 0 && (
-              <button
-                onClick={() => {
-                  setSuccess(false);
-                  setTitle("");
-                  setDescription("");
-                  setAiFeedback(null);
-                }}
-                className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
-              >
-                Submit Another
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state while checking auth
-  if (!user || !userProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Form screen
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Submit Your Idea</h1>
-        <p className="text-gray-600">Get brutally honest VC-style feedback in seconds</p>
-        
-        {/* Submission Status */}
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-medium text-blue-900">
-                Submissions Remaining: {submissionsRemaining}
-                {userTier === 'unlimited' ? ' (Unlimited)' : 
-                 userTier === 'starter' ? '/10' : '/3'}
-              </p>
-              <p className="text-sm text-blue-700">Plan: {userTier.toUpperCase()}</p>
-            </div>
-            {submissionsRemaining === 0 && userTier !== 'unlimited' && (
-              <button 
-                onClick={() => router.push('/pricing')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
-              >
-                Upgrade
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      const docRef = await addDoc(collection(db, 'ideas'), ideaData)
       
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+      // Redirect to the idea page
+      router.push(`/idea/${docRef.id}`)
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit idea. Please try again.')
+      setSubmitting(false)
+    }
+  }
 
-      {submissionsRemaining === 0 && userTier !== 'unlimited' ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-          <div className="text-6xl mb-4">😴</div>
-          <h2 className="text-2xl font-bold mb-2">No Submissions Left</h2>
-          <p className="text-gray-600 mb-6">
-            {userTier === 'free' 
-              ? "You've used all 3 free submissions this month" 
-              : "You've used all 10 submissions this month"}
-          </p>
-          <button 
-            onClick={() => router.push('/pricing')}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition"
-          >
-            {userTier === 'free' ? 'Upgrade to Continue' : 'Upgrade to Unlimited'}
-          </button>
+  if (loading) return <PageLayout><div className="p-8 text-center">Loading...</div></PageLayout>
+  if (!user) return null
+
+  return (
+    <>
+      <Head>
+        <title>Submit Your Idea | Make Me Famous</title>
+        <meta name="description" content="Submit your screenplay, game, or business idea for AI scoring" />
+      </Head>
+
+      <PageLayout>
+        {/* Hero Section */}
+        <div className="bg-black text-white py-16 px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-5xl font-display font-black mb-4">
+              SUBMIT YOUR BIG IDEA
+            </h1>
+            <p className="font-body text-xl opacity-90">
+              Get scored by AI. Climb the leaderboard. Win prizes.
+            </p>
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          {/* Idea Type Selection */}
-          <div className="mb-6">
-            <label className="block mb-3 font-medium text-gray-900">Idea Type</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['movie', 'game', 'business'] as IdeaType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`p-4 rounded-lg border-2 transition ${
-                    selectedType === type
-                      ? 'border-blue-600 bg-blue-50 text-blue-900'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">
-                    {type === 'movie' ? '🎬' : type === 'game' ? '🎮' : '💼'}
+
+        {/* Progress Bar */}
+        <div className="border-b-2 border-black bg-gray-50">
+          <div className="max-w-4xl mx-auto px-8 py-6">
+            <div className="flex justify-between items-center">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`
+                    w-10 h-10 rounded-full border-2 flex items-center justify-center font-ui font-bold
+                    ${currentStep >= step 
+                      ? 'bg-black text-white border-black' 
+                      : 'bg-white text-gray-400 border-gray-400'}
+                  `}>
+                    {step}
                   </div>
-                  <div className="font-medium capitalize">{type}</div>
-                </button>
+                  {step < 3 && (
+                    <div className={`w-20 sm:w-32 h-1 mx-2 ${
+                      currentStep > step ? 'bg-black' : 'bg-gray-300'
+                    }`} />
+                  )}
+                </div>
               ))}
             </div>
-          </div>
-
-          {/* Title */}
-          <div className="mb-4">
-            <label className="block mb-2 font-medium text-gray-900">Title*</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={loading}
-              placeholder={
-                selectedType === 'movie' ? 'e.g. The Last Algorithm' :
-                selectedType === 'game' ? 'e.g. Cosmic Conquest' :
-                'e.g. AI-Powered Personal Chef'
-              }
-              maxLength={100}
-            />
-          </div>
-
-          {/* Description */}
-          <div className="mb-6">
-            <label className="block mb-2 font-medium text-gray-900">
-              Description* (30-500 words)
-            </label>
-            <textarea
-              className="w-full p-3 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={loading}
-              placeholder={
-                selectedType === 'movie' ? "Describe your movie plot, main characters, and unique selling points..." :
-                selectedType === 'game' ? "Explain your game concept, core mechanics, target audience, and what makes it unique..." :
-                "Describe your business idea, target market, problem it solves, and revenue model..."
-              }
-            />
-            <div className="mt-2 flex justify-between text-sm text-gray-500">
-              <span>Word count: {description.trim().split(/\s+/).filter(w => w.length > 0).length}/500</span>
-              <span className={description.trim().split(/\s+/).filter(w => w.length > 0).length < 30 ? 'text-red-500' : ''}>
-                Minimum: 30 words
-              </span>
+            <div className="flex justify-between mt-4">
+              <span className="font-ui text-sm">Type</span>
+              <span className="font-ui text-sm">Details</span>
+              <span className="font-ui text-sm">Content</span>
             </div>
           </div>
-
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading || submissionsRemaining === 0}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Analyzing with AI...
-              </span>
-            ) : (
-              "Get VC Feedback"
-            )}
-          </button>
         </div>
-      )}
-    </div>
-  );
+
+        {/* Form */}
+        <div className="max-w-2xl mx-auto px-8 py-12">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-500 rounded-lg">
+              <p className="font-body text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* Step 1: Type Selection */}
+            {currentStep === 1 && (
+              <Card>
+                <h2 className="text-2xl font-display font-bold mb-6">
+                  WHAT ARE YOU SUBMITTING?
+                </h2>
+                
+                <div className="space-y-4">
+                  {[
+                    { value: 'entertainment', label: '🎬 Film / TV Script', desc: 'Screenplay, series, or story' },
+                    { value: 'game', label: '🎮 Game Concept', desc: 'Video game, board game, or app' },
+                    { value: 'business', label: '💼 Business Idea', desc: 'Startup, product, or service' }
+                  ].map((option) => (
+                    <label key={option.value} className="block">
+                      <input
+                        type="radio"
+                        name="type"
+                        value={option.value}
+                        checked={formData.type === option.value}
+                        onChange={handleInputChange}
+                        className="sr-only"
+                      />
+                      <div className={`
+                        p-6 border-2 rounded-lg cursor-pointer transition-all
+                        ${formData.type === option.value 
+                          ? 'border-black bg-gray-50' 
+                          : 'border-gray-300 hover:border-gray-500'}
+                      `}>
+                        <div className="text-xl font-ui font-bold mb-1">{option.label}</div>
+                        <div className="font-body text-sm text-gray-600">{option.desc}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <Button onClick={nextStep} variant="primary" size="lg">
+                    Next Step →
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Step 2: Details */}
+            {currentStep === 2 && (
+              <Card>
+                <h2 className="text-2xl font-display font-bold mb-6">
+                  TELL US THE BASICS
+                </h2>
+
+                <Input
+                  label="Title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder={
+                    formData.type === 'entertainment' ? 'The Last Stand' :
+                    formData.type === 'game' ? 'Zombie Survival RPG' :
+                    'UberEats for Home Services'
+                  }
+                  required
+                />
+
+                {formData.type === 'entertainment' && (
+                  <Select
+                    label="Genre"
+                    name="genre"
+                    value={formData.genre}
+                    onChange={handleInputChange}
+                    options={[
+                      { value: 'action', label: 'Action' },
+                      { value: 'comedy', label: 'Comedy' },
+                      { value: 'drama', label: 'Drama' },
+                      { value: 'horror', label: 'Horror' },
+                      { value: 'scifi', label: 'Sci-Fi' },
+                      { value: 'thriller', label: 'Thriller' },
+                      { value: 'romance', label: 'Romance' },
+                      { value: 'other', label: 'Other' }
+                    ]}
+                    required
+                  />
+                )}
+
+                {formData.type === 'game' && (
+                  <Select
+                    label="Genre"
+                    name="genre"
+                    value={formData.genre}
+                    onChange={handleInputChange}
+                    options={[
+                      { value: 'action', label: 'Action' },
+                      { value: 'adventure', label: 'Adventure' },
+                      { value: 'puzzle', label: 'Puzzle' },
+                      { value: 'strategy', label: 'Strategy' },
+                      { value: 'rpg', label: 'RPG' },
+                      { value: 'simulation', label: 'Simulation' },
+                      { value: 'sports', label: 'Sports' },
+                      { value: 'other', label: 'Other' }
+                    ]}
+                    required
+                  />
+                )}
+
+                {formData.type === 'business' && (
+                  <Select
+                    label="Industry"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleInputChange}
+                    options={[
+                      { value: 'tech', label: 'Technology' },
+                      { value: 'health', label: 'Healthcare' },
+                      { value: 'finance', label: 'Finance' },
+                      { value: 'education', label: 'Education' },
+                      { value: 'retail', label: 'Retail' },
+                      { value: 'food', label: 'Food & Beverage' },
+                      { value: 'entertainment', label: 'Entertainment' },
+                      { value: 'other', label: 'Other' }
+                    ]}
+                    required
+                  />
+                )}
+
+                <Input
+                  label="Target Audience"
+                  name="targetAudience"
+                  value={formData.targetAudience}
+                  onChange={handleInputChange}
+                  placeholder="Young adults, 18-35, who love thrillers"
+                  required
+                />
+
+                <div className="mt-8 flex justify-between">
+                  <Button onClick={prevStep} variant="outline">
+                    ← Back
+                  </Button>
+                  <Button onClick={nextStep} variant="primary" size="lg">
+                    Next Step →
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Step 3: Content */}
+            {currentStep === 3 && (
+              <Card>
+                <h2 className="text-2xl font-display font-bold mb-6">
+                  PITCH YOUR IDEA
+                </h2>
+
+                <Textarea
+                  label={
+                    formData.type === 'entertainment' ? 'Synopsis' :
+                    formData.type === 'game' ? 'Game Concept' :
+                    'Business Plan'
+                  }
+                  name="content"
+                  value={formData.content}
+                  onChange={handleInputChange}
+                  placeholder={
+                    formData.type === 'entertainment' 
+                      ? 'In a world where... A reluctant hero must...' 
+                      : formData.type === 'game'
+                      ? 'Players take on the role of... The objective is to...'
+                      : 'We solve the problem of... Our solution is...'
+                  }
+                  rows={8}
+                  required
+                />
+
+                <Textarea
+                  label="What Makes It Unique?"
+                  name="uniqueValue"
+                  value={formData.uniqueValue}
+                  onChange={handleInputChange}
+                  placeholder="Unlike existing solutions, this idea..."
+                  rows={4}
+                  required
+                />
+
+                <div className="mt-8 p-6 bg-gray-50 border-2 border-black rounded-lg">
+                  <h3 className="font-ui font-bold mb-2">What happens next?</h3>
+                  <ul className="font-body text-sm space-y-2">
+                    <li>• Our AI will analyze your idea (takes ~10 seconds)</li>
+                    <li>• You'll receive a score from 1-10</li>
+                    <li>• Your idea enters the public leaderboard</li>
+                    <li>• Community members can vote and comment</li>
+                    <li>• Top ideas win monthly prizes!</li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 flex justify-between">
+                  <Button onClick={prevStep} variant="outline">
+                    ← Back
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    variant="primary" 
+                    size="lg"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Analyzing...' : 'Submit for AI Scoring →'}
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </form>
+        </div>
+      </PageLayout>
+
+      <style jsx>{`
+        .font-display {
+          font-family: 'DrukWide', Impact, sans-serif;
+        }
+        .font-ui {
+          font-family: 'Bahnschrift', system-ui, sans-serif;
+        }
+        .font-body {
+          font-family: 'Courier', 'Courier New', monospace;
+        }
+      `}</style>
+    </>
+  )
 }
-
-// Score Card Component
-const ScoreCard = ({ 
-  label, 
-  score, 
-  feedback, 
-  isOverall = false 
-}: { 
-  label: string; 
-  score: number; 
-  feedback: string; 
-  isOverall?: boolean; 
-}) => {
-  const getScoreColor = (score: number) => {
-    if (score >= 8.0) return 'text-green-600 bg-green-50 border-green-200';
-    if (score >= 6.0) return 'text-blue-600 bg-blue-50 border-blue-200';
-    if (score >= 4.0) return 'text-amber-600 bg-amber-50 border-amber-200';
-    return 'text-red-600 bg-red-50 border-red-200';
-  };
-
-  return (
-    <div className={`p-4 rounded-lg border-2 ${getScoreColor(score)} ${isOverall ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}>
-      <div className="text-center mb-2">
-        <div className="text-2xl font-bold">{score.toFixed(2)}</div>
-        <div className="text-sm font-medium">{label}</div>
-      </div>
-      <p className="text-xs leading-tight">{feedback}</p>
-    </div>
-  );
-};
