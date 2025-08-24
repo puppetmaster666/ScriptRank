@@ -1,3 +1,4 @@
+// pages/ideas/[id].tsx - COMPLETE FILE
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -214,14 +215,16 @@ export default function IdeaDetailsPage() {
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{idea.title}</h1>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={idea.userPhotoURL || '/default-avatar.png'} 
-                        alt={idea.username}
-                        className="w-6 h-6 rounded-full"
-                      />
-                      <span>by {idea.username}</span>
-                    </div>
+                    <Link href={`/profile/${idea.username}`}>
+                      <a className="flex items-center gap-2 hover:text-blue-600 transition">
+                        <img 
+                          src={idea.userPhotoURL || '/default-avatar.png'} 
+                          alt={idea.username}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                        <span>by {idea.username}</span>
+                      </a>
+                    </Link>
                     <span>•</span>
                     <span>{idea.createdAt.toLocaleDateString()}</span>
                     <span>•</span>
