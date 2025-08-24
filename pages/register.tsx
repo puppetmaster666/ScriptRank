@@ -1,14 +1,14 @@
-// pages/register.tsx
+// pages/register.tsx - FIXED VERSION WITH TOGGLE
 import { useState } from 'react'
 import Head from 'next/head'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { PageLayout, Button, Input, Card } from '@/components/designSystem'
 
 export default function RegisterPage() {
+  const [isLogin, setIsLogin] = useState(false) // Toggle between login/register
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -30,58 +30,63 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-
-    if (!/^[a-zA-Z0-9._]+$/.test(formData.username)) {
-      setError('Username can only contain letters, numbers, dots and underscores')
-      return
-    }
-
     setLoading(true)
 
     try {
-      // Create auth user
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      )
+      if (isLogin) {
+        // LOGIN
+        await signInWithEmailAndPassword(auth, formData.email, formData.password)
+        router.push('/dashboard')
+      } else {
+        // REGISTER
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match')
+          setLoading(false)
+          return
+        }
 
-      const user = userCredential.user
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters')
+          setLoading(false)
+          return
+        }
 
-      // Update display name
-      await updateProfile(user, {
-        displayName: formData.fullName,
-        photoURL: `https://ui-avatars.com/api/?name=${formData.fullName}&background=000&color=fff`
-      })
+        if (!/^[a-zA-Z0-9._]+$/.test(formData.username)) {
+          setError('Username can only contain letters, numbers, dots and underscores')
+          setLoading(false)
+          return
+        }
 
-      // Create user profile in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: formData.email,
-        displayName: formData.fullName,
-        username: formData.username.toLowerCase(),
-        photoURL: `https://ui-avatars.com/api/?name=${formData.fullName}&background=000&color=fff`,
-        bio: '',
-        location: '',
-        website: '',
-        isPremium: false,
-        createdAt: new Date(),
-        followers: [],
-        following: []
-      })
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        )
 
-      router.push('/profile/' + formData.username.toLowerCase())
+        const user = userCredential.user
+
+        await updateProfile(user, {
+          displayName: formData.fullName,
+          photoURL: `https://ui-avatars.com/api/?name=${formData.fullName}&background=000&color=fff`
+        })
+
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: formData.email,
+          displayName: formData.fullName,
+          username: formData.username.toLowerCase(),
+          photoURL: `https://ui-avatars.com/api/?name=${formData.fullName}&background=000&color=fff`,
+          bio: '',
+          location: '',
+          website: '',
+          isPremium: false,
+          createdAt: new Date(),
+          followers: [],
+          following: []
+        })
+
+        router.push('/profile/' + formData.username.toLowerCase())
+      }
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Email is already registered')
@@ -89,8 +94,12 @@ export default function RegisterPage() {
         setError('Password is too weak')
       } else if (err.code === 'auth/invalid-email') {
         setError('Invalid email address')
+      } else if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email')
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password')
       } else {
-        setError('Failed to create account. Please try again.')
+        setError('Authentication failed. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -100,17 +109,21 @@ export default function RegisterPage() {
   return (
     <>
       <Head>
-        <title>Sign Up | Make Me Famous</title>
-        <meta name="description" content="Join Make Me Famous to submit your ideas and compete for prizes" />
+        <title>{isLogin ? 'Login' : 'Sign Up'} | Make Me Famous</title>
+        <meta name="description" content={isLogin ? 'Sign in to submit your ideas' : 'Join Make Me Famous'} />
       </Head>
 
       <PageLayout>
         <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
           <Card className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-display font-black mb-3">JOIN THE COMPETITION</h1>
+              <h1 className="text-4xl font-display font-black mb-3">
+                {isLogin ? 'WELCOME BACK' : 'JOIN THE COMPETITION'}
+              </h1>
               <p className="font-body text-gray-600">
-                Submit ideas. Get scored. Become famous.
+                {isLogin 
+                  ? 'Sign in to submit ideas and climb the leaderboard.'
+                  : 'Submit ideas. Get scored. Become famous.'}
               </p>
             </div>
 
@@ -121,23 +134,27 @@ export default function RegisterPage() {
             )}
 
             <form onSubmit={handleSubmit}>
-              <Input
-                label="Full Name"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="John Doe"
-                required
-              />
+              {!isLogin && (
+                <>
+                  <Input
+                    label="Full Name"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    required={!isLogin}
+                  />
 
-              <Input
-                label="Username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="johndoe"
-                required
-              />
+                  <Input
+                    label="Username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="johndoe"
+                    required={!isLogin}
+                  />
+                </>
+              )}
 
               <Input
                 label="Email"
@@ -159,52 +176,40 @@ export default function RegisterPage() {
                 required
               />
 
-              <Input
-                label="Confirm Password"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="••••••••"
-                required
-              />
-
-              <div className="mb-6">
-                <label className="flex items-start gap-2">
-                  <input 
-                    type="checkbox" 
-                    required
-                    className="mt-1 border-2 border-black rounded"
-                  />
-                  <span className="font-body text-sm text-gray-600">
-                    I agree to the{' '}
-                    <Link href="/terms" className="underline hover:no-underline">
-                      Terms of Service
-                    </Link>
-                    {' '}and{' '}
-                    <Link href="/privacy" className="underline hover:no-underline">
-                      Privacy Policy
-                    </Link>
-                  </span>
-                </label>
-              </div>
+              {!isLogin && (
+                <Input
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required={!isLogin}
+                />
+              )}
 
               <Button 
                 type="submit"
                 variant="primary" 
                 size="lg" 
-                className="w-full mb-6"
+                className="w-full mb-6 mt-6"
                 disabled={loading}
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading 
+                  ? (isLogin ? 'Signing in...' : 'Creating Account...') 
+                  : (isLogin ? 'Sign In' : 'Create Account')}
               </Button>
 
               <div className="text-center border-t-2 border-gray-200 pt-6">
                 <p className="font-body text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <Link href="/login" className="font-bold underline hover:no-underline">
-                    Sign in
-                  </Link>
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
+                  <button
+                    type="button"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="font-bold underline hover:no-underline"
+                  >
+                    {isLogin ? 'Sign up for free' : 'Sign in'}
+                  </button>
                 </p>
               </div>
             </form>
