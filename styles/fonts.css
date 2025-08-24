@@ -1,7 +1,7 @@
 /* styles/fonts.css */
 @font-face {
   font-family: 'DrukWide';
-  src: url('/fonts/DrukWide-Heavy-Trial.otf') format('opentype');
+  src: url('/fonts/Druk-HeavyItalic-Trial.otf') format('opentype');  /* Changed filename */
   font-weight: 900;
   font-style: normal;
   font-display: swap;
