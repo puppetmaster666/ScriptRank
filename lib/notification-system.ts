@@ -160,8 +160,8 @@ export async function unfollowUser(followerId: string, followedId: string) {
 export async function isFollowing(followerId: string, followedId: string): Promise<boolean> {
   try {
     const followingId = `${followerId}_${followedId}`;
-    const doc = await getDoc(doc(db, 'following', followingId));
-    return doc.exists();
+    const followDoc = await getDoc(doc(db, 'following', followingId));
+    return followDoc.exists();
   } catch (error) {
     console.error('Error checking follow status:', error);
     return false;
