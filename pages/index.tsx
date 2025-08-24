@@ -161,28 +161,17 @@ export default function HomePage() {
                     src="/models/tv.glb"
                     alt="3D TV Model"
                     auto-rotate
+                    rotation-per-second="30deg"
                     camera-controls
+                    disable-zoom
                     shadow-intensity="1"
                     exposure="1.2"
-                    style="width: 100%; height: 400px; border-radius: 12px; background: linear-gradient(to right, #9333ea, #ec4899);">
-                    <div slot="progress-bar" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-                      <div style="text-align: center; color: white;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📺</div>
-                        <p style="font-size: 1.25rem;">Loading 3D Model...</p>
-                      </div>
-                    </div>
+                    interaction-prompt="none"
+                    style="width: 100%; height: 400px; background: transparent;">
                   </model-viewer>
                 `
               }}
             />
-            
-            {/* Fallback if model doesn't load */}
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
-              <div className="text-center text-white">
-                <div className="text-6xl mb-4 animate-pulse">📺</div>
-                <p className="text-xl">3D TV Model</p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
