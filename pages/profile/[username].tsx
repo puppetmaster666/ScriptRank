@@ -332,7 +332,7 @@ export default function ProfilePage() {
                     {isFollowing ? 'Following' : 'Follow'}
                   </Button>
                 ) : (
-                  <Button variant="primary" href="/login">
+                  <Button variant="primary" href="/register">
                     Sign In to Follow
                   </Button>
                 )}
@@ -365,7 +365,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               {ideas.length > 0 ? (
                 ideas.map(idea => (
-                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                  <Link key={idea.id} href={`/ideas/${idea.id}`}>
                     <Card hover>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -408,7 +408,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               {votedIdeas.length > 0 ? (
                 votedIdeas.map(idea => (
-                  <Link key={idea.id} href={`/idea/${idea.id}`}>
+                  <Link key={idea.id} href={`/ideas/${idea.id}`}>
                     <Card hover>
                       <h3 className="font-display font-bold">{idea.title}</h3>
                       <p className="font-body text-sm text-gray-600">
