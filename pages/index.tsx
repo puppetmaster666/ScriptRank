@@ -1,7 +1,8 @@
-// pages/index.tsx - COMPLETE FILE
+// pages/index.tsx - COMPLETE FILE WITH FIX
 import Head from 'next/head'
 import Link from 'next/link'
 import LeaderboardPage from './leaderboard'
+// REMOVED: import ArchiveSidebar from '@/components/ArchiveSidebar'
 
 export default function HomePage() {
   return (
@@ -36,23 +37,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Leaderboard Section with Archive Sidebar */}
+      {/* Leaderboard Section - FIXED: No duplicate sidebar */}
       <section id="leaderboard" className="py-20 px-6 bg-gray-100">
         <div className="max-w-7xl mx-auto">
           <LeaderboardPage />
-        </div>
-      </section>
-            
-            {/* Archive Sidebar - Takes 1 column */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span>📚</span> Previous Months
-                </h2>
-                <ArchiveSidebar />
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
