@@ -61,8 +61,27 @@ export default function Header() {
           console.log('Error fetching notifications:', error)
           // Set some mock notifications for testing
           setNotifications([
-            { id: '1', message: 'Your idea received 10 votes!', read: false, createdAt: new Date() },
-            { id: '2', message: 'Someone commented on your submission', read: false, createdAt: new Date() }
+            { 
+              id: '1', 
+              message: 'Your idea "Neon Nights" received 10 votes!', 
+              link: '/idea/abc123',
+              read: false, 
+              createdAt: new Date() 
+            },
+            { 
+              id: '2', 
+              message: 'Sarah Chen started following you', 
+              link: '/profile/sarah.chen',
+              read: false, 
+              createdAt: new Date() 
+            },
+            { 
+              id: '3', 
+              message: 'New comment on "Mind Maze VR"', 
+              link: '/idea/xyz789#comments',
+              read: true, 
+              createdAt: new Date() 
+            }
           ])
           setUnreadCount(2)
         }
@@ -161,10 +180,14 @@ export default function Header() {
                         <div className="max-h-96 overflow-y-auto">
                           {notifications.length > 0 ? (
                             notifications.map((notif) => (
-                              <div
+                              <Link
                                 key={notif.id}
-                                onClick={() => markAsRead(notif.id)}
-                                className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                                href={notif.link || '#'}
+                                onClick={() => {
+                                  markAsRead(notif.id)
+                                  setShowNotifications(false)
+                                }}
+                                className={`block p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
                                   !notif.read ? 'bg-blue-50' : ''
                                 }`}
                               >
@@ -172,7 +195,7 @@ export default function Header() {
                                 <p className="text-xs text-gray-500 mt-1">
                                   {notif.createdAt?.toDate?.()?.toLocaleDateString() || 'Just now'}
                                 </p>
-                              </div>
+                              </Link>
                             ))
                           ) : (
                             <div className="p-4 text-center text-gray-500 text-sm">
@@ -183,10 +206,14 @@ export default function Header() {
                         {notifications.length > 0 && (
                           <div className="p-3 border-t border-gray-200">
                             <button 
-                              onClick={() => setShowNotifications(false)}
+                              onClick={() => {
+                                // Mark all as read
+                                notifications.forEach(n => markAsRead(n.id))
+                                setShowNotifications(false)
+                              }}
                               className="text-sm text-gray-600 hover:text-black w-full text-center"
                             >
-                              Clear all
+                              Mark all as read
                             </button>
                           </div>
                         )}
