@@ -19,6 +19,10 @@ interface Idea {
   aiScore: number
   votes: any[]
   voteCount: number
+  publicScore?: {
+    average: number
+    count: number
+  }
   views: number
   status: 'INVEST' | 'MAYBE' | 'PASS'
   createdAt: any
@@ -261,7 +265,7 @@ export default function LeaderboardPage() {
                 <div className="col-span-5">Idea</div>
                 <div className="col-span-2">Creator</div>
                 <div className="col-span-1 text-center">AI</div>
-                <div className="col-span-1 text-center">Votes</div>
+                <div className="col-span-1 text-center">Public</div>
                 <div className="col-span-1 text-center">Total</div>
                 <div className="col-span-1">Status</div>
               </div>
@@ -299,7 +303,7 @@ export default function LeaderboardPage() {
                         
                         <div className="flex justify-between font-ui text-sm">
                           <span>AI: {idea.aiScore}</span>
-                          <span>Votes: {idea.voteCount}</span>
+                          <span>Public: {idea.publicScore ? idea.publicScore.average.toFixed(1) : '-'}</span>
                           <span className="font-bold">Total: {totalScore}</span>
                         </div>
                       </div>
@@ -338,7 +342,9 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-1 text-center">
-                          <span className="font-ui">{idea.voteCount}</span>
+                          <span className="font-ui">
+                            {idea.publicScore ? idea.publicScore.average.toFixed(1) : '-'}
+                          </span>
                         </div>
                         
                         <div className="col-span-1 text-center">
