@@ -1,4 +1,4 @@
-// pages/idea/[id].tsx
+// pages/ideas/[id].tsx
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -355,7 +355,7 @@ export default function IdeaDetailPage() {
                 ) : (
                   <div className="p-4 bg-gray-50 border-2 border-gray-300 rounded-lg mb-6">
                     <p className="font-body text-sm text-center">
-                      <Link href="/login" className="underline hover:no-underline">Sign in</Link> to comment
+                      <Link href="/register" className="underline hover:no-underline">Sign in</Link> to comment
                     </p>
                   </div>
                 )}
@@ -415,7 +415,7 @@ export default function IdeaDetailPage() {
                   </div>
                 ) : (
                   <p className="font-body text-sm text-center">
-                    <Link href="/login" className="underline hover:no-underline">Sign in</Link> to vote
+                    <Link href="/register" className="underline hover:no-underline">Sign in</Link> to vote
                   </p>
                 )}
               </Card>
