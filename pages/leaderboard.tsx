@@ -121,12 +121,12 @@ export default function LeaderboardPage() {
     }
   }
 
-  const getTypeIcon = (type: string) => {
+  const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'entertainment': return '🎬'
-      case 'game': return '🎮'
-      case 'business': return '💼'
-      default: return '💡'
+      case 'entertainment': return 'Film'
+      case 'game': return 'Game'
+      case 'business': return 'Business'
+      default: return 'Idea'
     }
   }
 
@@ -142,8 +142,8 @@ export default function LeaderboardPage() {
   }
 
   const calculateTotalScore = (idea: Idea) => {
-    // AI score (0-10) + public votes (weighted)
-    return (idea.aiScore + (idea.voteCount * 0.1)).toFixed(1)
+    const publicScore = idea.publicScore?.average || 0
+    return ((idea.aiScore + publicScore) / 2).toFixed(1)
   }
 
   return (
@@ -192,9 +192,9 @@ export default function LeaderboardPage() {
               <div className="flex gap-2">
                 {[
                   { id: 'all', label: 'All Ideas' },
-                  { id: 'entertainment', label: '🎬 Film' },
-                  { id: 'game', label: '🎮 Games' },
-                  { id: 'business', label: '💼 Business' }
+                  { id: 'entertainment', label: 'Film' },
+                  { id: 'game', label: 'Games' },
+                  { id: 'business', label: 'Business' }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -287,10 +287,7 @@ export default function LeaderboardPage() {
                               index === 2 ? 'text-orange-600' :
                               'text-black'
                             }`}>
-                              {index === 0 ? '🥇' : 
-                               index === 1 ? '🥈' : 
-                               index === 2 ? '🥉' : 
-                               `#${index + 1}`}
+                              {index + 1}
                             </div>
                             <div className="text-2xl">{getTypeIcon(idea.type)}</div>
                           </div>
@@ -324,14 +321,11 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{getTypeIcon(idea.type)}</span>
-                            <div>
-                              <h3 className="font-display font-bold text-lg">{idea.title}</h3>
-                              <p className="font-body text-xs text-gray-600">
-                                {idea.content.substring(0, 60)}...
-                              </p>
-                            </div>
+                          <div>
+                            <h3 className="font-display font-bold text-lg">{idea.title}</h3>
+                            <p className="font-body text-xs text-gray-600">
+                              {getTypeLabel(idea.type)} • {idea.content.substring(0, 60)}...
+                            </p>
                           </div>
                         </div>
                         
