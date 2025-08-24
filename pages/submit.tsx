@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { useAuthState } from 'react-firebase-hooks/auth'
+import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { PageLayout, Button, Input, Textarea, Select, Card } from '@/components/designSystem'
 
 export default function SubmitPage() {
-  const [user, loading] = useAuthState(auth)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -25,10 +26,15 @@ export default function SubmitPage() {
   })
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+      setLoading(false)
+      if (!user) {
+        router.push('/register')
+      }
+    })
+    return () => unsubscribe()
+  }, [router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
