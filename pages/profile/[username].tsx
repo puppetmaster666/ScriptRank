@@ -1,11 +1,12 @@
-// pages/profile/[username].tsx - NEW FILE
+// pages/profile/[username].tsx - COMPLETE FILE
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { followUser, unfollowUser } from '@/lib/notification-system';
 
 interface UserProfile {
   uid: string;
@@ -47,6 +48,7 @@ export default function UserProfilePage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, setCurrentUser);
@@ -78,13 +80,9 @@ export default function UserProfilePage() {
 
         // Check if current user follows this user
         if (currentUser) {
-          const followQuery = query(
-            collection(db, 'following'),
-            where('followerId', '==', currentUser.uid),
-            where('followedId', '==', userId)
-          );
-          const followSnapshot = await getDocs(followQuery);
-          setIsFollowing(!followSnapshot.empty);
+          const followingId = `${currentUser.uid}_${userId}`;
+          const followDoc = await getDoc(doc(db, 'following', followingId));
+          setIsFollowing(followDoc.exists());
         }
 
         // Load user's ideas
@@ -118,9 +116,46 @@ export default function UserProfilePage() {
       return;
     }
 
-    // This would use the toggleFollow function from firebase-collections.ts
-    // For now, just show the UI change
-    setIsFollowing(!isFollowing);
+    if (followLoading) return;
+    setFollowLoading(true);
+
+    try {
+      // Get current user's profile for username and photo
+      const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const currentUserData = currentUserDoc.data();
+      
+      if (isFollowing) {
+        // Unfollow
+        await unfollowUser(currentUser.uid, profile.uid);
+        setIsFollowing(false);
+        
+        // Update local follower count
+        setProfile(prev => prev ? {
+          ...prev,
+          followersCount: Math.max(0, (prev.followersCount || 1) - 1)
+        } : null);
+      } else {
+        // Follow
+        await followUser(
+          currentUser.uid, 
+          profile.uid,
+          currentUserData?.username || 'Anonymous',
+          currentUserData?.photoURL
+        );
+        setIsFollowing(true);
+        
+        // Update local follower count
+        setProfile(prev => prev ? {
+          ...prev,
+          followersCount: (prev.followersCount || 0) + 1
+        } : null);
+      }
+    } catch (error: any) {
+      console.error('Error toggling follow:', error);
+      alert(error.message || 'Failed to update follow status');
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   if (loading) {
@@ -154,7 +189,7 @@ export default function UserProfilePage() {
         <meta name="description" content={`View ${profile.displayName}'s ideas and stats`} />
       </Head>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 pt-20">
         {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
           <div className="flex items-start gap-6">
@@ -186,13 +221,14 @@ export default function UserProfilePage() {
                   ) : currentUser && (
                     <button
                       onClick={handleFollow}
-                      className={`px-6 py-2 rounded-lg transition ${
+                      disabled={followLoading}
+                      className={`px-6 py-2 rounded-lg transition disabled:opacity-50 ${
                         isFollowing 
                           ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
                     >
-                      {isFollowing ? 'Following' : 'Follow'}
+                      {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
                     </button>
                   )}
                 </div>
