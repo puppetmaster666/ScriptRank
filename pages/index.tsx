@@ -40,11 +40,9 @@ export default function HomePage() {
       {/* Leaderboard Section with Archive Sidebar */}
       <section id="leaderboard" className="py-20 px-6 bg-gray-100">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Main Leaderboard - Takes 3 columns */}
-            <div className="lg:col-span-3">
-              <LeaderboardPage />
-            </div>
+          <LeaderboardPage />
+        </div>
+      </section>
             
             {/* Archive Sidebar - Takes 1 column */}
             <div className="space-y-6">
