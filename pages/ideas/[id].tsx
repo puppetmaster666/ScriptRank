@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useAuthState } from 'react-firebase-hooks/auth'
+import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { PageLayout, Button, Card, Badge, Textarea, EmptyState } from '@/components/designSystem'
@@ -41,7 +41,8 @@ interface Comment {
 export default function IdeaDetailPage() {
   const router = useRouter()
   const { id } = router.query
-  const [user] = useAuthState(auth)
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   
   const [idea, setIdea] = useState<IdeaData | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -50,6 +51,14 @@ export default function IdeaDetailPage() {
   const [commenting, setCommenting] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [userVote, setUserVote] = useState<number>(0) // -1, 0, or 1
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+      setAuthLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     if (id) {
