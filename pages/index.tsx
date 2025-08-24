@@ -2,7 +2,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import LeaderboardPage from './leaderboard'
-import ArchiveSidebar from '@/components/ArchiveSidebar'
 
 export default function HomePage() {
   return (
