@@ -8,13 +8,23 @@ import { doc, onSnapshot } from 'firebase/firestore'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
+  const [username, setUsername] = useState<string>('')
   const [scrolled, setScrolled] = useState(false)
   const [notifications, setNotifications] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
+      if (user) {
+        // Get username from profiles collection
+        const profileDoc = doc(db, 'profiles', user.uid)
+        onSnapshot(profileDoc, (doc) => {
+          if (doc.exists()) {
+            setUsername(doc.data().username || '')
+          }
+        })
+      }
     })
 
     const handleScroll = () => {
@@ -57,13 +67,13 @@ export default function Header() {
       scrolled ? 'bg-white/95 backdrop-blur-md border-b-2 border-black shadow-sm' : 'bg-white border-b-2 border-black'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <img 
               src="/images/logo.png" 
               alt="Make Me Famous" 
-              className="h-10 w-auto"
+              className="h-16 sm:h-20 w-auto"
               style={{ objectFit: 'contain' }}
             />
           </Link>
@@ -86,19 +96,25 @@ export default function Header() {
             {user ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href="/notifications"
                   className="nav-link relative"
                 >
-                  Dashboard
+                  <span className="text-xl">🔔</span>
                   {notifications > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                       {notifications}
                     </span>
                   )}
                 </Link>
+                <Link
+                  href="/dashboard"
+                  className="nav-link"
+                >
+                  Dashboard
+                </Link>
                 <div className="flex items-center space-x-3">
                   <Link
-                    href={`/profile/${user.uid}`}
+                    href={`/profile/${username || user.uid}`}
                     className="flex items-center space-x-2"
                   >
                     <img
