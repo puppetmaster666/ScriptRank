@@ -1,3 +1,4 @@
+// pages/leaderboard.tsx - COMPLETE FILE
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import { auth, db } from '@/lib/firebase';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { castVote } from '@/lib/firebase-collections';
+import ArchiveSidebar from '@/components/ArchiveSidebar';
 
 type Idea = {
   id: string;
@@ -406,6 +408,14 @@ export default function LeaderboardPage() {
                   Execution Score
                 </button>
               </div>
+            </div>
+
+            {/* Archive Section - NEW */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>📚</span> Previous Months
+              </h2>
+              <ArchiveSidebar />
             </div>
 
             {/* Vote Modal */}
