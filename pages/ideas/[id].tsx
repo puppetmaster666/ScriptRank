@@ -1,4 +1,4 @@
-// pages/ideas/[id].tsx
+// pages/ideas/[id].tsx - FIXED VERSION
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore'
-import { PageLayout, Button, Card, Badge, Textarea, EmptyState } from '@/components/designSystem'
 
 interface IdeaData {
   id: string
@@ -18,15 +17,31 @@ interface IdeaData {
   uniqueValue?: string
   targetAudience?: string
   userId: string
-  userName: string
-  userPhotoURL: string
-  aiScore: number
-  aiComment: string
-  status: 'INVEST' | 'MAYBE' | 'PASS'
-  votes: { userId: string; userName: string; value: number }[]
-  voteCount: number
-  views: number
+  userName?: string
+  username?: string
+  userPhotoURL?: string
+  aiScore?: number
+  aiScores?: {
+    overall: number
+    market: number
+    innovation: number
+    execution: number
+    verdict?: string
+    marketFeedback?: string
+    innovationFeedback?: string
+    executionFeedback?: string
+    investmentStatus?: 'INVEST' | 'PASS' | 'MAYBE'
+  }
+  aiComment?: string
+  status?: 'INVEST' | 'MAYBE' | 'PASS'
+  votes?: { userId: string; userName: string; value: number }[]
+  voteCount?: number
+  views?: number
   createdAt: any
+  publicScore?: {
+    average: number
+    count: number
+  }
 }
 
 interface Comment {
@@ -61,14 +76,15 @@ export default function IdeaDetailPage() {
   }, [])
 
   useEffect(() => {
-    if (id) {
+    if (id && typeof id === 'string') {
       fetchIdea()
       fetchComments()
     }
   }, [id])
 
   useEffect(() => {
-    if (user && idea) {
+    // Fixed: Check if user, idea, and votes exist before finding
+    if (user && idea && idea.votes && Array.isArray(idea.votes)) {
       const existingVote = idea.votes.find(v => v.userId === user.uid)
       if (existingVote) {
         setUserVote(existingVote.value)
@@ -77,50 +93,73 @@ export default function IdeaDetailPage() {
   }, [user, idea])
 
   const fetchIdea = async () => {
-    if (!id) return
+    if (!id || typeof id !== 'string') return
     
     try {
-      const ideaDoc = await getDoc(doc(db, 'ideas', id as string))
+      const ideaDoc = await getDoc(doc(db, 'ideas', id))
       
       if (ideaDoc.exists()) {
-        const data = { id: ideaDoc.id, ...ideaDoc.data() } as IdeaData
-        setIdea(data)
+        const data = ideaDoc.data()
+        const ideaData: IdeaData = { 
+          id: ideaDoc.id, 
+          ...data,
+          // Ensure arrays exist
+          votes: data.votes || [],
+          // Handle both userName and username
+          userName: data.userName || data.username || 'Anonymous'
+        } as IdeaData
+        
+        setIdea(ideaData)
         
         // Increment view count
-        await updateDoc(doc(db, 'ideas', id as string), {
-          views: (data.views || 0) + 1
-        })
+        try {
+          await updateDoc(doc(db, 'ideas', id), {
+            views: (data.views || 0) + 1
+          })
+        } catch (err) {
+          console.log('Could not update views')
+        }
       } else {
+        console.error('Idea not found')
         router.push('/404')
       }
     } catch (error) {
       console.error('Error fetching idea:', error)
+      router.push('/404')
     } finally {
       setLoading(false)
     }
   }
 
   const fetchComments = () => {
-    if (!id) return
+    if (!id || typeof id !== 'string') return
     
-    const commentsQuery = query(
-      collection(db, 'ideas', id as string, 'comments'),
-      orderBy('createdAt', 'desc')
-    )
-    
-    const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
-      const commentsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Comment[]
-      setComments(commentsData)
-    })
-    
-    return () => unsubscribe()
+    try {
+      const commentsQuery = query(
+        collection(db, 'ideas', id, 'comments'),
+        orderBy('createdAt', 'desc')
+      )
+      
+      const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
+        const commentsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Comment[]
+        setComments(commentsData)
+      }, (error) => {
+        console.error('Error fetching comments:', error)
+        setComments([])
+      })
+      
+      return () => unsubscribe()
+    } catch (error) {
+      console.error('Error setting up comments listener:', error)
+      setComments([])
+    }
   }
 
   const handleVote = async (value: number) => {
-    if (!user || !idea || voting) return
+    if (!user || !idea || voting || !id) return
     
     setVoting(true)
     
@@ -132,18 +171,21 @@ export default function IdeaDetailPage() {
       }
       
       // Remove existing vote if any
-      if (userVote !== 0) {
-        await updateDoc(doc(db, 'ideas', id as string), {
-          votes: arrayRemove({ userId: user.uid, userName: user.displayName || 'Anonymous', value: userVote }),
-          voteCount: idea.voteCount - userVote
-        })
+      if (userVote !== 0 && idea.votes) {
+        const existingVote = idea.votes.find(v => v.userId === user.uid)
+        if (existingVote) {
+          await updateDoc(doc(db, 'ideas', id as string), {
+            votes: arrayRemove(existingVote),
+            voteCount: (idea.voteCount || 0) - userVote
+          })
+        }
       }
       
       // Add new vote if not removing
       if (value !== userVote) {
         await updateDoc(doc(db, 'ideas', id as string), {
           votes: arrayUnion(voteData),
-          voteCount: idea.voteCount - userVote + value
+          voteCount: (idea.voteCount || 0) - userVote + value
         })
         setUserVote(value)
       } else {
@@ -154,6 +196,7 @@ export default function IdeaDetailPage() {
       await fetchIdea()
     } catch (error) {
       console.error('Error voting:', error)
+      alert('Failed to vote. Please try again.')
     } finally {
       setVoting(false)
     }
@@ -161,7 +204,7 @@ export default function IdeaDetailPage() {
 
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !commentText.trim() || commenting) return
+    if (!user || !commentText.trim() || commenting || !id) return
     
     setCommenting(true)
     
@@ -177,6 +220,7 @@ export default function IdeaDetailPage() {
       setCommentText('')
     } catch (error) {
       console.error('Error adding comment:', error)
+      alert('Failed to add comment. Please try again.')
     } finally {
       setCommenting(false)
     }
@@ -184,14 +228,19 @@ export default function IdeaDetailPage() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'entertainment': return '🎬'
-      case 'game': return '🎮'
-      case 'business': return '💼'
-      default: return '💡'
+      case 'movie':
+      case 'entertainment': 
+        return '🎬'
+      case 'game': 
+        return '🎮'
+      case 'business': 
+        return '💼'
+      default: 
+        return '💡'
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
     switch (status) {
       case 'INVEST': return 'text-green-600'
       case 'MAYBE': return 'text-yellow-600'
@@ -199,29 +248,43 @@ export default function IdeaDetailPage() {
     }
   }
 
+  // Get AI score safely
+  const getAIScore = (): number => {
+    if (idea?.aiScores?.overall) return idea.aiScores.overall
+    if (idea?.aiScore) return idea.aiScore
+    return 0
+  }
+
+  const getInvestmentStatus = (): string => {
+    if (idea?.aiScores?.investmentStatus) return idea.aiScores.investmentStatus
+    if (idea?.status) return idea.status
+    return 'PASS'
+  }
+
   if (loading) {
     return (
-      <PageLayout>
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </PageLayout>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+      </div>
     )
   }
 
   if (!idea) {
     return (
-      <PageLayout>
-        <EmptyState 
-          title="Idea not found"
-          description="This idea may have been removed or doesn't exist."
-          action={{ label: "View Leaderboard", href: "/leaderboard" }}
-        />
-      </PageLayout>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Idea not found</h1>
+          <Link href="/leaderboard" className="text-blue-600 hover:underline">
+            Back to Leaderboard
+          </Link>
+        </div>
+      </div>
     )
   }
 
-  const totalScore = (idea.aiScore + (idea.voteCount * 0.1)).toFixed(1)
+  const aiScore = getAIScore()
+  const publicScore = idea.publicScore?.average || 0
+  const totalScore = publicScore > 0 ? ((aiScore + publicScore) / 2).toFixed(1) : aiScore.toFixed(1)
 
   return (
     <>
@@ -230,32 +293,23 @@ export default function IdeaDetailPage() {
         <meta name="description" content={idea.content.substring(0, 160)} />
       </Head>
 
-      <PageLayout>
+      <div className="min-h-screen bg-white">
         {/* Hero Section */}
         <div className="bg-black text-white py-12 px-8">
           <div className="max-w-4xl mx-auto">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm font-ui mb-6 opacity-75">
-              <Link href="/" className="hover:opacity-100">Home</Link>
-              <span>/</span>
-              <Link href="/leaderboard" className="hover:opacity-100">Leaderboard</Link>
-              <span>/</span>
-              <span className="opacity-100">{idea.title}</span>
-            </div>
-
             {/* Title and Type */}
             <div className="flex items-start gap-4 mb-6">
               <div className="text-5xl">{getTypeIcon(idea.type)}</div>
               <div className="flex-1">
-                <h1 className="text-4xl font-display font-black mb-2">
+                <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'DrukWide, Impact, sans-serif' }}>
                   {idea.title}
                 </h1>
-                <div className="flex items-center gap-4 font-body">
+                <div className="flex items-center gap-4" style={{ fontFamily: 'Courier New, monospace' }}>
                   <span>{idea.genre || idea.industry || idea.type}</span>
                   <span>•</span>
-                  <span>by <Link href={`/profile/${idea.userName.toLowerCase().replace(' ', '.')}`} className="underline hover:no-underline">{idea.userName}</Link></span>
+                  <span>by {idea.userName}</span>
                   <span>•</span>
-                  <span>{idea.views} views</span>
+                  <span>{idea.views || 0} views</span>
                 </div>
               </div>
             </div>
@@ -263,16 +317,16 @@ export default function IdeaDetailPage() {
             {/* Scores */}
             <div className="grid grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold font-ui">{idea.aiScore}/10</div>
-                <div className="font-body text-sm opacity-75">AI Score</div>
+                <div className="text-3xl font-bold">{aiScore.toFixed(1)}/10</div>
+                <div className="text-sm opacity-75">AI Score</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold font-ui">{idea.voteCount}</div>
-                <div className="font-body text-sm opacity-75">Community Votes</div>
+                <div className="text-3xl font-bold">{idea.voteCount || 0}</div>
+                <div className="text-sm opacity-75">Community Votes</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold font-ui">{totalScore}</div>
-                <div className="font-body text-sm opacity-75">Total Score</div>
+                <div className="text-3xl font-bold">{totalScore}</div>
+                <div className="text-sm opacity-75">Total Score</div>
               </div>
             </div>
           </div>
@@ -283,87 +337,96 @@ export default function IdeaDetailPage() {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* The Pitch */}
-              <Card>
-                <h2 className="text-2xl font-display font-bold mb-4">THE PITCH</h2>
-                <p className="font-body text-gray-800 whitespace-pre-wrap leading-relaxed">
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <h2 className="text-2xl font-bold mb-4">THE PITCH</h2>
+                <p className="whitespace-pre-wrap leading-relaxed">
                   {idea.content}
                 </p>
                 
                 {idea.uniqueValue && (
                   <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                    <h3 className="font-ui font-bold mb-2">What Makes It Unique</h3>
-                    <p className="font-body text-gray-700">
-                      {idea.uniqueValue}
-                    </p>
+                    <h3 className="font-bold mb-2">What Makes It Unique</h3>
+                    <p className="text-gray-700">{idea.uniqueValue}</p>
                   </div>
                 )}
                 
                 {idea.targetAudience && (
                   <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                    <h3 className="font-ui font-bold mb-2">Target Audience</h3>
-                    <p className="font-body text-gray-700">
-                      {idea.targetAudience}
-                    </p>
+                    <h3 className="font-bold mb-2">Target Audience</h3>
+                    <p className="text-gray-700">{idea.targetAudience}</p>
                   </div>
                 )}
-              </Card>
+              </div>
 
               {/* AI Analysis */}
-              <Card>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-display font-bold">AI ANALYSIS</h2>
-                  <div className={`text-3xl font-bold ${getStatusColor(idea.status)}`}>
-                    {idea.status}
+                  <h2 className="text-2xl font-bold">AI ANALYSIS</h2>
+                  <div className={`text-3xl font-bold ${getStatusColor(getInvestmentStatus())}`}>
+                    {getInvestmentStatus()}
                   </div>
                 </div>
                 
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-ui font-medium">Score</span>
-                    <span className="font-ui font-bold text-xl">{idea.aiScore}/10</span>
+                {/* Detailed Scores if available */}
+                {idea.aiScores && (
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <div className="text-sm text-gray-600">Market</div>
+                      <div className="text-xl font-bold">{idea.aiScores.market.toFixed(1)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Innovation</div>
+                      <div className="text-xl font-bold">{idea.aiScores.innovation.toFixed(1)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Execution</div>
+                      <div className="text-xl font-bold">{idea.aiScores.execution.toFixed(1)}</div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-4">
-                    <div 
-                      className="bg-black rounded-full h-4 transition-all"
-                      style={{ width: `${idea.aiScore * 10}%` }}
-                    />
-                  </div>
-                </div>
+                )}
                 
                 <div className="p-4 bg-gray-50 border-2 border-black rounded-lg">
-                  <p className="font-body text-sm italic">
-                    "{idea.aiComment}"
+                  <p className="italic">
+                    "{idea.aiScores?.verdict || idea.aiComment || 'AI analysis pending...'}"
                   </p>
                 </div>
-              </Card>
+
+                {/* Detailed Feedback if available */}
+                {idea.aiScores?.marketFeedback && (
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div><strong>Market:</strong> {idea.aiScores.marketFeedback}</div>
+                    <div><strong>Innovation:</strong> {idea.aiScores.innovationFeedback}</div>
+                    <div><strong>Execution:</strong> {idea.aiScores.executionFeedback}</div>
+                  </div>
+                )}
+              </div>
 
               {/* Comments */}
-              <Card>
-                <h2 className="text-2xl font-display font-bold mb-6">COMMENTS</h2>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <h2 className="text-2xl font-bold mb-6">COMMENTS</h2>
                 
                 {user ? (
                   <form onSubmit={handleComment} className="mb-6">
-                    <Textarea
-                      label=""
+                    <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Share your thoughts..."
                       rows={3}
+                      className="w-full p-3 border-2 border-black rounded-lg"
                     />
                     <div className="flex justify-end mt-3">
-                      <Button 
+                      <button
                         type="submit"
-                        variant="primary"
-                        size="sm"
                         disabled={commenting || !commentText.trim()}
+                        className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
                       >
                         {commenting ? 'Posting...' : 'Post Comment'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 ) : (
                   <div className="p-4 bg-gray-50 border-2 border-gray-300 rounded-lg mb-6">
-                    <p className="font-body text-sm text-center">
+                    <p className="text-center">
                       <Link href="/register" className="underline hover:no-underline">Sign in</Link> to comment
                     </p>
                   </div>
@@ -374,120 +437,73 @@ export default function IdeaDetailPage() {
                     {comments.map(comment => (
                       <div key={comment.id} className="border-b border-gray-200 pb-4 last:border-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <Link 
-                            href={`/profile/${comment.userName.toLowerCase().replace(' ', '.')}`}
-                            className="font-ui font-medium hover:underline"
-                          >
-                            {comment.userName}
-                          </Link>
-                          <span className="font-body text-xs text-gray-500">
+                          <span className="font-bold">{comment.userName}</span>
+                          <span className="text-xs text-gray-500">
                             {comment.createdAt?.toDate?.()?.toLocaleDateString() || 'Just now'}
                           </span>
                         </div>
-                        <p className="font-body text-gray-800">
-                          {comment.content}
-                        </p>
+                        <p className="text-gray-800">{comment.content}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="font-body text-gray-500 text-center">
-                    No comments yet. Be the first!
-                  </p>
+                  <p className="text-gray-500 text-center">No comments yet. Be the first!</p>
                 )}
-              </Card>
+              </div>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Vote Section */}
-              <Card>
-                <h3 className="font-ui font-bold mb-4">VOTE</h3>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <h3 className="font-bold mb-4">VOTE</h3>
                 {user ? (
                   <div className="flex gap-2">
-                    <Button
-                      variant={userVote === 1 ? 'primary' : 'outline'}
-                      className="flex-1"
+                    <button
                       onClick={() => handleVote(1)}
                       disabled={voting}
+                      className={`flex-1 px-4 py-2 border-2 border-black rounded-lg transition ${
+                        userVote === 1 ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'
+                      }`}
                     >
                       👍 Upvote
-                    </Button>
-                    <Button
-                      variant={userVote === -1 ? 'primary' : 'outline'}
-                      className="flex-1"
+                    </button>
+                    <button
                       onClick={() => handleVote(-1)}
                       disabled={voting}
+                      className={`flex-1 px-4 py-2 border-2 border-black rounded-lg transition ${
+                        userVote === -1 ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'
+                      }`}
                     >
                       👎 Downvote
-                    </Button>
+                    </button>
                   </div>
                 ) : (
-                  <p className="font-body text-sm text-center">
+                  <p className="text-center">
                     <Link href="/register" className="underline hover:no-underline">Sign in</Link> to vote
                   </p>
                 )}
-              </Card>
+              </div>
 
               {/* Share Section */}
-              <Card>
-                <h3 className="font-ui font-bold mb-4">SHARE</h3>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <h3 className="font-bold mb-4">SHARE</h3>
                 <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full"
+                  <button
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.href)
                       alert('Link copied!')
                     }}
+                    className="w-full px-4 py-2 border-2 border-black rounded-lg hover:bg-gray-100 transition"
                   >
                     📋 Copy Link
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      window.open(`https://twitter.com/intent/tweet?text=Check out "${idea.title}" on Make Me Famous!&url=${encodeURIComponent(window.location.href)}`)
-                    }}
-                  >
-                    𝕏 Share on X
-                  </Button>
+                  </button>
                 </div>
-              </Card>
-
-              {/* Creator */}
-              <Card>
-                <h3 className="font-ui font-bold mb-4">CREATOR</h3>
-                <Link href={`/profile/${idea.userName.toLowerCase().replace(' ', '.')}`}>
-                  <div className="flex items-center gap-3 hover:opacity-75 transition">
-                    <img 
-                      src={idea.userPhotoURL || `https://ui-avatars.com/api/?name=${idea.userName}&background=000&color=fff`}
-                      alt={idea.userName}
-                      className="w-12 h-12 rounded-full border-2 border-black"
-                    />
-                    <div>
-                      <p className="font-ui font-medium">{idea.userName}</p>
-                      <p className="font-body text-xs text-gray-600">View Profile →</p>
-                    </div>
-                  </div>
-                </Link>
-              </Card>
+              </div>
             </div>
           </div>
         </div>
-      </PageLayout>
-
-      <style jsx>{`
-        .font-display {
-          font-family: 'DrukWide', Impact, sans-serif;
-        }
-        .font-ui {
-          font-family: 'Bahnschrift', system-ui, sans-serif;
-        }
-        .font-body {
-          font-family: 'Courier', 'Courier New', monospace;
-        }
-      `}</style>
+      </div>
     </>
   )
 }
