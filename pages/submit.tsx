@@ -2,14 +2,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { useAuthState } from 'react-firebase-hooks/auth'
+import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import { submitIdea, createUserProfile } from '@/lib/firebase-collections'
 
 export default function SubmitPage() {
   const router = useRouter()
-  const [user, loading] = useAuthState(auth)
+  
+  // Auth state without react-firebase-hooks
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   
   // Form state
   const [step, setStep] = useState(1)
@@ -25,6 +28,15 @@ export default function SubmitPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [charCount, setCharCount] = useState(0)
+
+  // Set up auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,39 +90,39 @@ export default function SubmitPage() {
         }
       }
       
-      // Now submit the idea with complete user information
+      // Get AI analysis first
+      const aiResponse = await fetch('/api/rate-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: ideaType,
+          content: description,
+          title: title
+        })
+      })
+
+      if (!aiResponse.ok) {
+        const errorData = await aiResponse.json()
+        throw new Error(errorData.error || 'Failed to get AI analysis')
+      }
+
+      const aiData = await aiResponse.json()
+      
+      // Now submit the idea with complete user information and AI scores
       const ideaData = {
-        title: title.trim(),
-        type: ideaType,
-        content: description.trim(),
-        genre: genre?.trim() || undefined,
-        industry: industry?.trim() || undefined,
-        targetAudience: targetAudience?.trim() || undefined,
-        uniqueValue: uniqueValue?.trim() || undefined,
-        
-        // COMPLETE USER DATA - NO MORE ANONYMOUS
         userId: user.uid,
-        userName: userData.displayName || userData.username || 'User',
         username: userData.username || user.email?.split('@')[0] || 'user',
         userPhotoURL: userData.photoURL || user.photoURL || '',
-        
-        // Initialize public score properly
-        publicScore: {
-          average: 0,
-          count: 0,
-          sum: 0
-        },
-        
-        // Set the month for archiving
-        month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-        
-        // Other metadata
-        views: 0,
-        createdAt: new Date()
+        type: ideaType,
+        title: title.trim(),
+        content: description.trim(),
+        aiScores: aiData.aiScores
       }
       
       // Submit the idea
-      const result = await submitIdea(ideaData, user.uid)
+      const result = await submitIdea(ideaData)
       
       if (result.success && result.ideaId) {
         // Success! Redirect to the idea page
