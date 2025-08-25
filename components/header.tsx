@@ -1,4 +1,4 @@
-// components/header.tsx
+// components/header.tsx - UPDATED WITH HOW IT WORKS
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { auth, db } from '@/lib/firebase'
@@ -119,7 +119,7 @@ export default function Header() {
         scrolled ? 'bg-white/95 backdrop-blur-md border-b-2 border-black shadow-sm' : 'bg-white border-b-2 border-black'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-20 sm:h-24">{/* Increased height for bigger logo */}
+          <div className="flex items-center justify-between h-20 sm:h-24">
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <img 
@@ -132,12 +132,21 @@ export default function Header() {
 
             {/* Navigation */}
             <nav className="flex items-center space-x-3 sm:space-x-4">
+              {/* NEW: How It Works Link */}
+              <Link
+                href="/how-it-works"
+                className="nav-link"
+              >
+                How It Works
+              </Link>
+              
               <Link
                 href="/leaderboard"
                 className="nav-link"
               >
                 Leaderboard
               </Link>
+              
               <Link
                 href="/submit"
                 className="nav-link"
