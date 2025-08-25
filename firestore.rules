@@ -1,3 +1,4 @@
+// firestore.rules - COMPLETE FILE
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -25,12 +26,17 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid
         && validateIdeaData();
       
-      // Users can update their own ideas (but not scores)
+      // FIXED: Allow authenticated users to update publicScore OR owners to update other fields
       allow update: if request.auth != null 
-        && request.auth.uid == resource.data.userId
-        && !('aiScores' in request.resource.data.diff(resource.data).affectedKeys())
-        && !('aiScore' in request.resource.data.diff(resource.data).affectedKeys())
-        && !('publicScore' in request.resource.data.diff(resource.data).affectedKeys());
+        && (
+          // Either the owner updating non-score fields
+          (request.auth.uid == resource.data.userId
+           && !('aiScores' in request.resource.data.diff(resource.data).affectedKeys())
+           && !('aiScore' in request.resource.data.diff(resource.data).affectedKeys())
+           && !('publicScore' in request.resource.data.diff(resource.data).affectedKeys()))
+          // OR any authenticated user updating ONLY publicScore (for voting)
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['publicScore']))
+        );
       
       // Users can delete their own ideas
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
