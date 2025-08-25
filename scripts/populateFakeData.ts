@@ -1,7 +1,7 @@
 // scripts/populateFakeData.ts
 // Run this file locally: npx ts-node scripts/populateFakeData.ts
+
 import * as dotenv from 'dotenv'
-dotenv.config({ path: '.env.local' })
 import { initializeApp } from 'firebase/app'
 import { 
   getFirestore, 
@@ -18,14 +18,17 @@ import {
   signInWithEmailAndPassword
 } from 'firebase/auth'
 
-// Your Firebase config - you need to fill these in
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
+
+// Your Firebase config - now reading from .env.local
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "scriptrank-5885f",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 }
 
 const app = initializeApp(firebaseConfig)
