@@ -111,25 +111,28 @@ export default function SubmitPage() {
       const aiData = await aiResponse.json()
       
       // Now submit the idea with complete user information and AI scores
-      const ideaData = {
+      const result = await submitIdea({
         userId: user.uid,
         username: userData.username || user.email?.split('@')[0] || 'user',
         userPhotoURL: userData.photoURL || user.photoURL || '',
         type: ideaType,
         title: title.trim(),
         content: description.trim(),
-        aiScores: aiData.aiScores
-      }
+        aiScores: {
+          market: aiData.aiScores.market,
+          innovation: aiData.aiScores.innovation,
+          execution: aiData.aiScores.execution,
+          overall: aiData.aiScores.overall,
+          marketFeedback: aiData.aiScores.marketFeedback,
+          innovationFeedback: aiData.aiScores.innovationFeedback,
+          executionFeedback: aiData.aiScores.executionFeedback,
+          verdict: aiData.aiScores.verdict,
+          investmentStatus: aiData.aiScores.investmentStatus
+        }
+      })
       
-      // Submit the idea
-      const result = await submitIdea(ideaData)
-      
-      if (result.success && result.ideaId) {
-        // Success! Redirect to the idea page
-        router.push(`/ideas/${result.ideaId}`)
-      } else {
-        throw new Error(result.reason || 'Failed to submit idea')
-      }
+      // Success! Redirect to the idea page
+      router.push(`/ideas/${result.ideaId}`)
       
     } catch (error: any) {
       console.error('Submission error:', error)
