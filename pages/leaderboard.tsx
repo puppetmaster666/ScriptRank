@@ -1,4 +1,4 @@
-// pages/leaderboard.tsx
+// pages/leaderboard.tsx - FIXED VERSION
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -14,8 +14,9 @@ interface Idea {
   industry?: string
   content: string
   userId: string
-  userName: string
-  userPhotoURL: string
+  userName?: string
+  username?: string
+  userPhotoURL?: string
   aiScore?: number
   aiScores?: {
     overall: number
@@ -23,14 +24,14 @@ interface Idea {
     innovation: number
     execution: number
   }
-  votes: any[]
-  voteCount: number
   publicScore?: {
     average: number
     count: number
   }
-  views: number
-  status: 'INVEST' | 'MAYBE' | 'PASS'
+  votes?: any[]
+  voteCount?: number
+  views?: number
+  status?: 'INVEST' | 'MAYBE' | 'PASS'
   createdAt: any
 }
 
@@ -39,7 +40,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [timeFilter, setTimeFilter] = useState('week')
-  const [sortBy, setSortBy] = useState('votes')
+  const [sortBy, setSortBy] = useState('ai')
 
   useEffect(() => {
     fetchIdeas()
@@ -48,63 +49,46 @@ export default function LeaderboardPage() {
   const fetchIdeas = async () => {
     setLoading(true)
     try {
-      let q = query(collection(db, 'ideas'))
-
-      // Filter by type
-      if (activeTab !== 'all') {
-        q = query(q, where('type', '==', activeTab))
-      }
-
-      // Sort
-      if (sortBy === 'votes') {
-        q = query(q, orderBy('voteCount', 'desc'))
-      } else if (sortBy === 'ai') {
-        // Try to sort by aiScores.overall first, fallback to aiScore
-        q = query(q, orderBy('aiScores.overall', 'desc'))
-      } else if (sortBy === 'newest') {
-        q = query(q, orderBy('createdAt', 'desc'))
-      }
-
-      q = query(q, limit(50))
-
-      const snapshot = await getDocs(q)
-      const ideasData = snapshot.docs.map(doc => ({
+      let ideasData: Idea[] = []
+      
+      // First, get ALL ideas
+      const baseQuery = activeTab !== 'all' 
+        ? query(collection(db, 'ideas'), where('type', '==', activeTab), limit(50))
+        : query(collection(db, 'ideas'), limit(50))
+      
+      const snapshot = await getDocs(baseQuery)
+      ideasData = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
-      } as Idea))
-
+        ...doc.data(),
+        // Ensure voteCount exists
+        voteCount: doc.data().voteCount || doc.data().publicScore?.count || 0
+      })) as Idea[]
+      
+      // Sort in memory based on sortBy
+      if (sortBy === 'votes') {
+        ideasData.sort((a, b) => {
+          const aVotes = a.publicScore?.count || a.voteCount || 0
+          const bVotes = b.publicScore?.count || b.voteCount || 0
+          return bVotes - aVotes
+        })
+      } else if (sortBy === 'ai') {
+        ideasData.sort((a, b) => {
+          const aScore = a.aiScores?.overall || a.aiScore || 0
+          const bScore = b.aiScores?.overall || b.aiScore || 0
+          return bScore - aScore
+        })
+      } else if (sortBy === 'newest') {
+        ideasData.sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0
+          const bTime = b.createdAt?.seconds || 0
+          return bTime - aTime
+        })
+      }
+      
       setIdeas(ideasData)
     } catch (error) {
       console.error('Error fetching ideas:', error)
-      // If sorting by aiScores.overall fails, try with aiScore
-      try {
-        let q = query(collection(db, 'ideas'))
-        
-        if (activeTab !== 'all') {
-          q = query(q, where('type', '==', activeTab))
-        }
-        
-        if (sortBy === 'ai') {
-          q = query(q, orderBy('aiScore', 'desc'))
-        } else if (sortBy === 'votes') {
-          q = query(q, orderBy('voteCount', 'desc'))
-        } else {
-          q = query(q, orderBy('createdAt', 'desc'))
-        }
-        
-        q = query(q, limit(50))
-        
-        const snapshot = await getDocs(q)
-        const ideasData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Idea))
-        
-        setIdeas(ideasData)
-      } catch (secondError) {
-        console.error('Error fetching ideas (second attempt):', secondError)
-        setIdeas([])
-      }
+      setIdeas([])
     } finally {
       setLoading(false)
     }
@@ -112,14 +96,19 @@ export default function LeaderboardPage() {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'entertainment': return 'Film'
-      case 'game': return 'Game'
-      case 'business': return 'Business'
-      default: return 'Idea'
+      case 'movie':
+      case 'entertainment': 
+        return 'Film'
+      case 'game': 
+        return 'Game'
+      case 'business': 
+        return 'Business'
+      default: 
+        return 'Idea'
     }
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'INVEST':
         return <Badge variant="success">INVEST</Badge>
@@ -130,9 +119,7 @@ export default function LeaderboardPage() {
     }
   }
 
-  // FIXED: Get AI score with fallback
   const getAIScore = (idea: Idea): number => {
-    // First check aiScores.overall, then fallback to aiScore
     if (idea.aiScores?.overall !== undefined) {
       return idea.aiScores.overall
     }
@@ -142,13 +129,24 @@ export default function LeaderboardPage() {
     return 0
   }
 
+  const getPublicScore = (idea: Idea): { average: number; count: number } => {
+    if (idea.publicScore) {
+      return idea.publicScore
+    }
+    return { average: 0, count: 0 }
+  }
+
   const calculateTotalScore = (idea: Idea) => {
     const aiScore = getAIScore(idea)
-    const publicScore = idea.publicScore?.average || 0
-    if (publicScore > 0) {
-      return ((aiScore + publicScore) / 2).toFixed(1)
+    const publicScore = getPublicScore(idea)
+    if (publicScore.count > 0) {
+      return ((aiScore + publicScore.average) / 2).toFixed(1)
     }
     return aiScore.toFixed(1)
+  }
+
+  const getUserName = (idea: Idea): string => {
+    return idea.userName || idea.username || 'Anonymous'
   }
 
   return (
@@ -177,7 +175,7 @@ export default function LeaderboardPage() {
               </div>
               <div>
                 <div className="text-3xl font-bold font-ui">
-                  {ideas.reduce((sum, idea) => sum + idea.voteCount, 0)}
+                  {ideas.reduce((sum, idea) => sum + getPublicScore(idea).count, 0)}
                 </div>
                 <div className="font-body text-sm opacity-75">Total Votes</div>
               </div>
@@ -197,7 +195,7 @@ export default function LeaderboardPage() {
               <div className="flex gap-2">
                 {[
                   { id: 'all', label: 'All Ideas' },
-                  { id: 'entertainment', label: 'Film' },
+                  { id: 'movie', label: 'Film' },
                   { id: 'game', label: 'Games' },
                   { id: 'business', label: 'Business' }
                 ].map(tab => (
@@ -233,8 +231,8 @@ export default function LeaderboardPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-4 py-2 border-2 border-black rounded-lg font-ui bg-white"
                 >
-                  <option value="votes">Most Votes</option>
                   <option value="ai">Highest AI Score</option>
+                  <option value="votes">Most Votes</option>
                   <option value="newest">Newest</option>
                 </select>
               </div>
@@ -274,6 +272,7 @@ export default function LeaderboardPage() {
               {/* Table Rows */}
               {ideas.map((idea, index) => {
                 const aiScore = getAIScore(idea)
+                const publicScore = getPublicScore(idea)
                 const totalScore = calculateTotalScore(idea)
                 const isTop3 = index < 3
 
@@ -297,15 +296,15 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="text-sm font-ui text-gray-600">{getTypeLabel(idea.type)}</div>
                           </div>
-                          {getStatusBadge(idea.status)}
+                          {getStatusBadge(idea.status || (aiScore > 8 ? 'INVEST' : aiScore > 6 ? 'MAYBE' : 'PASS'))}
                         </div>
                         
                         <h3 className="text-xl font-display font-bold mb-2">{idea.title}</h3>
-                        <p className="font-body text-sm text-gray-600 mb-3">by {idea.userName}</p>
+                        <p className="font-body text-sm text-gray-600 mb-3">by {getUserName(idea)}</p>
                         
                         <div className="flex justify-between font-ui text-sm">
                           <span>AI: {aiScore.toFixed(1)}</span>
-                          <span>Public: {idea.publicScore ? idea.publicScore.average.toFixed(1) : '-'}</span>
+                          <span>Public: {publicScore.average.toFixed(1)} ({publicScore.count})</span>
                           <span className="font-bold">Total: {totalScore}</span>
                         </div>
                       </div>
@@ -333,7 +332,7 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-2">
-                          <p className="font-ui text-sm">{idea.userName}</p>
+                          <p className="font-ui text-sm">{getUserName(idea)}</p>
                         </div>
                         
                         <div className="col-span-1 text-center">
@@ -341,9 +340,10 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-1 text-center">
-                          <span className="font-ui">
-                            {idea.publicScore ? idea.publicScore.average.toFixed(1) : '-'}
-                          </span>
+                          <div>
+                            <span className="font-ui">{publicScore.average.toFixed(1)}</span>
+                            <span className="text-xs block text-gray-500">({publicScore.count})</span>
+                          </div>
                         </div>
                         
                         <div className="col-span-1 text-center">
@@ -351,7 +351,7 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-1">
-                          {getStatusBadge(idea.status)}
+                          {getStatusBadge(idea.status || (aiScore > 8 ? 'INVEST' : aiScore > 6 ? 'MAYBE' : 'PASS'))}
                         </div>
                       </div>
                     </Card>
@@ -361,7 +361,6 @@ export default function LeaderboardPage() {
             </div>
           )}
 
-          {/* Load More */}
           {!loading && ideas.length >= 50 && (
             <div className="text-center mt-12">
               <Button variant="outline" size="lg">
