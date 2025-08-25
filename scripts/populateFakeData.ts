@@ -1,6 +1,7 @@
 // scripts/populateFakeData.ts
 // Run this file locally: npx ts-node scripts/populateFakeData.ts
-
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
 import { initializeApp } from 'firebase/app'
 import { 
   getFirestore, 
