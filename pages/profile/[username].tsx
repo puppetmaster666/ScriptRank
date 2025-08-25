@@ -1,4 +1,4 @@
-// pages/profile/[username].tsx
+// pages/profile/[username].tsx - FIXED VERSION
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -75,7 +75,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile && currentUser) {
-      setIsFollowing(profile.followers.includes(currentUser.uid))
+      // FIX: Check if followers array exists before using includes
+      const followersArray = profile.followers || []
+      setIsFollowing(followersArray.includes(currentUser.uid))
     }
   }, [profile, currentUser])
 
@@ -87,33 +89,45 @@ export default function ProfilePage() {
       
       if (!userSnapshot.empty) {
         const userData = userSnapshot.docs[0].data() as UserProfile
-        setProfile(userData)
+        
+        // FIX: Ensure arrays exist
+        const safeProfile = {
+          ...userData,
+          followers: userData.followers || [],
+          following: userData.following || []
+        }
+        
+        setProfile(safeProfile)
         setEditData({
-          bio: userData.bio || '',
-          location: userData.location || '',
-          website: userData.website || ''
+          bio: safeProfile.bio || '',
+          location: safeProfile.location || '',
+          website: safeProfile.website || ''
         })
         
         // Fetch user's ideas
-        const ideasQuery = query(collection(db, 'ideas'), where('userId', '==', userData.uid))
+        const ideasQuery = query(collection(db, 'ideas'), where('userId', '==', safeProfile.uid))
         const ideasSnapshot = await getDocs(ideasQuery)
         const ideasData = ideasSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Idea[]
-        setIdeas(ideasData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds))
+        setIdeas(ideasData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)))
         
-        // Fetch followers/following profiles
-        if (userData.followers.length > 0) {
-          const followersQuery = query(collection(db, 'users'), where('uid', 'in', userData.followers.slice(0, 10)))
+        // Fetch followers/following profiles (only if arrays have items)
+        if (safeProfile.followers.length > 0) {
+          const followersQuery = query(collection(db, 'users'), where('uid', 'in', safeProfile.followers.slice(0, 10)))
           const followersSnapshot = await getDocs(followersQuery)
           setFollowers(followersSnapshot.docs.map(doc => doc.data() as UserProfile))
+        } else {
+          setFollowers([])
         }
         
-        if (userData.following.length > 0) {
-          const followingQuery = query(collection(db, 'users'), where('uid', 'in', userData.following.slice(0, 10)))
+        if (safeProfile.following.length > 0) {
+          const followingQuery = query(collection(db, 'users'), where('uid', 'in', safeProfile.following.slice(0, 10)))
           const followingSnapshot = await getDocs(followingQuery)
           setFollowing(followingSnapshot.docs.map(doc => doc.data() as UserProfile))
+        } else {
+          setFollowing([])
         }
       } else {
         router.push('/404')
@@ -141,7 +155,10 @@ export default function ProfilePage() {
           following: arrayRemove(profile.uid)
         })
         setIsFollowing(false)
-        setProfile(prev => prev ? {...prev, followers: prev.followers.filter(id => id !== currentUser.uid)} : null)
+        setProfile(prev => prev ? {
+          ...prev, 
+          followers: (prev.followers || []).filter(id => id !== currentUser.uid)
+        } : null)
       } else {
         // Follow
         await updateDoc(userRef, {
@@ -151,7 +168,10 @@ export default function ProfilePage() {
           following: arrayUnion(profile.uid)
         })
         setIsFollowing(true)
-        setProfile(prev => prev ? {...prev, followers: [...prev.followers, currentUser.uid]} : null)
+        setProfile(prev => prev ? {
+          ...prev, 
+          followers: [...(prev.followers || []), currentUser.uid]
+        } : null)
       }
     } catch (error) {
       console.error('Error following/unfollowing:', error)
@@ -181,9 +201,9 @@ export default function ProfilePage() {
   }
 
   const calculateStats = () => {
-    const totalVotes = ideas.reduce((sum, idea) => sum + idea.voteCount, 0)
+    const totalVotes = ideas.reduce((sum, idea) => sum + (idea.voteCount || 0), 0)
     const avgScore = ideas.length > 0 
-      ? (ideas.reduce((sum, idea) => sum + idea.aiScore, 0) / ideas.length).toFixed(1)
+      ? (ideas.reduce((sum, idea) => sum + (idea.aiScore || 0), 0) / ideas.length).toFixed(1)
       : '0.0'
     
     return { totalVotes, avgScore }
@@ -212,6 +232,8 @@ export default function ProfilePage() {
   }
 
   const { totalVotes, avgScore } = calculateStats()
+  const followersCount = (profile.followers || []).length
+  const followingCount = (profile.following || []).length
 
   return (
     <>
@@ -310,7 +332,7 @@ export default function ProfilePage() {
                     <div className="font-body text-sm text-gray-400">Avg Score</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold font-ui">{profile.followers.length}</div>
+                    <div className="text-2xl font-bold font-ui">{followersCount}</div>
                     <div className="font-body text-sm text-gray-400">Followers</div>
                   </div>
                 </div>
@@ -357,8 +379,8 @@ export default function ProfilePage() {
               tabs={[
                 { id: 'ideas', label: `Ideas (${ideas.length})` },
                 { id: 'voted', label: 'Voted' },
-                { id: 'followers', label: `Followers (${profile.followers.length})` },
-                { id: 'following', label: `Following (${profile.following.length})` },
+                { id: 'followers', label: `Followers (${followersCount})` },
+                { id: 'following', label: `Following (${followingCount})` },
                 ...(isOwnProfile ? [{ id: 'settings', label: 'Settings' }] : [])
               ]}
               activeTab={activeTab}
@@ -385,8 +407,8 @@ export default function ProfilePage() {
                             {idea.content.substring(0, 150)}...
                           </p>
                           <div className="flex gap-6 text-sm font-ui">
-                            <span>AI Score: <strong>{idea.aiScore}</strong></span>
-                            <span>Votes: <strong>{idea.voteCount}</strong></span>
+                            <span>AI Score: <strong>{idea.aiScore || 0}</strong></span>
+                            <span>Votes: <strong>{idea.voteCount || 0}</strong></span>
                             <Badge variant={
                               idea.status === 'INVEST' ? 'success' :
                               idea.status === 'MAYBE' ? 'warning' : 'danger'
@@ -412,7 +434,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Voted Tab */}
+          {/* Other tabs remain the same... */}
           {activeTab === 'voted' && (
             <div className="space-y-4">
               {votedIdeas.length > 0 ? (
