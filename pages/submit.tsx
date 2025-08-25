@@ -80,44 +80,33 @@ export default function SubmitPage() {
         })
       })
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`)
-      }
-
       const analysis = await response.json()
+      console.log('Raw API Response:', analysis) // Debug log
 
       if (!analysis.success) {
         throw new Error(analysis.error || 'AI analysis failed')
       }
 
-      // Build the data object with all required fields
+      // Get current month
       const now = new Date()
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
-      const ideaData: any = {
-        // Core fields
-        title: formData.title || 'Untitled',
-        type: formData.type || 'entertainment',
-        content: formData.content || '',
+      // Build idea with NO undefined values possible
+      const ideaData: Record<string, any> = {
+        title: formData.title,
+        type: formData.type,
+        content: formData.content,
         targetAudience: formData.targetAudience || '',
         uniqueValue: formData.uniqueValue || '',
-        
-        // User info
         userId: user.uid,
-        username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || 'anonymous',
         userName: user.displayName || 'Anonymous',
+        username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || 'anonymous',
         userPhotoURL: user.photoURL || '',
-        
-        // Initialize arrays and counters
         votes: [],
         voteCount: 0,
         views: 0,
-        
-        // Timestamps
         createdAt: serverTimestamp(),
         month: month,
-        
-        // Initialize public scoring
         publicScore: {
           average: 0,
           count: 0,
@@ -125,62 +114,63 @@ export default function SubmitPage() {
         }
       }
 
-      // Add genre OR industry based on type (not both)
-      if ((formData.type === 'entertainment' || formData.type === 'game') && formData.genre) {
+      // Add genre or industry
+      if (formData.genre && (formData.type === 'entertainment' || formData.type === 'game')) {
         ideaData.genre = formData.genre
-      } else if (formData.type === 'business' && formData.industry) {
+      }
+      if (formData.industry && formData.type === 'business') {
         ideaData.industry = formData.industry
       }
 
-      // Handle AI scores safely
-      if (analysis.aiScores && typeof analysis.aiScores === 'object') {
+      // Handle AI scores - guaranteed no undefined
+      if (analysis.aiScores) {
         ideaData.aiScores = {
-          overall: Number(analysis.aiScores.overall) || 0,
-          market: Number(analysis.aiScores.market) || 0,
-          innovation: Number(analysis.aiScores.innovation) || 0,
-          execution: Number(analysis.aiScores.execution) || 0,
-          verdict: String(analysis.aiScores.verdict || 'Analysis pending'),
-          marketFeedback: String(analysis.aiScores.marketFeedback || ''),
-          innovationFeedback: String(analysis.aiScores.innovationFeedback || ''),
-          executionFeedback: String(analysis.aiScores.executionFeedback || ''),
-          investmentStatus: String(analysis.aiScores.investmentStatus || 'PASS')
+          overall: analysis.aiScores.overall || 0,
+          market: analysis.aiScores.market || 0,
+          innovation: analysis.aiScores.innovation || 0,
+          execution: analysis.aiScores.execution || 0,
+          verdict: analysis.aiScores.verdict || 'Analysis complete',
+          marketFeedback: analysis.aiScores.marketFeedback || '',
+          innovationFeedback: analysis.aiScores.innovationFeedback || '',
+          executionFeedback: analysis.aiScores.executionFeedback || '',
+          investmentStatus: analysis.aiScores.investmentStatus || 'PASS'
         }
+        // Set status from investmentStatus
+        ideaData.status = analysis.aiScores.investmentStatus || 'PASS'
       } else {
-        // Fallback structure
+        // Fallback if no aiScores at all
         ideaData.aiScores = {
-          overall: Number(analysis.score) || 0,
+          overall: analysis.score || 0,
           market: 0,
           innovation: 0,
           execution: 0,
-          verdict: String(analysis.comment || 'Analysis pending'),
+          verdict: analysis.comment || 'Analysis complete',
           marketFeedback: '',
           innovationFeedback: '',
           executionFeedback: '',
           investmentStatus: 'PASS'
         }
+        ideaData.status = 'PASS'
       }
 
-      // CRITICAL: Ensure status is always defined
-      ideaData.status = ideaData.aiScores.investmentStatus
-
-      // Backward compatibility fields
+      // Backward compatibility
       ideaData.aiScore = ideaData.aiScores.overall
       ideaData.aiComment = ideaData.aiScores.verdict
 
-      // Final cleanup - remove any undefined/null/empty string fields
-      const cleanedData: any = {}
-      for (const [key, value] of Object.entries(ideaData)) {
-        if (value !== undefined && value !== null && value !== '') {
-          cleanedData[key] = value
+      // FINAL CHECK: Ensure no undefined values
+      Object.keys(ideaData).forEach(key => {
+        if (ideaData[key] === undefined) {
+          console.error(`Found undefined value for key: ${key}`)
+          delete ideaData[key]
         }
-      }
+      })
 
-      console.log('Submitting cleaned data:', cleanedData) // Debug log
+      console.log('Final data to save:', ideaData)
+      console.log('Status value:', ideaData.status) // Specific check
 
-      const docRef = await addDoc(collection(db, 'ideas'), cleanedData)
-      
-      // Redirect to the idea page
+      const docRef = await addDoc(collection(db, 'ideas'), ideaData)
       router.push(`/ideas/${docRef.id}`)
+      
     } catch (err: any) {
       console.error('Submission error:', err)
       setError(err.message || 'Failed to submit idea. Please try again.')
