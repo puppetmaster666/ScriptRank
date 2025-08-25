@@ -13,25 +13,25 @@ import {
 import { 
   getAuth, 
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  signInWithEmailAndPassword
 } from 'firebase/auth'
 
-// Your Firebase config
+// Your Firebase config - you need to fill these in
 const firebaseConfig = {
-  // Copy your config from .env.local
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "scriptrank-5885f",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 }
 
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
 const auth = getAuth(app)
 
-// Fake users data
+// Fake users data with FIXED aiScores structure
 const fakeUsers = [
   { 
     name: 'Michael Rodriguez', 
@@ -40,9 +40,14 @@ const fakeUsers = [
     ideas: [
       {
         title: 'Neon Nights',
-        type: 'entertainment',
-        content: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet.',
-        aiScore: 8.7
+        type: 'movie',  // Changed from 'entertainment' to 'movie'
+        content: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet. The city itself becomes a character as augmented reality bleeds into the real world.',
+        aiScores: {
+          overall: 8.73,
+          market: 8.52,
+          innovation: 9.01,
+          execution: 8.64
+        }
       }
     ]
   },
@@ -53,15 +58,25 @@ const fakeUsers = [
     ideas: [
       {
         title: 'The Last Comedian',
-        type: 'entertainment',
-        content: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny.',
-        aiScore: 8.2
+        type: 'movie',
+        content: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny. A dark comedy that questions what makes us human.',
+        aiScores: {
+          overall: 8.24,
+          market: 8.03,
+          innovation: 8.51,
+          execution: 8.18
+        }
       },
       {
         title: 'Memory Lane VR',
         type: 'game',
-        content: 'A VR game where players literally walk through their memories and can change small details to alter their present.',
-        aiScore: 7.9
+        content: 'A VR game where players literally walk through their memories and can change small details to alter their present. Each choice creates ripple effects.',
+        aiScores: {
+          overall: 7.92,
+          market: 8.21,
+          innovation: 8.05,
+          execution: 7.48
+        }
       }
     ]
   },
@@ -73,8 +88,13 @@ const fakeUsers = [
       {
         title: 'GreenEats',
         type: 'business',
-        content: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Return containers get you discounts.',
-        aiScore: 8.4
+        content: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Return containers get you discounts. Partner with local restaurants.',
+        aiScores: {
+          overall: 8.43,
+          market: 8.79,
+          innovation: 8.02,
+          execution: 8.31
+        }
       }
     ]
   },
@@ -86,8 +106,13 @@ const fakeUsers = [
       {
         title: 'Mind Maze VR',
         type: 'game',
-        content: 'Puzzle VR game where each level is based on psychological concepts. Solve your own mind to escape.',
-        aiScore: 7.8
+        content: 'Puzzle VR game where each level is based on psychological concepts. Solve your own mind to escape. Features adaptive difficulty based on player behavior.',
+        aiScores: {
+          overall: 7.81,
+          market: 7.53,
+          innovation: 8.32,
+          execution: 7.59
+        }
       }
     ]
   },
@@ -99,8 +124,13 @@ const fakeUsers = [
       {
         title: 'Pixel Dungeons',
         type: 'game',
-        content: 'Roguelike mobile game with time-loop mechanics. Every death teaches you something new about the dungeon.',
-        aiScore: 7.5
+        content: 'Roguelike mobile game with time-loop mechanics. Every death teaches you something new about the dungeon. Procedurally generated with story elements.',
+        aiScores: {
+          overall: 7.48,
+          market: 7.82,
+          innovation: 7.23,
+          execution: 7.51
+        }
       }
     ]
   },
@@ -112,8 +142,13 @@ const fakeUsers = [
       {
         title: 'AI Resume Coach',
         type: 'business',
-        content: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords and requirements.',
-        aiScore: 8.1
+        content: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords and requirements. Uses GPT to rewrite descriptions.',
+        aiScores: {
+          overall: 8.12,
+          market: 8.47,
+          innovation: 7.85,
+          execution: 8.03
+        }
       }
     ]
   },
@@ -125,8 +160,13 @@ const fakeUsers = [
       {
         title: 'RentMyGarage',
         type: 'business',
-        content: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included.',
-        aiScore: 7.6
+        content: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included. Smart locks for secure access.',
+        aiScores: {
+          overall: 7.63,
+          market: 8.01,
+          innovation: 7.04,
+          execution: 7.82
+        }
       }
     ]
   },
@@ -137,9 +177,14 @@ const fakeUsers = [
     ideas: [
       {
         title: 'Echoes of Tomorrow',
-        type: 'entertainment',
-        content: 'Sci-fi series about archaeologists who discover future artifacts buried in the past. Each artifact reveals humanity\'s fate.',
-        aiScore: 8.3
+        type: 'movie',
+        content: 'Sci-fi series about archaeologists who discover future artifacts buried in the past. Each artifact reveals humanity\'s fate. Mind-bending time paradoxes.',
+        aiScores: {
+          overall: 8.36,
+          market: 8.05,
+          innovation: 8.87,
+          execution: 8.21
+        }
       }
     ]
   },
@@ -150,9 +195,14 @@ const fakeUsers = [
     ideas: [
       {
         title: 'Street Kings',
-        type: 'entertainment',
-        content: 'Crime drama following chess hustlers in NYC who use the game to run an underground empire.',
-        aiScore: 7.7
+        type: 'movie',
+        content: 'Crime drama following chess hustlers in NYC who use the game to run an underground empire. Each chess move mirrors their criminal strategy.',
+        aiScores: {
+          overall: 7.71,
+          market: 7.52,
+          innovation: 7.94,
+          execution: 7.68
+        }
       }
     ]
   },
@@ -164,96 +214,138 @@ const fakeUsers = [
       {
         title: 'Battle Royale Chess',
         type: 'game',
-        content: '100 players start on a giant chess board. Capture pieces to gain their powers. Last player standing wins.',
-        aiScore: 8.0
+        content: '100 players start on a giant chess board. Capture pieces to gain their powers. Last player standing wins. Real-time strategy meets classic chess.',
+        aiScores: {
+          overall: 8.04,
+          market: 8.22,
+          innovation: 8.15,
+          execution: 7.76
+        }
       }
     ]
   }
 ]
 
 async function populateFakeData() {
-  console.log('🚀 Starting to populate fake data...')
+  console.log('🚀 Starting to populate fake data with correct aiScores structure...')
   
-  const createdUsers: any[] = []
   const createdIdeas: any[] = []
 
-  // Step 1: Create fake user accounts
+  // Try to use existing users or create new ones
   for (const userData of fakeUsers) {
+    let userId: string
+    
     try {
-      console.log(`Creating user: ${userData.name}`)
-      
-      // Create auth user
-      const userCredential = await createUserWithEmailAndPassword(
+      // Try to sign in first (user might already exist)
+      console.log(`Trying to sign in as: ${userData.name}`)
+      const userCredential = await signInWithEmailAndPassword(
         auth,
         userData.email,
         userData.password
       )
+      userId = userCredential.user.uid
+      console.log(`✅ Signed in as existing user: ${userData.name}`)
       
-      const user = userCredential.user
-      
-      // Update display name
-      await updateProfile(user, {
-        displayName: userData.name,
-        photoURL: `https://ui-avatars.com/api/?name=${userData.name}&background=000&color=fff`
-      })
-      
-      // Create user profile in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: userData.email,
-        displayName: userData.name,
-        username: userData.name.toLowerCase().replace(' ', '.'),
-        photoURL: `https://ui-avatars.com/api/?name=${userData.name}&background=000&color=fff`,
-        createdAt: serverTimestamp(),
-        role: 'user',
-        isPremium: Math.random() > 0.7, // 30% premium users
-        bio: `Creative professional passionate about innovative ideas.`,
-        location: 'San Francisco, CA',
-        website: `https://${userData.name.toLowerCase().replace(' ', '')}.com`
-      })
-      
-      createdUsers.push({
-        ...userData,
-        uid: user.uid
-      })
-      
-      console.log(`✅ Created user: ${userData.name}`)
-      
-    } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
-        console.log(`User ${userData.email} already exists, skipping...`)
+    } catch (signInError: any) {
+      // If sign in fails, create new user
+      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+        try {
+          console.log(`Creating new user: ${userData.name}`)
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            userData.email,
+            userData.password
+          )
+          
+          const user = userCredential.user
+          userId = user.uid
+          
+          // Update display name
+          await updateProfile(user, {
+            displayName: userData.name,
+            photoURL: `https://ui-avatars.com/api/?name=${userData.name}&background=000&color=fff`
+          })
+          
+          // Create user profile in Firestore
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email: userData.email,
+            displayName: userData.name,
+            username: userData.name.toLowerCase().replace(' ', '.'),
+            photoURL: `https://ui-avatars.com/api/?name=${userData.name}&background=000&color=fff`,
+            createdAt: serverTimestamp(),
+            subscription: {
+              tier: 'free',
+              submissionsRemaining: 3,
+              submissionsUsedThisMonth: 0,
+              resetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            },
+            stats: {
+              totalIdeas: 0,
+              averageAIScore: 0,
+              averagePublicScore: 0,
+              bestIdeaScore: 0,
+              totalVotesCast: 0
+            }
+          })
+          
+          console.log(`✅ Created new user: ${userData.name}`)
+        } catch (createError: any) {
+          console.error(`Error creating user ${userData.name}:`, createError)
+          continue
+        }
       } else {
-        console.error(`Error creating user ${userData.name}:`, error)
+        console.error(`Error signing in ${userData.name}:`, signInError)
+        continue
       }
     }
-  }
 
-  // Step 2: Create ideas for each user
-  for (const user of createdUsers) {
-    for (const idea of user.ideas) {
+    // Now create ideas for this user
+    for (const idea of userData.ideas) {
       try {
-        console.log(`Creating idea: ${idea.title} by ${user.name}`)
+        console.log(`Creating idea: ${idea.title} by ${userData.name}`)
+        
+        // Calculate month for archiving
+        const now = new Date()
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
         
         const ideaRef = await addDoc(collection(db, 'ideas'), {
           title: idea.title,
           type: idea.type,
           content: idea.content,
-          userId: user.uid,
-          userName: user.name,
-          userPhotoURL: `https://ui-avatars.com/api/?name=${user.name}&background=000&color=fff`,
-          aiScore: idea.aiScore,
-          aiComment: 'This idea shows strong potential with innovative concepts and market viability.',
+          userId: userId,
+          userName: userData.name,
+          username: userData.name.toLowerCase().replace(' ', '.'),
+          userPhotoURL: `https://ui-avatars.com/api/?name=${userData.name}&background=000&color=fff`,
+          
+          // FIXED: Using nested aiScores structure
+          aiScores: idea.aiScores,
+          
+          // Additional AI feedback
+          aiComment: `This ${idea.type} idea shows strong potential with innovative concepts and market viability.`,
+          status: idea.aiScores.overall > 8 ? 'INVEST' : idea.aiScores.overall > 7 ? 'MAYBE' : 'PASS',
+          
+          // Public voting
+          publicScore: {
+            average: 0,
+            count: 0,
+            sum: 0
+          },
+          
           votes: [],
+          voteCount: 0,
           views: Math.floor(Math.random() * 500) + 100,
+          
+          // Timestamps
           createdAt: serverTimestamp(),
-          status: idea.aiScore > 8 ? 'INVEST' : idea.aiScore > 7 ? 'MAYBE' : 'PASS'
+          month: month
         })
         
         createdIdeas.push({
           id: ideaRef.id,
           ...idea,
-          userId: user.uid,
-          userName: user.name
+          userId: userId,
+          userName: userData.name
         })
         
         console.log(`✅ Created idea: ${idea.title}`)
@@ -264,80 +356,16 @@ async function populateFakeData() {
     }
   }
 
-  // Step 3: Add cross-voting between users
-  console.log('Adding votes between users...')
-  
-  for (const idea of createdIdeas) {
-    // Each idea gets votes from 3-7 random users
-    const voteCount = Math.floor(Math.random() * 5) + 3
-    const voters = createdUsers
-      .filter(u => u.uid !== idea.userId) // Can't vote for own idea
-      .sort(() => Math.random() - 0.5)
-      .slice(0, voteCount)
-    
-    const votes = voters.map(voter => ({
-      userId: voter.uid,
-      userName: voter.name,
-      value: Math.random() > 0.3 ? 1 : -1, // 70% upvotes
-      createdAt: new Date()
-    }))
-    
-    try {
-      await setDoc(doc(db, 'ideas', idea.id), {
-        votes: votes,
-        voteCount: votes.reduce((sum, v) => sum + v.value, 0)
-      }, { merge: true })
-      
-      console.log(`✅ Added ${votes.length} votes to "${idea.title}"`)
-    } catch (error) {
-      console.error(`Error adding votes to ${idea.title}:`, error)
-    }
-  }
-
-  // Step 4: Add some comments
-  console.log('Adding comments...')
-  
-  const comments = [
-    'This is brilliant! Would love to see this developed.',
-    'Interesting concept, but how would you handle the technical challenges?',
-    'I\'ve been thinking about something similar. Let\'s connect!',
-    'This could really disrupt the industry.',
-    'Love the creativity here. Have you considered the legal aspects?',
-    'Solid idea! The market is definitely ready for this.',
-    'This reminds me of another successful project. Great potential!',
-    'Would definitely use this. When can we expect a prototype?'
-  ]
-  
-  for (const idea of createdIdeas.slice(0, 5)) { // Add comments to first 5 ideas
-    const commentCount = Math.floor(Math.random() * 3) + 1
-    
-    for (let i = 0; i < commentCount; i++) {
-      const commenter = createdUsers[Math.floor(Math.random() * createdUsers.length)]
-      
-      try {
-        await addDoc(collection(db, 'ideas', idea.id, 'comments'), {
-          userId: commenter.uid,
-          userName: commenter.name,
-          userPhotoURL: `https://ui-avatars.com/api/?name=${commenter.name}&background=000&color=fff`,
-          content: comments[Math.floor(Math.random() * comments.length)],
-          createdAt: serverTimestamp()
-        })
-        
-        console.log(`✅ Added comment to "${idea.title}"`)
-      } catch (error) {
-        console.error(`Error adding comment:`, error)
-      }
-    }
-  }
-
   console.log('🎉 Fake data population complete!')
-  console.log(`Created ${createdUsers.length} users and ${createdIdeas.length} ideas`)
+  console.log(`Created ${createdIdeas.length} ideas`)
   
-  // Display credentials for testing
+  // Display test credentials
   console.log('\n📝 Test Credentials:')
-  createdUsers.forEach(user => {
+  fakeUsers.forEach(user => {
     console.log(`Email: ${user.email} | Password: Test123!`)
   })
+  
+  console.log('\n✨ Ideas should now appear on your website with proper aiScores structure!')
 }
 
 // Run the script
