@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
 
 interface IdeaPreview {
   id: string
@@ -24,6 +24,8 @@ export default function HomePage() {
   const [topIdeas, setTopIdeas] = useState<IdeaPreview[]>([])
   const [loading, setLoading] = useState(true)
   const [typedText, setTypedText] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
+  const [timeFilter, setTimeFilter] = useState('week')
   const fullText = 'DO YOU HAVE THE NEXT TARANTINO SCRIPT?'
 
   useEffect(() => {
@@ -38,15 +40,34 @@ export default function HomePage() {
       } else {
         clearInterval(typingInterval)
       }
-    }, 50) // Adjust speed here
+    }, 50)
 
     return () => clearInterval(typingInterval)
   }, [])
 
+  useEffect(() => {
+    fetchTopIdeas()
+  }, [activeTab, timeFilter])
+
   const fetchTopIdeas = async () => {
     try {
+      // First try the ideas collection with filters
       const ideasRef = collection(db, 'ideas')
-      const q = query(ideasRef, orderBy('aiScore', 'desc'), limit(10))
+      let q = query(ideasRef)
+      
+      // Filter by type if not 'all'
+      if (activeTab !== 'all') {
+        const typeMap: any = {
+          'movies': 'entertainment',
+          'games': 'game', 
+          'business': 'business'
+        }
+        q = query(ideasRef, where('type', '==', typeMap[activeTab] || activeTab))
+      }
+      
+      // Always order by AI score for now
+      q = query(q, orderBy('aiScore', 'desc'), limit(20))
+      
       const snapshot = await getDocs(q)
       
       if (!snapshot.empty) {
@@ -66,14 +87,16 @@ export default function HomePage() {
         })
         setTopIdeas(ideas)
       } else {
-        // No data - fetch from ALL collections
-        const collections = ['ideas', 'movies', 'games', 'business']
+        // Try individual collections as fallback
+        const collections = activeTab === 'all' 
+          ? ['ideas', 'movies', 'games', 'business']
+          : [activeTab]
         let allIdeas: IdeaPreview[] = []
         
         for (const col of collections) {
           try {
             const colRef = collection(db, col)
-            const colQuery = query(colRef, limit(3))
+            const colQuery = query(colRef, orderBy('aiScore', 'desc'), limit(5))
             const colSnapshot = await getDocs(colQuery)
             
             colSnapshot.docs.forEach(doc => {
@@ -95,7 +118,7 @@ export default function HomePage() {
           }
         }
         
-        setTopIdeas(allIdeas.sort((a, b) => b.aiScore - a.aiScore).slice(0, 10))
+        setTopIdeas(allIdeas.sort((a, b) => b.aiScore - a.aiScore))
       }
     } catch (error) {
       console.error('Error fetching ideas:', error)
@@ -128,59 +151,136 @@ export default function HomePage() {
 
         {/* Leaderboard Section */}
         <section className="px-8 py-16">
-          <div className="max-w-4xl mx-auto">
-            {/* Tab */}
-            <div className="leaderboard-tab">
-              TOP IDEAS THIS WEEK
-            </div>
-            
-            {/* Table Container */}
-            <div className="leaderboard-container">
-              {/* Table Header */}
-              <div className="leaderboard-header">
-                <div className="flex-1">Name</div>
-                <div className="w-20 text-center">AI</div>
-                <div className="w-24 text-center">Public</div>
-                <div className="w-20 text-center">Total</div>
-              </div>
-
-              {/* Table Body */}
-              {loading ? (
-                <div className="p-8 text-center">Loading...</div>
-              ) : topIdeas.length > 0 ? (
-                topIdeas.map((idea, index) => {
-                  const publicScore = idea.publicScore?.average || 0
-                  const totalScore = ((idea.aiScore + publicScore) / 2).toFixed(1)
-                  
-                  return (
-                    <Link 
-                      key={idea.id}
-                      href={`/ideas/${idea.id}`}
-                      className="leaderboard-row"
-                    >
-                      <div className="flex-1">
-                        <span className="mr-4">{index + 1}.</span>
-                        {idea.title}
-                        <span className="creator-name"> by {idea.creatorName}</span>
-                      </div>
-                      <div className="w-20 text-center">{idea.aiScore.toFixed(1)}</div>
-                      <div className="w-24 text-center">
-                        {idea.publicScore ? `${publicScore.toFixed(1)} (${idea.publicScore.count})` : 'No votes'}
-                      </div>
-                      <div className="w-20 text-center font-bold">{totalScore}</div>
-                    </Link>
-                  )
-                })
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  No ideas submitted yet. Be the first!
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-4 gap-8">
+            {/* Main Table */}
+            <div className="lg:col-span-3">
+              {/* Tabs */}
+              <div className="flex gap-2 mb-6">
+                <div className="leaderboard-tab bg-black text-white">
+                  TOP IDEAS THIS {timeFilter.toUpperCase()}
                 </div>
-              )}
+                <div className="flex gap-2 ml-auto">
+                  {['all', 'movies', 'games', 'business'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-4 py-2 font-ui border-2 rounded-lg transition-all ${
+                        activeTab === tab
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-black border-gray-300 hover:border-black'
+                      }`}
+                    >
+                      {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
               
-              {/* View All Link */}
-              <div className="text-center pt-8 pb-4">
-                <Link href="/leaderboard" className="view-all-link">
-                  VIEW ALL IDEAS →
+              {/* Table Container */}
+              <div className="leaderboard-container">
+                {/* Table Header */}
+                <div className="leaderboard-header bg-black text-white">
+                  <div className="w-16 text-center font-bold">#</div>
+                  <div className="flex-1 font-bold">IDEA</div>
+                  <div className="w-20 text-center font-bold">AI</div>
+                  <div className="w-24 text-center font-bold">PUBLIC</div>
+                  <div className="w-24 text-center font-bold">TOTAL</div>
+                </div>
+
+                {/* Table Body */}
+                {loading ? (
+                  <div className="p-8 text-center">Loading...</div>
+                ) : topIdeas.length > 0 ? (
+                  topIdeas.map((idea, index) => {
+                    const publicScore = idea.publicScore?.average || 0
+                    const totalScore = ((idea.aiScore + publicScore) / 2).toFixed(1)
+                    
+                    return (
+                      <Link 
+                        key={idea.id}
+                        href={`/ideas/${idea.id}`}
+                        className="leaderboard-row hover:bg-gray-50 transition-all"
+                      >
+                        <div className="w-16 flex justify-center">
+                          <div className={`w-10 h-10 flex items-center justify-center font-bold text-white rounded ${
+                            index === 0 ? 'bg-black' :
+                            index === 1 ? 'bg-gray-800' :
+                            index === 2 ? 'bg-gray-600' :
+                            'bg-gray-400'
+                          }`}>
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-lg" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
+                            {idea.title}
+                          </div>
+                          <div className="text-sm text-gray-600 font-body">
+                            by {idea.creatorName}
+                          </div>
+                        </div>
+                        <div className="w-20 text-center font-bold text-lg">{idea.aiScore.toFixed(1)}</div>
+                        <div className="w-24 text-center">
+                          {idea.publicScore ? (
+                            <div>
+                              <span className="font-bold text-lg">{publicScore.toFixed(1)}</span>
+                              <span className="text-xs text-gray-500 block">({idea.publicScore.count} votes)</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </div>
+                        <div className="w-24 text-center">
+                          <div className="text-xl font-bold bg-black text-white py-1 px-3 rounded">
+                            {totalScore}
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    No ideas submitted yet. Be the first!
+                  </div>
+                )}
+                
+                {/* View All Link */}
+                <div className="text-center pt-8 pb-4 border-t">
+                  <Link href="/leaderboard" className="view-all-link">
+                    VIEW FULL LEADERBOARD →
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Previous Month Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="border-2 border-black rounded-lg p-6">
+                <h3 className="font-bold text-lg mb-4" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
+                  PREVIOUS MONTH
+                </h3>
+                <div className="text-sm font-body text-gray-600 mb-4">
+                  {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                <div className="space-y-3">
+                  <div className="pb-3 border-b">
+                    <div className="font-bold">🥇 Winner</div>
+                    <div className="text-sm">The Memory Thief</div>
+                    <div className="text-xs text-gray-600">Score: 9.2</div>
+                  </div>
+                  <div className="pb-3 border-b">
+                    <div className="font-bold">🥈 Runner-up</div>
+                    <div className="text-sm">Quantum Break</div>
+                    <div className="text-xs text-gray-600">Score: 8.9</div>
+                  </div>
+                  <div>
+                    <div className="font-bold">🥉 Third Place</div>
+                    <div className="text-sm">Mind Maze VR</div>
+                    <div className="text-xs text-gray-600">Score: 8.7</div>
+                  </div>
+                </div>
+                <Link href="/archive" className="block mt-6 text-center py-2 border-2 border-black rounded hover:bg-black hover:text-white transition-all">
+                  View Archive →
                 </Link>
               </div>
             </div>
