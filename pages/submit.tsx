@@ -76,32 +76,50 @@ export default function SubmitPage() {
         body: JSON.stringify({
           type: formData.type,
           title: formData.title,
-          content: formData.content,
-          genre: formData.genre,
-          industry: formData.industry
+          content: formData.content
         })
       })
 
       const analysis = await response.json()
 
-      if (!analysis.score) {
-        throw new Error('AI analysis failed')
+      if (!analysis.success) {
+        throw new Error(analysis.error || 'AI analysis failed')
       }
 
-      // Save to Firestore
+      // Save to Firestore - FIXED VERSION
       const ideaData = {
         ...formData,
         userId: user.uid,
         userName: user.displayName || 'Anonymous',
         userPhotoURL: user.photoURL || '',
-        aiScore: analysis.score,
-        aiComment: analysis.comment,
-        status: analysis.status,
+        
+        // Handle aiScores properly
+        aiScores: analysis.aiScores || {
+          overall: analysis.score || 0,
+          market: 0,
+          innovation: 0,
+          execution: 0,
+          verdict: analysis.comment || '',
+          investmentStatus: 'PASS'
+        },
+        aiScore: analysis.score || 0,
+        aiComment: analysis.comment || '',
+        
+        // Fixed: Always provide a value for status
+        status: analysis.aiScores?.investmentStatus || 'PASS',
+        
         votes: [],
         voteCount: 0,
         views: 0,
         createdAt: serverTimestamp()
       }
+
+      // Remove any undefined fields
+      Object.keys(ideaData).forEach(key => {
+        if (ideaData[key] === undefined) {
+          delete ideaData[key]
+        }
+      })
 
       const docRef = await addDoc(collection(db, 'ideas'), ideaData)
       
