@@ -80,52 +80,109 @@ export default function SubmitPage() {
         })
       })
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`)
+      }
+
       const analysis = await response.json()
 
       if (!analysis.success) {
         throw new Error(analysis.error || 'AI analysis failed')
       }
 
-      // Save to Firestore - FIXED VERSION
-      const ideaData = {
-        ...formData,
+      // Build the data object with all required fields
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+      const ideaData: any = {
+        // Core fields
+        title: formData.title || 'Untitled',
+        type: formData.type || 'entertainment',
+        content: formData.content || '',
+        targetAudience: formData.targetAudience || '',
+        uniqueValue: formData.uniqueValue || '',
+        
+        // User info
         userId: user.uid,
+        username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || 'anonymous',
         userName: user.displayName || 'Anonymous',
         userPhotoURL: user.photoURL || '',
         
-        // Handle aiScores properly
-        aiScores: analysis.aiScores || {
-          overall: analysis.score || 0,
-          market: 0,
-          innovation: 0,
-          execution: 0,
-          verdict: analysis.comment || '',
-          investmentStatus: 'PASS'
-        },
-        aiScore: analysis.score || 0,
-        aiComment: analysis.comment || '',
-        
-        // Fixed: Always provide a value for status
-        status: analysis.aiScores?.investmentStatus || 'PASS',
-        
+        // Initialize arrays and counters
         votes: [],
         voteCount: 0,
         views: 0,
-        createdAt: serverTimestamp()
+        
+        // Timestamps
+        createdAt: serverTimestamp(),
+        month: month,
+        
+        // Initialize public scoring
+        publicScore: {
+          average: 0,
+          count: 0,
+          sum: 0
+        }
       }
 
-      // Remove any undefined fields
-      Object.keys(ideaData).forEach(key => {
-        if (ideaData[key] === undefined) {
-          delete ideaData[key]
-        }
-      })
+      // Add genre OR industry based on type (not both)
+      if ((formData.type === 'entertainment' || formData.type === 'game') && formData.genre) {
+        ideaData.genre = formData.genre
+      } else if (formData.type === 'business' && formData.industry) {
+        ideaData.industry = formData.industry
+      }
 
-      const docRef = await addDoc(collection(db, 'ideas'), ideaData)
+      // Handle AI scores safely
+      if (analysis.aiScores && typeof analysis.aiScores === 'object') {
+        ideaData.aiScores = {
+          overall: Number(analysis.aiScores.overall) || 0,
+          market: Number(analysis.aiScores.market) || 0,
+          innovation: Number(analysis.aiScores.innovation) || 0,
+          execution: Number(analysis.aiScores.execution) || 0,
+          verdict: String(analysis.aiScores.verdict || 'Analysis pending'),
+          marketFeedback: String(analysis.aiScores.marketFeedback || ''),
+          innovationFeedback: String(analysis.aiScores.innovationFeedback || ''),
+          executionFeedback: String(analysis.aiScores.executionFeedback || ''),
+          investmentStatus: String(analysis.aiScores.investmentStatus || 'PASS')
+        }
+      } else {
+        // Fallback structure
+        ideaData.aiScores = {
+          overall: Number(analysis.score) || 0,
+          market: 0,
+          innovation: 0,
+          execution: 0,
+          verdict: String(analysis.comment || 'Analysis pending'),
+          marketFeedback: '',
+          innovationFeedback: '',
+          executionFeedback: '',
+          investmentStatus: 'PASS'
+        }
+      }
+
+      // CRITICAL: Ensure status is always defined
+      ideaData.status = ideaData.aiScores.investmentStatus
+
+      // Backward compatibility fields
+      ideaData.aiScore = ideaData.aiScores.overall
+      ideaData.aiComment = ideaData.aiScores.verdict
+
+      // Final cleanup - remove any undefined/null/empty string fields
+      const cleanedData: any = {}
+      for (const [key, value] of Object.entries(ideaData)) {
+        if (value !== undefined && value !== null && value !== '') {
+          cleanedData[key] = value
+        }
+      }
+
+      console.log('Submitting cleaned data:', cleanedData) // Debug log
+
+      const docRef = await addDoc(collection(db, 'ideas'), cleanedData)
       
       // Redirect to the idea page
       router.push(`/ideas/${docRef.id}`)
     } catch (err: any) {
+      console.error('Submission error:', err)
       setError(err.message || 'Failed to submit idea. Please try again.')
       setSubmitting(false)
     }
@@ -229,7 +286,12 @@ export default function SubmitPage() {
                 </div>
 
                 <div className="mt-8 flex justify-end">
-                  <Button onClick={nextStep} variant="primary" size="lg">
+                  <Button 
+                    onClick={nextStep} 
+                    variant="primary" 
+                    size="lg"
+                    type="button"
+                  >
                     Next Step →
                   </Button>
                 </div>
@@ -326,10 +388,19 @@ export default function SubmitPage() {
                 />
 
                 <div className="mt-8 flex justify-between">
-                  <Button onClick={prevStep} variant="outline">
+                  <Button 
+                    onClick={prevStep} 
+                    variant="outline"
+                    type="button"
+                  >
                     ← Back
                   </Button>
-                  <Button onClick={nextStep} variant="primary" size="lg">
+                  <Button 
+                    onClick={nextStep} 
+                    variant="primary" 
+                    size="lg"
+                    type="button"
+                  >
                     Next Step →
                   </Button>
                 </div>
@@ -385,7 +456,11 @@ export default function SubmitPage() {
                 </div>
 
                 <div className="mt-8 flex justify-between">
-                  <Button onClick={prevStep} variant="outline">
+                  <Button 
+                    onClick={prevStep} 
+                    variant="outline"
+                    type="button"
+                  >
                     ← Back
                   </Button>
                   <Button 
