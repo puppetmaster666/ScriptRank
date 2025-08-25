@@ -1,4 +1,5 @@
-// pages/index.tsx
+```typescript
+// pages/index.tsx - FIXED VERSION
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -9,7 +10,12 @@ interface IdeaPreview {
   id: string
   title: string
   type: string
-  aiScore: number
+  aiScores?: {
+    overall: number
+    market: number
+    innovation: number
+    execution: number
+  }
   publicScore?: {
     average: number
     count: number
@@ -18,6 +24,7 @@ interface IdeaPreview {
   voteCount?: number
   creatorName: string
   userName?: string
+  username?: string
 }
 
 export default function HomePage() {
@@ -51,74 +58,45 @@ export default function HomePage() {
 
   const fetchTopIdeas = async () => {
     try {
-      // First try the ideas collection with filters
       const ideasRef = collection(db, 'ideas')
       let q = query(ideasRef)
       
       // Filter by type if not 'all'
       if (activeTab !== 'all') {
         const typeMap: any = {
-          'movies': 'entertainment',
+          'movies': 'movie',  // Fixed: movie not entertainment
           'games': 'game', 
           'business': 'business'
         }
         q = query(ideasRef, where('type', '==', typeMap[activeTab] || activeTab))
       }
       
-      // Always order by AI score for now
-      q = query(q, orderBy('aiScore', 'desc'), limit(20))
+      // FIX: Use aiScores.overall instead of aiScore
+      q = query(q, orderBy('aiScores.overall', 'desc'), limit(20))
       
       const snapshot = await getDocs(q)
       
       if (!snapshot.empty) {
         const ideas = snapshot.docs.map(doc => {
           const data = doc.data()
+          console.log('Fetched idea data:', data) // Debug log
           return {
             id: doc.id,
             title: data.title,
             type: data.type,
-            aiScore: data.aiScore || data.aiScores?.overall || 0,
+            aiScores: data.aiScores, // Keep the full aiScores object
             publicScore: data.publicScore,
             votes: data.votes,
             voteCount: data.voteCount || data.votes?.length || 0,
             creatorName: data.userName || data.username || 'Anonymous',
-            userName: data.userName || data.username
+            userName: data.userName,
+            username: data.username
           }
         })
         setTopIdeas(ideas)
       } else {
-        // Try individual collections as fallback
-        const collections = activeTab === 'all' 
-          ? ['ideas', 'movies', 'games', 'business']
-          : [activeTab]
-        let allIdeas: IdeaPreview[] = []
-        
-        for (const col of collections) {
-          try {
-            const colRef = collection(db, col)
-            const colQuery = query(colRef, orderBy('aiScore', 'desc'), limit(5))
-            const colSnapshot = await getDocs(colQuery)
-            
-            colSnapshot.docs.forEach(doc => {
-              const data = doc.data()
-              allIdeas.push({
-                id: doc.id,
-                title: data.title,
-                type: col === 'movies' ? 'entertainment' : col,
-                aiScore: data.aiScore || data.aiScores?.overall || 0,
-                publicScore: data.publicScore,
-                votes: data.votes,
-                voteCount: data.voteCount || data.votes?.length || 0,
-                creatorName: data.userName || data.username || 'Anonymous',
-                userName: data.userName || data.username
-              })
-            })
-          } catch (err) {
-            console.log(`No ${col} collection yet`)
-          }
-        }
-        
-        setTopIdeas(allIdeas.sort((a, b) => b.aiScore - a.aiScore))
+        console.log('No ideas found in database')
+        setTopIdeas([])
       }
     } catch (error) {
       console.error('Error fetching ideas:', error)
@@ -126,6 +104,11 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Helper function to safely get AI score
+  const getAIScore = (idea: IdeaPreview): number => {
+    return idea.aiScores?.overall || 0
   }
 
   return (
@@ -192,8 +175,9 @@ export default function HomePage() {
                   <div className="p-8 text-center">Loading...</div>
                 ) : topIdeas.length > 0 ? (
                   topIdeas.map((idea, index) => {
+                    const aiScore = getAIScore(idea)
                     const publicScore = idea.publicScore?.average || 0
-                    const totalScore = ((idea.aiScore + publicScore) / 2).toFixed(1)
+                    const totalScore = ((aiScore + publicScore) / 2).toFixed(1)
                     
                     return (
                       <Link 
@@ -219,7 +203,7 @@ export default function HomePage() {
                             by {idea.creatorName}
                           </div>
                         </div>
-                        <div className="w-20 text-center font-bold text-lg">{idea.aiScore.toFixed(1)}</div>
+                        <div className="w-20 text-center font-bold text-lg">{aiScore.toFixed(1)}</div>
                         <div className="w-24 text-center">
                           {idea.publicScore ? (
                             <div>
@@ -474,3 +458,4 @@ export default function HomePage() {
     </>
   )
 }
+```
