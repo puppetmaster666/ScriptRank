@@ -1,4 +1,4 @@
-// pages/index.tsx - FULLY FIXED VERSION
+// pages/index.tsx - ENHANCED VERSION WITH EXPANDABLE CONTENT
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -9,12 +9,22 @@ interface IdeaPreview {
   id: string
   title: string
   type: string
-  aiScore?: number  // Support both old and new structure
+  genre?: string
+  industry?: string
+  content: string
+  targetAudience?: string
+  uniqueValue?: string
+  aiScore?: number
   aiScores?: {
     overall: number
     market: number
     innovation: number
     execution: number
+    verdict?: string
+    marketFeedback?: string
+    innovationFeedback?: string
+    executionFeedback?: string
+    investmentStatus?: 'INVEST' | 'PASS' | 'MAYBE'
   }
   publicScore?: {
     average: number
@@ -33,6 +43,7 @@ export default function HomePage() {
   const [typedText, setTypedText] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [timeFilter, setTimeFilter] = useState('week')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const fullText = 'DO YOU HAVE THE NEXT TARANTINO SCRIPT?'
 
   useEffect(() => {
@@ -59,7 +70,6 @@ export default function HomePage() {
   const fetchTopIdeas = async () => {
     setLoading(true)
     try {
-      // Try to get ideas from the main collection first
       const ideasRef = collection(db, 'ideas')
       let allIdeas: IdeaPreview[] = []
       
@@ -74,6 +84,11 @@ export default function HomePage() {
             id: doc.id,
             title: data.title || 'Untitled',
             type: data.type || 'unknown',
+            genre: data.genre,
+            industry: data.industry,
+            content: data.content || '',
+            targetAudience: data.targetAudience,
+            uniqueValue: data.uniqueValue,
             aiScore: data.aiScores?.overall || data.aiScore || 0,
             aiScores: data.aiScores,
             publicScore: data.publicScore,
@@ -98,6 +113,11 @@ export default function HomePage() {
               id: doc.id,
               title: data.title || 'Untitled',
               type: data.type || 'unknown',
+              genre: data.genre,
+              industry: data.industry,
+              content: data.content || '',
+              targetAudience: data.targetAudience,
+              uniqueValue: data.uniqueValue,
               aiScore: data.aiScore || 0,
               publicScore: data.publicScore,
               votes: data.votes,
@@ -108,57 +128,7 @@ export default function HomePage() {
             })
           })
         } catch (e2) {
-          console.log('No ideas with aiScore either, trying without order...')
-          
-          // Third try: Just get any ideas
-          const q3 = query(ideasRef, limit(20))
-          const snapshot3 = await getDocs(q3)
-          
-          snapshot3.docs.forEach(doc => {
-            const data = doc.data()
-            allIdeas.push({
-              id: doc.id,
-              title: data.title || 'Untitled',
-              type: data.type || 'unknown',
-              aiScore: data.aiScores?.overall || data.aiScore || 0,
-              aiScores: data.aiScores,
-              publicScore: data.publicScore,
-              votes: data.votes,
-              voteCount: data.voteCount || data.votes?.length || 0,
-              creatorName: data.userName || data.username || 'Anonymous',
-              userName: data.userName,
-              username: data.username
-            })
-          })
-        }
-      }
-
-      // Also check legacy collections
-      const legacyCollections = ['movies', 'games', 'business']
-      for (const collName of legacyCollections) {
-        try {
-          const legacyRef = collection(db, collName)
-          const legacyQuery = query(legacyRef, limit(5))
-          const legacySnapshot = await getDocs(legacyQuery)
-          
-          legacySnapshot.docs.forEach(doc => {
-            const data = doc.data()
-            allIdeas.push({
-              id: doc.id,
-              title: data.title || 'Untitled',
-              type: collName === 'movies' ? 'movie' : collName === 'games' ? 'game' : 'business',
-              aiScore: data.aiScores?.overall || data.aiScore || 0,
-              aiScores: data.aiScores,
-              publicScore: data.publicScore,
-              votes: data.votes,
-              voteCount: data.voteCount || data.votes?.length || 0,
-              creatorName: data.userName || data.username || 'Anonymous',
-              userName: data.userName,
-              username: data.username
-            })
-          })
-        } catch (err) {
-          console.log(`No ${collName} collection`)
+          console.log('Error fetching ideas')
         }
       }
 
@@ -179,7 +149,6 @@ export default function HomePage() {
         allIdeas = allIdeas.filter(idea => idea.type === typeMap[activeTab])
       }
 
-      console.log('Found ideas:', allIdeas)
       setTopIdeas(allIdeas.slice(0, 20))
     } catch (error) {
       console.error('Error fetching ideas:', error)
@@ -189,9 +158,37 @@ export default function HomePage() {
     }
   }
 
-  // Helper function to safely get AI score
   const getAIScore = (idea: IdeaPreview): number => {
     return idea.aiScores?.overall || idea.aiScore || 0
+  }
+
+  const getTypeLabel = (type: string): string => {
+    switch(type) {
+      case 'movie':
+      case 'entertainment':
+        return 'FILM'
+      case 'game':
+        return 'GAME'
+      case 'business':
+        return 'BIZ'
+      default:
+        return 'IDEA'
+    }
+  }
+
+  const getGenreOrIndustry = (idea: IdeaPreview): string => {
+    if (idea.genre) return idea.genre
+    if (idea.industry) return idea.industry
+    return idea.type
+  }
+
+  const toggleExpanded = (ideaId: string) => {
+    setExpandedId(expandedId === ideaId ? null : ideaId)
+  }
+
+  const truncateContent = (content: string, maxLength: number = 80): string => {
+    if (content.length <= maxLength) return content
+    return content.substring(0, maxLength).trim() + '...'
   }
 
   return (
@@ -292,11 +289,14 @@ export default function HomePage() {
                     background: 'black',
                     color: 'white'
                   }}>
-                    <div style={{ width: '64px', textAlign: 'center' }}>#</div>
+                    <div style={{ width: '50px', textAlign: 'center' }}>#</div>
+                    <div style={{ width: '60px', textAlign: 'center' }}>TYPE</div>
+                    <div style={{ width: '100px' }}>GENRE</div>
                     <div style={{ flex: 1 }}>IDEA</div>
-                    <div style={{ width: '80px', textAlign: 'center' }}>AI</div>
-                    <div style={{ width: '100px', textAlign: 'center' }}>PUBLIC</div>
-                    <div style={{ width: '100px', textAlign: 'center' }}>TOTAL</div>
+                    <div style={{ width: '140px' }}>CREATOR</div>
+                    <div style={{ width: '60px', textAlign: 'center' }}>AI</div>
+                    <div style={{ width: '80px', textAlign: 'center' }}>PUBLIC</div>
+                    <div style={{ width: '60px', textAlign: 'center' }}>VOTES</div>
                   </div>
 
                   {/* Table Body */}
@@ -307,78 +307,218 @@ export default function HomePage() {
                       topIdeas.map((idea, index) => {
                         const aiScore = getAIScore(idea)
                         const publicScore = idea.publicScore?.average || 0
-                        const totalScore = publicScore > 0 ? ((aiScore + publicScore) / 2).toFixed(1) : aiScore.toFixed(1)
+                        const isExpanded = expandedId === idea.id
                         
                         return (
-                          <Link 
-                            key={idea.id}
-                            href={`/ideas/${idea.id}`}
-                            style={{
-                              display: 'flex',
-                              padding: '20px 24px',
-                              fontFamily: 'Courier New, monospace',
-                              fontSize: '16px',
-                              borderBottom: index === topIdeas.length - 1 ? 'none' : '1px solid #e0e0e0',
-                              textDecoration: 'none',
-                              color: 'black',
-                              transition: 'background 0.2s',
-                              cursor: 'pointer',
-                              alignItems: 'center'
-                            }}
-                            className="hover:bg-gray-50"
-                          >
-                            <div style={{ width: '64px', display: 'flex', justifyContent: 'center' }}>
-                              <div style={{
-                                width: '40px',
-                                height: '40px',
+                          <div key={idea.id}>
+                            <div
+                              style={{
                                 display: 'flex',
+                                padding: '16px 24px',
+                                fontFamily: 'Courier New, monospace',
+                                fontSize: '14px',
+                                borderBottom: '1px solid #e0e0e0',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 'bold',
-                                color: 'white',
-                                borderRadius: '50%',
-                                backgroundColor: index === 0 ? 'black' : index === 1 ? '#374151' : index === 2 ? '#6B7280' : '#9CA3AF'
-                              }}>
-                                {index + 1}
-                              </div>
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontFamily: 'Bahnschrift, sans-serif', fontWeight: 'bold', fontSize: '18px' }}>
-                                {idea.title}
-                              </div>
-                              <div style={{ fontSize: '14px', color: '#666', marginTop: '2px' }}>
-                                by {idea.creatorName}
-                              </div>
-                            </div>
-                            <div style={{ width: '80px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px' }}>
-                              {aiScore.toFixed(1)}
-                            </div>
-                            <div style={{ width: '100px', textAlign: 'center' }}>
-                              {idea.publicScore && idea.publicScore.count > 0 ? (
-                                <div>
-                                  <span style={{ fontWeight: 'bold', fontSize: '18px' }}>{publicScore.toFixed(1)}</span>
-                                  <span style={{ display: 'block', fontSize: '12px', color: '#9CA3AF' }}>
-                                    ({idea.publicScore.count} votes)
-                                  </span>
+                                cursor: 'pointer',
+                                transition: 'background 0.2s'
+                              }}
+                              className="hover:bg-gray-50"
+                            >
+                              <div style={{ width: '50px', display: 'flex', justifyContent: 'center' }}>
+                                <div style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 'bold',
+                                  fontSize: '12px',
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  backgroundColor: index === 0 ? 'black' : index === 1 ? '#374151' : index === 2 ? '#6B7280' : '#9CA3AF'
+                                }}>
+                                  {index + 1}
                                 </div>
-                              ) : (
-                                <span style={{ color: '#9CA3AF' }}>0.0</span>
-                              )}
-                            </div>
-                            <div style={{ width: '100px', textAlign: 'center' }}>
-                              <div style={{
-                                fontSize: '20px',
-                                fontWeight: 'bold',
-                                backgroundColor: 'black',
-                                color: 'white',
-                                padding: '4px 12px',
-                                borderRadius: '6px',
-                                display: 'inline-block'
-                              }}>
-                                {totalScore}
+                              </div>
+                              
+                              <div style={{ width: '60px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.5px' }}>
+                                {getTypeLabel(idea.type)}
+                              </div>
+                              
+                              <div style={{ width: '100px', fontSize: '12px', color: '#666' }}>
+                                {getGenreOrIndustry(idea)}
+                              </div>
+                              
+                              <div style={{ flex: 1, paddingRight: '10px' }}>
+                                <Link href={`/ideas/${idea.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                  <div style={{ fontFamily: 'Bahnschrift, sans-serif', fontWeight: 'bold', fontSize: '15px', marginBottom: '4px' }}>
+                                    {idea.title}
+                                  </div>
+                                </Link>
+                                <div 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleExpanded(idea.id)
+                                  }}
+                                  style={{ 
+                                    fontSize: '12px', 
+                                    color: '#666', 
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline'
+                                  }}
+                                >
+                                  {truncateContent(idea.content)}
+                                  {idea.content.length > 80 && (
+                                    <span style={{ color: '#000', fontWeight: 'bold', marginLeft: '4px' }}>
+                                      {isExpanded ? '▼' : '▶'}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div style={{ width: '140px', fontSize: '12px', color: '#333' }}>
+                                {idea.creatorName}
+                              </div>
+                              
+                              <div style={{ width: '60px', textAlign: 'center', fontWeight: 'bold', fontSize: '16px' }}>
+                                {aiScore.toFixed(2)}
+                              </div>
+                              
+                              <div style={{ width: '80px', textAlign: 'center' }}>
+                                {idea.publicScore && idea.publicScore.count > 0 ? (
+                                  <div>
+                                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{publicScore.toFixed(2)}</span>
+                                    <span style={{ display: 'block', fontSize: '10px', color: '#9CA3AF' }}>
+                                      ({idea.publicScore.count})
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span style={{ color: '#9CA3AF', fontSize: '12px' }}>-</span>
+                                )}
+                              </div>
+                              
+                              <div style={{ width: '60px', textAlign: 'center' }}>
+                                <div style={{
+                                  fontSize: '16px',
+                                  fontWeight: 'bold',
+                                  color: idea.voteCount > 0 ? '#059669' : '#6B7280'
+                                }}>
+                                  {idea.voteCount || 0}
+                                </div>
                               </div>
                             </div>
-                          </Link>
+                            
+                            {/* Expandable Content Section */}
+                            {isExpanded && (
+                              <div style={{
+                                padding: '20px 24px 20px 74px',
+                                background: 'linear-gradient(to bottom, #f9fafb, #ffffff)',
+                                borderBottom: '1px solid #e0e0e0',
+                                animation: 'slideDown 0.3s ease-out'
+                              }}>
+                                <div style={{
+                                  backgroundColor: 'white',
+                                  border: '2px solid #e5e7eb',
+                                  borderRadius: '8px',
+                                  padding: '16px',
+                                  position: 'relative'
+                                }}>
+                                  <button
+                                    onClick={() => toggleExpanded(idea.id)}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '8px',
+                                      right: '8px',
+                                      background: 'none',
+                                      border: 'none',
+                                      fontSize: '20px',
+                                      cursor: 'pointer',
+                                      color: '#6B7280'
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                  
+                                  <h4 style={{ 
+                                    fontFamily: 'Bahnschrift, sans-serif',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    marginBottom: '12px',
+                                    color: '#111827'
+                                  }}>
+                                    Full Brief:
+                                  </h4>
+                                  
+                                  <p style={{
+                                    fontFamily: 'Courier New, monospace',
+                                    fontSize: '13px',
+                                    lineHeight: '1.6',
+                                    color: '#374151',
+                                    whiteSpace: 'pre-wrap'
+                                  }}>
+                                    {idea.content}
+                                  </p>
+                                  
+                                  {idea.targetAudience && (
+                                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                                      <strong style={{ fontSize: '12px', color: '#6B7280' }}>Target Audience:</strong>
+                                      <p style={{ fontSize: '13px', marginTop: '4px' }}>{idea.targetAudience}</p>
+                                    </div>
+                                  )}
+                                  
+                                  {idea.uniqueValue && (
+                                    <div style={{ marginTop: '12px' }}>
+                                      <strong style={{ fontSize: '12px', color: '#6B7280' }}>What Makes It Unique:</strong>
+                                      <p style={{ fontSize: '13px', marginTop: '4px' }}>{idea.uniqueValue}</p>
+                                    </div>
+                                  )}
+                                  
+                                  {idea.aiScores?.verdict && (
+                                    <div style={{ 
+                                      marginTop: '16px',
+                                      padding: '12px',
+                                      background: '#f3f4f6',
+                                      borderRadius: '6px'
+                                    }}>
+                                      <strong style={{ fontSize: '12px', color: '#111827' }}>AI Verdict:</strong>
+                                      <p style={{ fontSize: '13px', marginTop: '4px', fontStyle: 'italic' }}>
+                                        "{idea.aiScores.verdict}"
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Link 
+                                      href={`/ideas/${idea.id}`}
+                                      style={{
+                                        fontSize: '12px',
+                                        color: '#2563eb',
+                                        textDecoration: 'underline',
+                                        fontFamily: 'Bahnschrift, sans-serif'
+                                      }}
+                                    >
+                                      View Full Details →
+                                    </Link>
+                                    
+                                    {idea.aiScores?.investmentStatus && (
+                                      <span style={{
+                                        fontSize: '12px',
+                                        fontWeight: 'bold',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        backgroundColor: 
+                                          idea.aiScores.investmentStatus === 'INVEST' ? '#10b981' :
+                                          idea.aiScores.investmentStatus === 'MAYBE' ? '#f59e0b' : '#ef4444',
+                                        color: 'white'
+                                      }}>
+                                        {idea.aiScores.investmentStatus}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )
                       })
                     ) : (
@@ -427,17 +567,17 @@ export default function HomePage() {
                   </div>
                   <div className="space-y-3">
                     <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0' }}>
-                      <div style={{ fontWeight: 'bold' }}>🥇 Winner</div>
+                      <div style={{ fontWeight: 'bold' }}>1st Place</div>
                       <div style={{ fontSize: '14px' }}>The Memory Thief</div>
                       <div style={{ fontSize: '12px', color: '#666' }}>Score: 9.2</div>
                     </div>
                     <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0' }}>
-                      <div style={{ fontWeight: 'bold' }}>🥈 Runner-up</div>
+                      <div style={{ fontWeight: 'bold' }}>2nd Place</div>
                       <div style={{ fontSize: '14px' }}>Quantum Break</div>
                       <div style={{ fontSize: '12px', color: '#666' }}>Score: 8.9</div>
                     </div>
                     <div>
-                      <div style={{ fontWeight: 'bold' }}>🥉 Third Place</div>
+                      <div style={{ fontWeight: 'bold' }}>3rd Place</div>
                       <div style={{ fontSize: '14px' }}>Mind Maze VR</div>
                       <div style={{ fontSize: '12px', color: '#666' }}>Score: 8.7</div>
                     </div>
@@ -514,6 +654,17 @@ export default function HomePage() {
         @keyframes blink {
           0%, 50% { opacity: 1; }
           51%, 100% { opacity: 0; }
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+          }
         }
 
         .hover\\:bg-gray-50:hover {
