@@ -1,4 +1,3 @@
-```typescript
 // pages/index.tsx - FIXED VERSION
 import Head from 'next/head'
 import Link from 'next/link'
@@ -458,4 +457,3 @@ export default function HomePage() {
     </>
   )
 }
-```
