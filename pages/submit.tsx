@@ -1,484 +1,457 @@
-// pages/submit.tsx
+// pages/submit.tsx - COMPLETE FIXED FILE
 import { useState, useEffect } from 'react'
-import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { onAuthStateChanged, User } from 'firebase/auth'
+import Head from 'next/head'
+import { useAuthState } from 'react-firebase-hooks/auth'
 import { auth, db } from '@/lib/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { PageLayout, Button, Input, Textarea, Select, Card } from '@/components/designSystem'
+import { doc, getDoc } from 'firebase/firestore'
+import { submitIdea, createUserProfile } from '@/lib/firebase-collections'
 
 export default function SubmitPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const [user, loading] = useAuthState(auth)
+  
+  // Form state
+  const [step, setStep] = useState(1)
+  const [ideaType, setIdeaType] = useState<'movie' | 'game' | 'business'>('movie')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [genre, setGenre] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [targetAudience, setTargetAudience] = useState('')
+  const [uniqueValue, setUniqueValue] = useState('')
+  
+  // UI state
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [currentStep, setCurrentStep] = useState(1)
-  
-  const [formData, setFormData] = useState({
-    type: '',
-    title: '',
-    genre: '',
-    industry: '',
-    content: '',
-    targetAudience: '',
-    uniqueValue: ''
-  })
+  const [charCount, setCharCount] = useState(0)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-      setLoading(false)
-      if (!user) {
-        router.push('/register')
-      }
-    })
-    return () => unsubscribe()
-  }, [router])
+    if (!loading && !user) {
+      router.push('/register')
+    }
+  }, [user, loading, router])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+  useEffect(() => {
+    setCharCount(description.length)
+  }, [description])
 
-  const nextStep = () => {
-    if (currentStep === 1 && !formData.type) {
-      setError('Please select an idea type')
+  const handleSubmit = async () => {
+    if (!user) {
+      router.push('/register')
       return
     }
-    if (currentStep === 2 && !formData.title) {
-      setError('Please enter a title')
-      return
-    }
-    setError('')
-    setCurrentStep(prev => prev + 1)
-  }
-
-  const prevStep = () => {
-    setError('')
-    setCurrentStep(prev => prev - 1)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-
-    setSubmitting(true)
-    setError('')
-
+    
     try {
-      // Get AI analysis
-      const response = await fetch('/api/rate-idea', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: formData.type,
-          title: formData.title,
-          content: formData.content
+      setSubmitting(true)
+      setError('')
+      
+      // CRITICAL FIX: Get user profile data FIRST
+      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      let userData = userDoc.data()
+      
+      if (!userData) {
+        // User doesn't have a profile yet - create one
+        console.log('No profile found, creating one...')
+        
+        // Generate a username from email or displayName
+        const baseUsername = user.displayName?.toLowerCase().replace(/\s+/g, '.') || 
+                            user.email?.split('@')[0] || 
+                            'user'
+        const timestamp = Date.now().toString().slice(-6)
+        const username = `${baseUsername}_${timestamp}`.replace(/[^a-z0-9._]/g, '')
+        
+        // Create the profile
+        await createUserProfile(user.uid, {
+          username: username,
+          displayName: user.displayName || baseUsername,
+          email: user.email || '',
+          photoURL: user.photoURL || undefined
         })
-      })
-
-      const analysis = await response.json()
-      console.log('Raw API Response:', analysis) // Debug log
-
-      if (!analysis.success) {
-        throw new Error(analysis.error || 'AI analysis failed')
+        
+        // Fetch the newly created profile
+        const newUserDoc = await getDoc(doc(db, 'users', user.uid))
+        userData = newUserDoc.data()
+        
+        if (!userData) {
+          throw new Error('Failed to create user profile')
+        }
       }
-
-      // Get current month
-      const now = new Date()
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-
-      // Build idea with NO undefined values possible
-      const ideaData: Record<string, any> = {
-        title: formData.title,
-        type: formData.type,
-        content: formData.content,
-        targetAudience: formData.targetAudience || '',
-        uniqueValue: formData.uniqueValue || '',
+      
+      // Now submit the idea with complete user information
+      const ideaData = {
+        title: title.trim(),
+        type: ideaType,
+        content: description.trim(),
+        genre: genre?.trim() || undefined,
+        industry: industry?.trim() || undefined,
+        targetAudience: targetAudience?.trim() || undefined,
+        uniqueValue: uniqueValue?.trim() || undefined,
+        
+        // COMPLETE USER DATA - NO MORE ANONYMOUS
         userId: user.uid,
-        userName: user.displayName || 'Anonymous',
-        username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || 'anonymous',
-        userPhotoURL: user.photoURL || '',
-        votes: [],
-        voteCount: 0,
-        views: 0,
-        createdAt: serverTimestamp(),
-        month: month,
+        userName: userData.displayName || userData.username || 'User',
+        username: userData.username || user.email?.split('@')[0] || 'user',
+        userPhotoURL: userData.photoURL || user.photoURL || '',
+        
+        // Initialize public score properly
         publicScore: {
           average: 0,
           count: 0,
           sum: 0
-        }
+        },
+        
+        // Set the month for archiving
+        month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+        
+        // Other metadata
+        views: 0,
+        createdAt: new Date()
       }
-
-      // Add genre or industry
-      if (formData.genre && (formData.type === 'entertainment' || formData.type === 'game')) {
-        ideaData.genre = formData.genre
-      }
-      if (formData.industry && formData.type === 'business') {
-        ideaData.industry = formData.industry
-      }
-
-      // Handle AI scores - guaranteed no undefined
-      if (analysis.aiScores) {
-        ideaData.aiScores = {
-          overall: analysis.aiScores.overall || 0,
-          market: analysis.aiScores.market || 0,
-          innovation: analysis.aiScores.innovation || 0,
-          execution: analysis.aiScores.execution || 0,
-          verdict: analysis.aiScores.verdict || 'Analysis complete',
-          marketFeedback: analysis.aiScores.marketFeedback || '',
-          innovationFeedback: analysis.aiScores.innovationFeedback || '',
-          executionFeedback: analysis.aiScores.executionFeedback || '',
-          investmentStatus: analysis.aiScores.investmentStatus || 'PASS'
-        }
-        // Set status from investmentStatus
-        ideaData.status = analysis.aiScores.investmentStatus || 'PASS'
-      } else {
-        // Fallback if no aiScores at all
-        ideaData.aiScores = {
-          overall: analysis.score || 0,
-          market: 0,
-          innovation: 0,
-          execution: 0,
-          verdict: analysis.comment || 'Analysis complete',
-          marketFeedback: '',
-          innovationFeedback: '',
-          executionFeedback: '',
-          investmentStatus: 'PASS'
-        }
-        ideaData.status = 'PASS'
-      }
-
-      // Backward compatibility
-      ideaData.aiScore = ideaData.aiScores.overall
-      ideaData.aiComment = ideaData.aiScores.verdict
-
-      // FINAL CHECK: Ensure no undefined values
-      Object.keys(ideaData).forEach(key => {
-        if (ideaData[key] === undefined) {
-          console.error(`Found undefined value for key: ${key}`)
-          delete ideaData[key]
-        }
-      })
-
-      console.log('Final data to save:', ideaData)
-      console.log('Status value:', ideaData.status) // Specific check
-
-      const docRef = await addDoc(collection(db, 'ideas'), ideaData)
-      router.push(`/ideas/${docRef.id}`)
       
-    } catch (err: any) {
-      console.error('Submission error:', err)
-      setError(err.message || 'Failed to submit idea. Please try again.')
+      // Submit the idea
+      const result = await submitIdea(ideaData, user.uid)
+      
+      if (result.success && result.ideaId) {
+        // Success! Redirect to the idea page
+        router.push(`/ideas/${result.ideaId}`)
+      } else {
+        throw new Error(result.reason || 'Failed to submit idea')
+      }
+      
+    } catch (error: any) {
+      console.error('Submission error:', error)
+      setError(error.message || 'Failed to submit idea. Please try again.')
       setSubmitting(false)
     }
   }
 
-  if (loading) return <PageLayout><div className="p-8 text-center">Loading...</div></PageLayout>
-  if (!user) return null
+  const validateStep = (stepNumber: number): boolean => {
+    switch (stepNumber) {
+      case 1:
+        return ideaType !== null
+      case 2:
+        return title.length >= 3 && title.length <= 100
+      case 3:
+        return description.length >= 30 && description.length <= 5000
+      default:
+        return true
+    }
+  }
+
+  const nextStep = () => {
+    if (validateStep(step)) {
+      setStep(step + 1)
+      setError('')
+    } else {
+      setError('Please complete this step before continuing')
+    }
+  }
+
+  const prevStep = () => {
+    setStep(step - 1)
+    setError('')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    )
+  }
 
   return (
     <>
       <Head>
         <title>Submit Your Idea | Make Me Famous</title>
-        <meta name="description" content="Submit your screenplay, game, or business idea for AI scoring" />
       </Head>
 
-      <PageLayout>
-        {/* Hero Section */}
-        <div className="bg-black text-white py-16 px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl font-display font-black mb-4">
-              SUBMIT YOUR BIG IDEA
-            </h1>
-            <p className="font-body text-xl opacity-90">
-              Get scored by AI. Climb the leaderboard. Win prizes.
-            </p>
-          </div>
-        </div>
-
+      <div className="min-h-screen bg-white">
         {/* Progress Bar */}
-        <div className="border-b-2 border-black bg-gray-50">
-          <div className="max-w-4xl mx-auto px-8 py-6">
-            <div className="flex justify-between items-center">
-              {[1, 2, 3].map((step) => (
-                <div key={step} className="flex items-center">
-                  <div className={`
-                    w-10 h-10 rounded-full border-2 flex items-center justify-center font-ui font-bold
-                    ${currentStep >= step 
-                      ? 'bg-black text-white border-black' 
-                      : 'bg-white text-gray-400 border-gray-400'}
-                  `}>
-                    {step}
+        <div className="bg-black p-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex justify-between items-center mb-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`flex items-center ${i < 3 ? 'flex-1' : ''}`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                      i <= step ? 'bg-white text-black' : 'bg-gray-700 text-gray-400'
+                    }`}
+                  >
+                    {i}
                   </div>
-                  {step < 3 && (
-                    <div className={`w-20 sm:w-32 h-1 mx-2 ${
-                      currentStep > step ? 'bg-black' : 'bg-gray-300'
-                    }`} />
+                  {i < 3 && (
+                    <div className={`flex-1 h-1 mx-2 ${i < step ? 'bg-white' : 'bg-gray-700'}`} />
                   )}
                 </div>
               ))}
             </div>
-            <div className="flex justify-between mt-4">
-              <span className="font-ui text-sm">Type</span>
-              <span className="font-ui text-sm">Details</span>
-              <span className="font-ui text-sm">Content</span>
+            <div className="text-white text-center">
+              {step === 1 && 'Choose Your Category'}
+              {step === 2 && 'Name Your Idea'}
+              {step === 3 && 'Describe Your Vision'}
             </div>
           </div>
         </div>
 
-        {/* Form */}
-        <div className="max-w-2xl mx-auto px-8 py-12">
+        <div className="max-w-3xl mx-auto px-4 py-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-2 border-red-500 rounded-lg">
-              <p className="font-body text-sm text-red-800">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg text-red-800">
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            {/* Step 1: Type Selection */}
-            {currentStep === 1 && (
-              <Card>
-                <h2 className="text-2xl font-display font-bold mb-6">
-                  WHAT ARE YOU SUBMITTING?
-                </h2>
-                
-                <div className="space-y-4">
-                  {[
-                    { value: 'entertainment', label: '🎬 Film / TV Script', desc: 'Screenplay, series, or story' },
-                    { value: 'game', label: '🎮 Game Concept', desc: 'Video game, board game, or app' },
-                    { value: 'business', label: '💼 Business Idea', desc: 'Startup, product, or service' }
-                  ].map((option) => (
-                    <label key={option.value} className="block">
-                      <input
-                        type="radio"
-                        name="type"
-                        value={option.value}
-                        checked={formData.type === option.value}
-                        onChange={handleInputChange}
-                        className="sr-only"
-                      />
-                      <div className={`
-                        p-6 border-2 rounded-lg cursor-pointer transition-all
-                        ${formData.type === option.value 
-                          ? 'border-black bg-gray-50' 
-                          : 'border-gray-300 hover:border-gray-500'}
-                      `}>
-                        <div className="text-xl font-ui font-bold mb-1">{option.label}</div>
-                        <div className="font-body text-sm text-gray-600">{option.desc}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+          {/* Step 1: Choose Type */}
+          {step === 1 && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold text-center mb-8">What are you pitching?</h2>
+              
+              <div className="grid md:grid-cols-3 gap-6">
+                <button
+                  onClick={() => setIdeaType('movie')}
+                  className={`p-6 border-2 rounded-lg transition-all ${
+                    ideaType === 'movie'
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="text-4xl mb-3">🎬</div>
+                  <div className="font-bold text-lg">Movie/TV</div>
+                  <div className="text-sm mt-2 opacity-80">
+                    Film scripts, series concepts, documentaries
+                  </div>
+                </button>
 
-                <div className="mt-8 flex justify-end">
-                  <Button 
-                    onClick={nextStep} 
-                    variant="primary" 
-                    size="lg"
-                    type="button"
-                  >
-                    Next Step →
-                  </Button>
-                </div>
-              </Card>
-            )}
+                <button
+                  onClick={() => setIdeaType('game')}
+                  className={`p-6 border-2 rounded-lg transition-all ${
+                    ideaType === 'game'
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="text-4xl mb-3">🎮</div>
+                  <div className="font-bold text-lg">Game</div>
+                  <div className="text-sm mt-2 opacity-80">
+                    Video games, mobile games, board games
+                  </div>
+                </button>
 
-            {/* Step 2: Details */}
-            {currentStep === 2 && (
-              <Card>
-                <h2 className="text-2xl font-display font-bold mb-6">
-                  TELL US THE BASICS
-                </h2>
+                <button
+                  onClick={() => setIdeaType('business')}
+                  className={`p-6 border-2 rounded-lg transition-all ${
+                    ideaType === 'business'
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="text-4xl mb-3">💼</div>
+                  <div className="font-bold text-lg">Business</div>
+                  <div className="text-sm mt-2 opacity-80">
+                    Startups, apps, products, services
+                  </div>
+                </button>
+              </div>
 
-                <Input
-                  label="Title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
+              <div className="flex justify-end mt-8">
+                <button
+                  onClick={nextStep}
+                  disabled={!ideaType}
+                  className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Title & Basic Info */}
+          {step === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold text-center mb-8">Give it a name</h2>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder={
-                    formData.type === 'entertainment' ? 'The Last Stand' :
-                    formData.type === 'game' ? 'Zombie Survival RPG' :
-                    'UberEats for Home Services'
+                    ideaType === 'movie' ? 'e.g., The Memory Thief' :
+                    ideaType === 'game' ? 'e.g., Cosmic Conquest VR' :
+                    'e.g., AirBnB for Parking Spaces'
                   }
-                  required
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
+                  maxLength={100}
                 />
-
-                {formData.type === 'entertainment' && (
-                  <Select
-                    label="Genre"
-                    name="genre"
-                    value={formData.genre}
-                    onChange={handleInputChange}
-                    options={[
-                      { value: 'action', label: 'Action' },
-                      { value: 'comedy', label: 'Comedy' },
-                      { value: 'drama', label: 'Drama' },
-                      { value: 'horror', label: 'Horror' },
-                      { value: 'scifi', label: 'Sci-Fi' },
-                      { value: 'thriller', label: 'Thriller' },
-                      { value: 'romance', label: 'Romance' },
-                      { value: 'other', label: 'Other' }
-                    ]}
-                    required
-                  />
-                )}
-
-                {formData.type === 'game' && (
-                  <Select
-                    label="Genre"
-                    name="genre"
-                    value={formData.genre}
-                    onChange={handleInputChange}
-                    options={[
-                      { value: 'action', label: 'Action' },
-                      { value: 'adventure', label: 'Adventure' },
-                      { value: 'puzzle', label: 'Puzzle' },
-                      { value: 'strategy', label: 'Strategy' },
-                      { value: 'rpg', label: 'RPG' },
-                      { value: 'simulation', label: 'Simulation' },
-                      { value: 'sports', label: 'Sports' },
-                      { value: 'other', label: 'Other' }
-                    ]}
-                    required
-                  />
-                )}
-
-                {formData.type === 'business' && (
-                  <Select
-                    label="Industry"
-                    name="industry"
-                    value={formData.industry}
-                    onChange={handleInputChange}
-                    options={[
-                      { value: 'tech', label: 'Technology' },
-                      { value: 'health', label: 'Healthcare' },
-                      { value: 'finance', label: 'Finance' },
-                      { value: 'education', label: 'Education' },
-                      { value: 'retail', label: 'Retail' },
-                      { value: 'food', label: 'Food & Beverage' },
-                      { value: 'entertainment', label: 'Entertainment' },
-                      { value: 'other', label: 'Other' }
-                    ]}
-                    required
-                  />
-                )}
-
-                <Input
-                  label="Target Audience"
-                  name="targetAudience"
-                  value={formData.targetAudience}
-                  onChange={handleInputChange}
-                  placeholder="Young adults, 18-35, who love thrillers"
-                  required
-                />
-
-                <div className="mt-8 flex justify-between">
-                  <Button 
-                    onClick={prevStep} 
-                    variant="outline"
-                    type="button"
-                  >
-                    ← Back
-                  </Button>
-                  <Button 
-                    onClick={nextStep} 
-                    variant="primary" 
-                    size="lg"
-                    type="button"
-                  >
-                    Next Step →
-                  </Button>
+                <div className="text-sm text-gray-500 mt-1">
+                  {title.length}/100 characters
                 </div>
-              </Card>
-            )}
+              </div>
 
-            {/* Step 3: Content */}
-            {currentStep === 3 && (
-              <Card>
-                <h2 className="text-2xl font-display font-bold mb-6">
-                  PITCH YOUR IDEA
-                </h2>
+              {ideaType === 'movie' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Genre</label>
+                  <select
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
+                  >
+                    <option value="">Select a genre...</option>
+                    <option value="Action">Action</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Sci-Fi">Sci-Fi</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Documentary">Documentary</option>
+                    <option value="Animation">Animation</option>
+                  </select>
+                </div>
+              )}
 
-                <Textarea
-                  label={
-                    formData.type === 'entertainment' ? 'Synopsis' :
-                    formData.type === 'game' ? 'Game Concept' :
-                    'Business Plan'
-                  }
-                  name="content"
-                  value={formData.content}
-                  onChange={handleInputChange}
+              {ideaType === 'game' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Genre</label>
+                  <select
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
+                  >
+                    <option value="">Select a genre...</option>
+                    <option value="Action">Action</option>
+                    <option value="RPG">RPG</option>
+                    <option value="Strategy">Strategy</option>
+                    <option value="Puzzle">Puzzle</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Simulation">Simulation</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Horror">Horror</option>
+                  </select>
+                </div>
+              )}
+
+              {ideaType === 'business' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Industry</label>
+                  <input
+                    type="text"
+                    value={industry}
+                    onChange={(e) => setIndustry(e.target.value)}
+                    placeholder="e.g., Real Estate, FinTech, Healthcare"
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-between mt-8">
+                <button
+                  onClick={prevStep}
+                  className="px-8 py-3 border-2 border-black text-black rounded-lg hover:bg-gray-100"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={nextStep}
+                  disabled={title.length < 3}
+                  className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Description */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold text-center mb-8">Pitch your vision</h2>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder={
-                    formData.type === 'entertainment' 
-                      ? 'In a world where... A reluctant hero must...' 
-                      : formData.type === 'game'
-                      ? 'Players take on the role of... The objective is to...'
-                      : 'We solve the problem of... Our solution is...'
+                    ideaType === 'movie' 
+                      ? "Describe your story. What's the plot? Who are the main characters? What makes it unique?"
+                      : ideaType === 'game'
+                      ? "Describe your game concept. What's the gameplay like? What makes it fun and unique?"
+                      : "Describe your business idea. What problem does it solve? Who are your customers?"
                   }
-                  rows={8}
-                  required
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none h-48"
+                  maxLength={5000}
                 />
+                <div className={`text-sm mt-1 ${charCount < 30 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {charCount}/5000 characters (minimum 30)
+                </div>
+              </div>
 
-                <Textarea
-                  label="What Makes It Unique?"
-                  name="uniqueValue"
-                  value={formData.uniqueValue}
-                  onChange={handleInputChange}
-                  placeholder="Unlike existing solutions, this idea..."
-                  rows={4}
-                  required
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Target Audience
+                </label>
+                <input
+                  type="text"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  placeholder={
+                    ideaType === 'movie' ? "e.g., Fans of Christopher Nolan films" :
+                    ideaType === 'game' ? "e.g., Casual mobile gamers aged 25-40" :
+                    "e.g., Small business owners in urban areas"
+                  }
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
                 />
+              </div>
 
-                <div className="mt-8 p-6 bg-gray-50 border-2 border-black rounded-lg">
-                  <h3 className="font-ui font-bold mb-2">What happens next?</h3>
-                  <ul className="font-body text-sm space-y-2">
-                    <li>• Our AI will analyze your idea (takes ~10 seconds)</li>
-                    <li>• You'll receive a score from 1-10</li>
-                    <li>• Your idea enters the public leaderboard</li>
-                    <li>• Community members can vote and comment</li>
-                    <li>• Top ideas win monthly prizes!</li>
-                  </ul>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  What makes it unique?
+                </label>
+                <textarea
+                  value={uniqueValue}
+                  onChange={(e) => setUniqueValue(e.target.value)}
+                  placeholder="What sets your idea apart from everything else out there?"
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none h-24"
+                  maxLength={500}
+                />
+              </div>
 
-                <div className="mt-8 flex justify-between">
-                  <Button 
-                    onClick={prevStep} 
-                    variant="outline"
-                    type="button"
-                  >
-                    ← Back
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
-                    size="lg"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Analyzing...' : 'Submit for AI Scoring →'}
-                  </Button>
-                </div>
-              </Card>
-            )}
-          </form>
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                <p className="text-sm">
+                  <strong>⚠️ Warning:</strong> Our AI is brutally honest. Most ideas score between 3-6. 
+                  Only the truly exceptional break 8. Are you ready for harsh feedback?
+                </p>
+              </div>
+
+              <div className="flex justify-between mt-8">
+                <button
+                  onClick={prevStep}
+                  className="px-8 py-3 border-2 border-black text-black rounded-lg hover:bg-gray-100"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || description.length < 30}
+                  className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Submitting...' : 'Submit for AI Review'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      </PageLayout>
-
-      <style jsx>{`
-        .font-display {
-          font-family: 'DrukWide', Impact, sans-serif;
-        }
-        .font-ui {
-          font-family: 'Bahnschrift', system-ui, sans-serif;
-        }
-        .font-body {
-          font-family: 'Courier', 'Courier New', monospace;
-        }
-      `}</style>
+      </div>
     </>
   )
 }
