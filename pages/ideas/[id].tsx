@@ -1,11 +1,12 @@
-// pages/ideas/[id].tsx - FIXED VERSION
+// pages/ideas/[id].tsx
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { castVote } from '@/lib/firebase-collections'
 
 interface IdeaData {
   id: string
@@ -65,7 +66,8 @@ export default function IdeaDetailPage() {
   const [voting, setVoting] = useState(false)
   const [commenting, setCommenting] = useState(false)
   const [commentText, setCommentText] = useState('')
-  const [userVote, setUserVote] = useState<number>(0) // -1, 0, or 1
+  const [userVoteScore, setUserVoteScore] = useState<number>(5.00) // Default to 5
+  const [hasVoted, setHasVoted] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -83,14 +85,23 @@ export default function IdeaDetailPage() {
   }, [id])
 
   useEffect(() => {
-    // Fixed: Check if user, idea, and votes exist before finding
-    if (user && idea && idea.votes && Array.isArray(idea.votes)) {
-      const existingVote = idea.votes.find(v => v.userId === user.uid)
-      if (existingVote) {
-        setUserVote(existingVote.value)
+    // Check if user has already voted
+    const checkUserVote = async () => {
+      if (user && id && typeof id === 'string') {
+        try {
+          const voteId = `${user.uid}_${id}`
+          const voteDoc = await getDoc(doc(db, 'votes', voteId))
+          if (voteDoc.exists()) {
+            setHasVoted(true)
+            setUserVoteScore(voteDoc.data().score || 0)
+          }
+        } catch (error) {
+          console.error('Error checking user vote:', error)
+        }
       }
     }
-  }, [user, idea])
+    checkUserVote()
+  }, [user, id])
 
   const fetchIdea = async () => {
     if (!id || typeof id !== 'string') return
@@ -103,9 +114,7 @@ export default function IdeaDetailPage() {
         const ideaData: IdeaData = { 
           id: ideaDoc.id, 
           ...data,
-          // Ensure arrays exist
           votes: data.votes || [],
-          // Handle both userName and username
           userName: data.userName || data.username || 'Anonymous'
         } as IdeaData
         
@@ -158,45 +167,28 @@ export default function IdeaDetailPage() {
     }
   }
 
-  const handleVote = async (value: number) => {
-    if (!user || !idea || voting || !id) return
+  const handleVote = async () => {
+    if (!user || !idea || voting || !id || hasVoted) return
     
     setVoting(true)
     
     try {
-      const voteData = {
-        userId: user.uid,
-        userName: user.displayName || 'Anonymous',
-        value
-      }
+      // Use the castVote function from firebase-collections
+      await castVote(user.uid, id as string, userVoteScore)
       
-      // Remove existing vote if any
-      if (userVote !== 0 && idea.votes) {
-        const existingVote = idea.votes.find(v => v.userId === user.uid)
-        if (existingVote) {
-          await updateDoc(doc(db, 'ideas', id as string), {
-            votes: arrayRemove(existingVote),
-            voteCount: (idea.voteCount || 0) - userVote
-          })
-        }
-      }
-      
-      // Add new vote if not removing
-      if (value !== userVote) {
-        await updateDoc(doc(db, 'ideas', id as string), {
-          votes: arrayUnion(voteData),
-          voteCount: (idea.voteCount || 0) - userVote + value
-        })
-        setUserVote(value)
-      } else {
-        setUserVote(0)
-      }
+      setHasVoted(true)
+      alert(`You rated this idea ${userVoteScore.toFixed(2)}/10`)
       
       // Refresh idea data
       await fetchIdea()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error voting:', error)
-      alert('Failed to vote. Please try again.')
+      if (error.message === 'You have already voted on this idea') {
+        setHasVoted(true)
+        alert('You have already voted on this idea')
+      } else {
+        alert('Failed to vote. Please try again.')
+      }
     } finally {
       setVoting(false)
     }
@@ -321,8 +313,10 @@ export default function IdeaDetailPage() {
                 <div className="text-sm opacity-75">AI Score</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold">{idea.voteCount || 0}</div>
-                <div className="text-sm opacity-75">Community Votes</div>
+                <div className="text-3xl font-bold">
+                  {publicScore > 0 ? publicScore.toFixed(1) : '-'}/10
+                </div>
+                <div className="text-sm opacity-75">Public Score ({idea.publicScore?.count || 0})</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold">{totalScore}</div>
@@ -454,33 +448,58 @@ export default function IdeaDetailPage() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Vote Section */}
+              {/* Vote Section - UPDATED WITH SLIDER */}
               <div className="bg-white border-2 border-black rounded-lg p-6">
-                <h3 className="font-bold mb-4">VOTE</h3>
+                <h3 className="font-bold mb-4">RATE THIS IDEA</h3>
                 {user ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleVote(1)}
-                      disabled={voting}
-                      className={`flex-1 px-4 py-2 border-2 border-black rounded-lg transition ${
-                        userVote === 1 ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'
-                      }`}
-                    >
-                      👍 Upvote
-                    </button>
-                    <button
-                      onClick={() => handleVote(-1)}
-                      disabled={voting}
-                      className={`flex-1 px-4 py-2 border-2 border-black rounded-lg transition ${
-                        userVote === -1 ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'
-                      }`}
-                    >
-                      👎 Downvote
-                    </button>
-                  </div>
+                  hasVoted ? (
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">✅</div>
+                      <p className="font-bold text-lg mb-1">You rated: {userVoteScore.toFixed(2)}/10</p>
+                      <p className="text-sm text-gray-600">Thank you for voting!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span>Your Rating</span>
+                          <span className="font-bold text-lg">{userVoteScore.toFixed(2)}/10</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          step="0.01"
+                          value={userVoteScore}
+                          onChange={(e) => setUserVoteScore(parseFloat(e.target.value))}
+                          className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, black 0%, black ${userVoteScore * 10}%, #e5e7eb ${userVoteScore * 10}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>0</span>
+                          <span>2.5</span>
+                          <span>5</span>
+                          <span>7.5</span>
+                          <span>10</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleVote}
+                        disabled={voting}
+                        className="w-full px-4 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 font-bold"
+                      >
+                        {voting ? 'Submitting...' : `Submit Rating (${userVoteScore.toFixed(2)})`}
+                      </button>
+                      <p className="text-xs text-gray-500 text-center">
+                        You can only vote once
+                      </p>
+                    </div>
+                  )
                 ) : (
                   <p className="text-center">
-                    <Link href="/register" className="underline hover:no-underline">Sign in</Link> to vote
+                    <Link href="/register" className="underline hover:no-underline">Sign in</Link> to rate
                   </p>
                 )}
               </div>
@@ -504,6 +523,30 @@ export default function IdeaDetailPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        /* Custom slider styles */
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          background: black;
+          cursor: pointer;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          background: black;
+          cursor: pointer;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+      `}</style>
     </>
   )
 }
