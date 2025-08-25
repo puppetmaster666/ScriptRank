@@ -16,7 +16,13 @@ interface Idea {
   userId: string
   userName: string
   userPhotoURL: string
-  aiScore: number
+  aiScore?: number
+  aiScores?: {
+    overall: number
+    market: number
+    innovation: number
+    execution: number
+  }
   votes: any[]
   voteCount: number
   publicScore?: {
@@ -53,7 +59,8 @@ export default function LeaderboardPage() {
       if (sortBy === 'votes') {
         q = query(q, orderBy('voteCount', 'desc'))
       } else if (sortBy === 'ai') {
-        q = query(q, orderBy('aiScore', 'desc'))
+        // Try to sort by aiScores.overall first, fallback to aiScore
+        q = query(q, orderBy('aiScores.overall', 'desc'))
       } else if (sortBy === 'newest') {
         q = query(q, orderBy('createdAt', 'desc'))
       }
@@ -69,57 +76,35 @@ export default function LeaderboardPage() {
       setIdeas(ideasData)
     } catch (error) {
       console.error('Error fetching ideas:', error)
-      // Set mock data if fetch fails
-      setIdeas([
-        {
-          id: '1',
-          title: 'Neon Nights',
-          type: 'entertainment',
-          genre: 'scifi',
-          content: 'A cyberpunk thriller...',
-          userId: '1',
-          userName: 'Michael Rodriguez',
-          userPhotoURL: '',
-          aiScore: 8.7,
-          votes: Array(245).fill(1),
-          voteCount: 245,
-          views: 1234,
-          status: 'INVEST',
-          createdAt: new Date()
-        },
-        {
-          id: '2',
-          title: 'GreenEats',
-          type: 'business',
-          industry: 'food',
-          content: 'Zero-waste meal delivery...',
-          userId: '2',
-          userName: 'David Park',
-          userPhotoURL: '',
-          aiScore: 8.4,
-          votes: Array(189).fill(1),
-          voteCount: 189,
-          views: 987,
-          status: 'INVEST',
-          createdAt: new Date()
-        },
-        {
-          id: '3',
-          title: 'Mind Maze VR',
-          type: 'game',
-          genre: 'puzzle',
-          content: 'A VR puzzle game...',
-          userId: '3',
-          userName: 'Emily Davis',
-          userPhotoURL: '',
-          aiScore: 7.8,
-          votes: Array(156).fill(1),
-          voteCount: 156,
-          views: 789,
-          status: 'MAYBE',
-          createdAt: new Date()
+      // If sorting by aiScores.overall fails, try with aiScore
+      try {
+        let q = query(collection(db, 'ideas'))
+        
+        if (activeTab !== 'all') {
+          q = query(q, where('type', '==', activeTab))
         }
-      ])
+        
+        if (sortBy === 'ai') {
+          q = query(q, orderBy('aiScore', 'desc'))
+        } else if (sortBy === 'votes') {
+          q = query(q, orderBy('voteCount', 'desc'))
+        } else {
+          q = query(q, orderBy('createdAt', 'desc'))
+        }
+        
+        q = query(q, limit(50))
+        
+        const snapshot = await getDocs(q)
+        const ideasData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Idea))
+        
+        setIdeas(ideasData)
+      } catch (secondError) {
+        console.error('Error fetching ideas (second attempt):', secondError)
+        setIdeas([])
+      }
     } finally {
       setLoading(false)
     }
@@ -145,9 +130,25 @@ export default function LeaderboardPage() {
     }
   }
 
+  // FIXED: Get AI score with fallback
+  const getAIScore = (idea: Idea): number => {
+    // First check aiScores.overall, then fallback to aiScore
+    if (idea.aiScores?.overall !== undefined) {
+      return idea.aiScores.overall
+    }
+    if (idea.aiScore !== undefined) {
+      return idea.aiScore
+    }
+    return 0
+  }
+
   const calculateTotalScore = (idea: Idea) => {
+    const aiScore = getAIScore(idea)
     const publicScore = idea.publicScore?.average || 0
-    return ((idea.aiScore + publicScore) / 2).toFixed(1)
+    if (publicScore > 0) {
+      return ((aiScore + publicScore) / 2).toFixed(1)
+    }
+    return aiScore.toFixed(1)
   }
 
   return (
@@ -272,6 +273,7 @@ export default function LeaderboardPage() {
 
               {/* Table Rows */}
               {ideas.map((idea, index) => {
+                const aiScore = getAIScore(idea)
                 const totalScore = calculateTotalScore(idea)
                 const isTop3 = index < 3
 
@@ -302,7 +304,7 @@ export default function LeaderboardPage() {
                         <p className="font-body text-sm text-gray-600 mb-3">by {idea.userName}</p>
                         
                         <div className="flex justify-between font-ui text-sm">
-                          <span>AI: {idea.aiScore}</span>
+                          <span>AI: {aiScore.toFixed(1)}</span>
                           <span>Public: {idea.publicScore ? idea.publicScore.average.toFixed(1) : '-'}</span>
                           <span className="font-bold">Total: {totalScore}</span>
                         </div>
@@ -335,7 +337,7 @@ export default function LeaderboardPage() {
                         </div>
                         
                         <div className="col-span-1 text-center">
-                          <span className="font-ui font-bold">{idea.aiScore}</span>
+                          <span className="font-ui font-bold">{aiScore.toFixed(1)}</span>
                         </div>
                         
                         <div className="col-span-1 text-center">
