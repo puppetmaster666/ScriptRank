@@ -1,4 +1,4 @@
-// pages/index.tsx - FIXED VERSION
+// pages/index.tsx - FULLY FIXED VERSION
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -9,6 +9,7 @@ interface IdeaPreview {
   id: string
   title: string
   type: string
+  aiScore?: number  // Support both old and new structure
   aiScores?: {
     overall: number
     market: number
@@ -56,47 +57,130 @@ export default function HomePage() {
   }, [activeTab, timeFilter])
 
   const fetchTopIdeas = async () => {
+    setLoading(true)
     try {
+      // Try to get ideas from the main collection first
       const ideasRef = collection(db, 'ideas')
-      let q = query(ideasRef)
+      let allIdeas: IdeaPreview[] = []
       
-      // Filter by type if not 'all'
-      if (activeTab !== 'all') {
-        const typeMap: any = {
-          'movies': 'movie',  // Fixed: movie not entertainment
-          'games': 'game', 
-          'business': 'business'
-        }
-        q = query(ideasRef, where('type', '==', typeMap[activeTab] || activeTab))
-      }
-      
-      // FIX: Use aiScores.overall instead of aiScore
-      q = query(q, orderBy('aiScores.overall', 'desc'), limit(20))
-      
-      const snapshot = await getDocs(q)
-      
-      if (!snapshot.empty) {
-        const ideas = snapshot.docs.map(doc => {
+      // First try: Get all ideas with aiScores.overall
+      try {
+        const q1 = query(ideasRef, orderBy('aiScores.overall', 'desc'), limit(20))
+        const snapshot1 = await getDocs(q1)
+        
+        snapshot1.docs.forEach(doc => {
           const data = doc.data()
-          console.log('Fetched idea data:', data) // Debug log
-          return {
+          allIdeas.push({
             id: doc.id,
-            title: data.title,
-            type: data.type,
-            aiScores: data.aiScores, // Keep the full aiScores object
+            title: data.title || 'Untitled',
+            type: data.type || 'unknown',
+            aiScore: data.aiScores?.overall || data.aiScore || 0,
+            aiScores: data.aiScores,
             publicScore: data.publicScore,
             votes: data.votes,
             voteCount: data.voteCount || data.votes?.length || 0,
             creatorName: data.userName || data.username || 'Anonymous',
             userName: data.userName,
             username: data.username
-          }
+          })
         })
-        setTopIdeas(ideas)
-      } else {
-        console.log('No ideas found in database')
-        setTopIdeas([])
+      } catch (e1) {
+        console.log('No ideas with aiScores.overall, trying aiScore...')
+        
+        // Second try: Get ideas with flat aiScore
+        try {
+          const q2 = query(ideasRef, orderBy('aiScore', 'desc'), limit(20))
+          const snapshot2 = await getDocs(q2)
+          
+          snapshot2.docs.forEach(doc => {
+            const data = doc.data()
+            allIdeas.push({
+              id: doc.id,
+              title: data.title || 'Untitled',
+              type: data.type || 'unknown',
+              aiScore: data.aiScore || 0,
+              publicScore: data.publicScore,
+              votes: data.votes,
+              voteCount: data.voteCount || data.votes?.length || 0,
+              creatorName: data.userName || data.username || 'Anonymous',
+              userName: data.userName,
+              username: data.username
+            })
+          })
+        } catch (e2) {
+          console.log('No ideas with aiScore either, trying without order...')
+          
+          // Third try: Just get any ideas
+          const q3 = query(ideasRef, limit(20))
+          const snapshot3 = await getDocs(q3)
+          
+          snapshot3.docs.forEach(doc => {
+            const data = doc.data()
+            allIdeas.push({
+              id: doc.id,
+              title: data.title || 'Untitled',
+              type: data.type || 'unknown',
+              aiScore: data.aiScores?.overall || data.aiScore || 0,
+              aiScores: data.aiScores,
+              publicScore: data.publicScore,
+              votes: data.votes,
+              voteCount: data.voteCount || data.votes?.length || 0,
+              creatorName: data.userName || data.username || 'Anonymous',
+              userName: data.userName,
+              username: data.username
+            })
+          })
+        }
       }
+
+      // Also check legacy collections
+      const legacyCollections = ['movies', 'games', 'business']
+      for (const collName of legacyCollections) {
+        try {
+          const legacyRef = collection(db, collName)
+          const legacyQuery = query(legacyRef, limit(5))
+          const legacySnapshot = await getDocs(legacyQuery)
+          
+          legacySnapshot.docs.forEach(doc => {
+            const data = doc.data()
+            allIdeas.push({
+              id: doc.id,
+              title: data.title || 'Untitled',
+              type: collName === 'movies' ? 'movie' : collName === 'games' ? 'game' : 'business',
+              aiScore: data.aiScores?.overall || data.aiScore || 0,
+              aiScores: data.aiScores,
+              publicScore: data.publicScore,
+              votes: data.votes,
+              voteCount: data.voteCount || data.votes?.length || 0,
+              creatorName: data.userName || data.username || 'Anonymous',
+              userName: data.userName,
+              username: data.username
+            })
+          })
+        } catch (err) {
+          console.log(`No ${collName} collection`)
+        }
+      }
+
+      // Sort all ideas by score
+      allIdeas.sort((a, b) => {
+        const scoreA = a.aiScores?.overall || a.aiScore || 0
+        const scoreB = b.aiScores?.overall || b.aiScore || 0
+        return scoreB - scoreA
+      })
+
+      // Filter by type if needed
+      if (activeTab !== 'all') {
+        const typeMap: any = {
+          'movies': 'movie',
+          'games': 'game',
+          'business': 'business'
+        }
+        allIdeas = allIdeas.filter(idea => idea.type === typeMap[activeTab])
+      }
+
+      console.log('Found ideas:', allIdeas)
+      setTopIdeas(allIdeas.slice(0, 20))
     } catch (error) {
       console.error('Error fetching ideas:', error)
       setTopIdeas([])
@@ -107,7 +191,7 @@ export default function HomePage() {
 
   // Helper function to safely get AI score
   const getAIScore = (idea: IdeaPreview): number => {
-    return idea.aiScores?.overall || 0
+    return idea.aiScores?.overall || idea.aiScore || 0
   }
 
   return (
@@ -118,13 +202,24 @@ export default function HomePage() {
       </Head>
 
       <div className="min-h-screen bg-white">
-        {/* Hero Section - Black background with white text */}
+        {/* Hero Section */}
         <section className="px-8 py-20 bg-black text-white">
-          <h1 className="hero-title text-center text-white min-h-[64px]">
+          <h1 className="text-center text-white min-h-[64px]" style={{ 
+            fontFamily: 'DrukWide, Impact, sans-serif',
+            fontSize: 'clamp(32px, 5vw, 64px)',
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            lineHeight: 1
+          }}>
             {typedText}
             <span className="typing-cursor">|</span>
           </h1>
-          <p className="hero-subtitle text-center mt-8 text-white opacity-90">
+          <p className="text-center mt-8 text-white opacity-90" style={{
+            fontFamily: 'Courier New, monospace',
+            fontSize: '18px',
+            lineHeight: 1.6,
+            letterSpacing: '0.02em'
+          }}>
             SUBMIT YOUR IDEA AND GET SCORED BY OUR AI.<br />
             JOIN THE LEADERBOARD FOR<br />
             PRIZES AND OPPORTUNITIES
@@ -133,138 +228,235 @@ export default function HomePage() {
 
         {/* Leaderboard Section */}
         <section className="px-8 py-16">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-4 gap-8">
-            {/* Main Table */}
-            <div className="lg:col-span-3">
-              {/* Tabs */}
-              <div className="flex gap-2 mb-6">
-                <div className="leaderboard-tab bg-black text-white">
-                  TOP IDEAS THIS {timeFilter.toUpperCase()}
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-4 gap-8">
+              {/* Main Table - Takes 3 columns */}
+              <div className="lg:col-span-3">
+                {/* Tab and Filters Container */}
+                <div className="flex flex-wrap gap-2 mb-0">
+                  {/* Tab attached to table */}
+                  <div style={{
+                    fontFamily: 'Bahnschrift, sans-serif',
+                    fontSize: '16px',
+                    padding: '12px 32px',
+                    border: '2px solid black',
+                    borderBottom: 'none',
+                    borderRadius: '12px 12px 0 0',
+                    background: 'black',
+                    color: 'white',
+                    display: 'inline-block',
+                    fontWeight: 500,
+                    position: 'relative',
+                    zIndex: 10
+                  }}>
+                    TOP IDEAS THIS {timeFilter.toUpperCase()}
+                  </div>
+                  
+                  {/* Filter buttons */}
+                  <div className="flex gap-2 ml-auto">
+                    {['all', 'movies', 'games', 'business'].map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 border-2 rounded-lg transition-all`}
+                        style={{
+                          fontFamily: 'Bahnschrift, sans-serif',
+                          backgroundColor: activeTab === tab ? 'black' : 'white',
+                          color: activeTab === tab ? 'white' : 'black',
+                          borderColor: 'black'
+                        }}
+                      >
+                        {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2 ml-auto">
-                  {['all', 'movies', 'games', 'business'].map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-2 font-ui border-2 rounded-lg transition-all ${
-                        activeTab === tab
-                          ? 'bg-black text-white border-black'
-                          : 'bg-white text-black border-gray-300 hover:border-black'
-                      }`}
-                    >
-                      {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-                    </button>
-                  ))}
+                
+                {/* Table Container - Attached to tab */}
+                <div style={{
+                  border: '2px solid black',
+                  borderRadius: '0 12px 12px 12px',
+                  background: 'white',
+                  overflow: 'hidden',
+                  marginTop: '-2px'
+                }}>
+                  {/* Table Header */}
+                  <div style={{
+                    display: 'flex',
+                    padding: '16px 24px',
+                    fontFamily: 'Bahnschrift, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    borderBottom: '2px solid black',
+                    background: 'black',
+                    color: 'white'
+                  }}>
+                    <div style={{ width: '64px', textAlign: 'center' }}>#</div>
+                    <div style={{ flex: 1 }}>IDEA</div>
+                    <div style={{ width: '80px', textAlign: 'center' }}>AI</div>
+                    <div style={{ width: '100px', textAlign: 'center' }}>PUBLIC</div>
+                    <div style={{ width: '100px', textAlign: 'center' }}>TOTAL</div>
+                  </div>
+
+                  {/* Table Body */}
+                  <div>
+                    {loading ? (
+                      <div className="p-8 text-center">Loading...</div>
+                    ) : topIdeas.length > 0 ? (
+                      topIdeas.map((idea, index) => {
+                        const aiScore = getAIScore(idea)
+                        const publicScore = idea.publicScore?.average || 0
+                        const totalScore = publicScore > 0 ? ((aiScore + publicScore) / 2).toFixed(1) : aiScore.toFixed(1)
+                        
+                        return (
+                          <Link 
+                            key={idea.id}
+                            href={`/ideas/${idea.id}`}
+                            style={{
+                              display: 'flex',
+                              padding: '20px 24px',
+                              fontFamily: 'Courier New, monospace',
+                              fontSize: '16px',
+                              borderBottom: index === topIdeas.length - 1 ? 'none' : '1px solid #e0e0e0',
+                              textDecoration: 'none',
+                              color: 'black',
+                              transition: 'background 0.2s',
+                              cursor: 'pointer',
+                              alignItems: 'center'
+                            }}
+                            className="hover:bg-gray-50"
+                          >
+                            <div style={{ width: '64px', display: 'flex', justifyContent: 'center' }}>
+                              <div style={{
+                                width: '40px',
+                                height: '40px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                color: 'white',
+                                borderRadius: '50%',
+                                backgroundColor: index === 0 ? 'black' : index === 1 ? '#374151' : index === 2 ? '#6B7280' : '#9CA3AF'
+                              }}>
+                                {index + 1}
+                              </div>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontFamily: 'Bahnschrift, sans-serif', fontWeight: 'bold', fontSize: '18px' }}>
+                                {idea.title}
+                              </div>
+                              <div style={{ fontSize: '14px', color: '#666', marginTop: '2px' }}>
+                                by {idea.creatorName}
+                              </div>
+                            </div>
+                            <div style={{ width: '80px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px' }}>
+                              {aiScore.toFixed(1)}
+                            </div>
+                            <div style={{ width: '100px', textAlign: 'center' }}>
+                              {idea.publicScore && idea.publicScore.count > 0 ? (
+                                <div>
+                                  <span style={{ fontWeight: 'bold', fontSize: '18px' }}>{publicScore.toFixed(1)}</span>
+                                  <span style={{ display: 'block', fontSize: '12px', color: '#9CA3AF' }}>
+                                    ({idea.publicScore.count} votes)
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#9CA3AF' }}>0.0</span>
+                              )}
+                            </div>
+                            <div style={{ width: '100px', textAlign: 'center' }}>
+                              <div style={{
+                                fontSize: '20px',
+                                fontWeight: 'bold',
+                                backgroundColor: 'black',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '6px',
+                                display: 'inline-block'
+                              }}>
+                                {totalScore}
+                              </div>
+                            </div>
+                          </Link>
+                        )
+                      })
+                    ) : (
+                      <div className="p-8 text-center text-gray-500">
+                        No ideas submitted yet. Be the first!
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* View All Link */}
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '24px',
+                    borderTop: '1px solid #e0e0e0'
+                  }}>
+                    <Link href="/leaderboard" style={{
+                      fontFamily: 'Bahnschrift, sans-serif',
+                      fontSize: '14px',
+                      color: 'black',
+                      textDecoration: 'underline'
+                    }}>
+                      VIEW FULL LEADERBOARD →
+                    </Link>
+                  </div>
                 </div>
               </div>
-              
-              {/* Table Container */}
-              <div className="leaderboard-container">
-                {/* Table Header */}
-                <div className="leaderboard-header bg-black text-white">
-                  <div className="w-16 text-center font-bold">#</div>
-                  <div className="flex-1 font-bold">IDEA</div>
-                  <div className="w-20 text-center font-bold">AI</div>
-                  <div className="w-24 text-center font-bold">PUBLIC</div>
-                  <div className="w-24 text-center font-bold">TOTAL</div>
-                </div>
 
-                {/* Table Body */}
-                {loading ? (
-                  <div className="p-8 text-center">Loading...</div>
-                ) : topIdeas.length > 0 ? (
-                  topIdeas.map((idea, index) => {
-                    const aiScore = getAIScore(idea)
-                    const publicScore = idea.publicScore?.average || 0
-                    const totalScore = ((aiScore + publicScore) / 2).toFixed(1)
-                    
-                    return (
-                      <Link 
-                        key={idea.id}
-                        href={`/ideas/${idea.id}`}
-                        className="leaderboard-row hover:bg-gray-50 transition-all"
-                      >
-                        <div className="w-16 flex justify-center">
-                          <div className={`w-10 h-10 flex items-center justify-center font-bold text-white rounded ${
-                            index === 0 ? 'bg-black' :
-                            index === 1 ? 'bg-gray-800' :
-                            index === 2 ? 'bg-gray-600' :
-                            'bg-gray-400'
-                          }`}>
-                            {index + 1}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-lg" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
-                            {idea.title}
-                          </div>
-                          <div className="text-sm text-gray-600 font-body">
-                            by {idea.creatorName}
-                          </div>
-                        </div>
-                        <div className="w-20 text-center font-bold text-lg">{aiScore.toFixed(1)}</div>
-                        <div className="w-24 text-center">
-                          {idea.publicScore ? (
-                            <div>
-                              <span className="font-bold text-lg">{publicScore.toFixed(1)}</span>
-                              <span className="text-xs text-gray-500 block">({idea.publicScore.count} votes)</span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </div>
-                        <div className="w-24 text-center">
-                          <div className="text-xl font-bold bg-black text-white py-1 px-3 rounded">
-                            {totalScore}
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  })
-                ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    No ideas submitted yet. Be the first!
+              {/* Sidebar - Takes 1 column */}
+              <div className="lg:col-span-1">
+                <div style={{
+                  border: '2px solid black',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  background: 'white'
+                }}>
+                  <h3 style={{
+                    fontFamily: 'Bahnschrift, sans-serif',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    marginBottom: '16px'
+                  }}>
+                    PREVIOUS MONTH
+                  </h3>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+                    {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
-                )}
-                
-                {/* View All Link */}
-                <div className="text-center pt-8 pb-4 border-t">
-                  <Link href="/leaderboard" className="view-all-link">
-                    VIEW FULL LEADERBOARD →
+                  <div className="space-y-3">
+                    <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0' }}>
+                      <div style={{ fontWeight: 'bold' }}>🥇 Winner</div>
+                      <div style={{ fontSize: '14px' }}>The Memory Thief</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>Score: 9.2</div>
+                    </div>
+                    <div style={{ paddingBottom: '12px', borderBottom: '1px solid #e0e0e0' }}>
+                      <div style={{ fontWeight: 'bold' }}>🥈 Runner-up</div>
+                      <div style={{ fontSize: '14px' }}>Quantum Break</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>Score: 8.9</div>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold' }}>🥉 Third Place</div>
+                      <div style={{ fontSize: '14px' }}>Mind Maze VR</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>Score: 8.7</div>
+                    </div>
+                  </div>
+                  <Link href="/archive" style={{
+                    display: 'block',
+                    marginTop: '24px',
+                    textAlign: 'center',
+                    padding: '8px',
+                    border: '2px solid black',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    color: 'black',
+                    transition: 'all 0.2s'
+                  }}
+                  className="hover:bg-black hover:text-white">
+                    View Archive →
                   </Link>
                 </div>
-              </div>
-            </div>
-
-            {/* Previous Month Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="border-2 border-black rounded-lg p-6">
-                <h3 className="font-bold text-lg mb-4" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
-                  PREVIOUS MONTH
-                </h3>
-                <div className="text-sm font-body text-gray-600 mb-4">
-                  {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </div>
-                <div className="space-y-3">
-                  <div className="pb-3 border-b">
-                    <div className="font-bold">🥇 Winner</div>
-                    <div className="text-sm">The Memory Thief</div>
-                    <div className="text-xs text-gray-600">Score: 9.2</div>
-                  </div>
-                  <div className="pb-3 border-b">
-                    <div className="font-bold">🥈 Runner-up</div>
-                    <div className="text-sm">Quantum Break</div>
-                    <div className="text-xs text-gray-600">Score: 8.9</div>
-                  </div>
-                  <div>
-                    <div className="font-bold">🥉 Third Place</div>
-                    <div className="text-sm">Mind Maze VR</div>
-                    <div className="text-xs text-gray-600">Score: 8.7</div>
-                  </div>
-                </div>
-                <Link href="/archive" className="block mt-6 text-center py-2 border-2 border-black rounded hover:bg-black hover:text-white transition-all">
-                  View Archive →
-                </Link>
               </div>
             </div>
           </div>
@@ -273,8 +465,27 @@ export default function HomePage() {
         {/* Call to Action */}
         <section className="px-8 py-16 border-t-2 border-black">
           <div className="text-center">
-            <h2 className="cta-title">READY TO GET FAMOUS?</h2>
-            <Link href="/submit" className="submit-button">
+            <h2 style={{
+              fontFamily: 'DrukWide, Impact, sans-serif',
+              fontSize: '36px',
+              fontWeight: 900,
+              marginBottom: '32px'
+            }}>
+              READY TO GET FAMOUS?
+            </h2>
+            <Link href="/submit" style={{
+              fontFamily: 'Bahnschrift, sans-serif',
+              fontSize: '18px',
+              padding: '16px 48px',
+              border: '3px solid black',
+              borderRadius: '8px',
+              background: 'black',
+              color: 'white',
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.2s'
+            }}
+            className="hover:bg-white hover:text-black">
               SUBMIT YOUR IDEA
             </Link>
           </div>
@@ -282,7 +493,12 @@ export default function HomePage() {
 
         {/* Footer */}
         <footer className="px-8 py-8 border-t-2 border-black">
-          <div className="text-center footer-text">
+          <div className="text-center" style={{
+            fontFamily: 'Courier New, monospace',
+            fontSize: '12px',
+            letterSpacing: '0.05em',
+            color: '#666'
+          }}>
             © 2024 MAKE ME FAMOUS. WHERE IDEAS COMPETE.
           </div>
         </footer>
@@ -300,158 +516,16 @@ export default function HomePage() {
           51%, 100% { opacity: 0; }
         }
 
-        .nav-button {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 16px;
-          padding: 8px 24px;
-          border: 2px solid black;
-          border-radius: 8px;
-          background: white;
-          color: black;
-          text-decoration: none;
-          transition: all 0.2s;
+        .hover\\:bg-gray-50:hover {
+          background-color: #f9fafb;
         }
 
-        .nav-button:hover {
-          background: black;
+        .hover\\:bg-black:hover {
+          background-color: black;
+        }
+
+        .hover\\:text-white:hover {
           color: white;
-        }
-
-        .hero-title {
-          font-family: 'DrukWide', sans-serif;
-          font-size: clamp(32px, 5vw, 64px);
-          line-height: 1;
-          font-weight: 900;
-          letter-spacing: -0.02em;
-        }
-
-        .hero-subtitle {
-          font-family: 'Courier', monospace;
-          font-size: 18px;
-          line-height: 1.6;
-          letter-spacing: 0.02em;
-        }
-
-        .leaderboard-tab {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 16px;
-          padding: 12px 32px;
-          border: 2px solid black;
-          border-bottom: none;
-          border-radius: 12px 12px 0 0;
-          background: white;
-          display: inline-block;
-          font-weight: 500;
-        }
-
-        .leaderboard-container {
-          border: 2px solid black;
-          border-radius: 0 12px 12px 12px;
-          background: white;
-          overflow: hidden;
-        }
-
-        .leaderboard-header {
-          display: flex;
-          padding: 16px 24px;
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          text-transform: uppercase;
-          border-bottom: 2px solid black;
-          background: #f8f8f8;
-        }
-
-        .leaderboard-row {
-          display: flex;
-          padding: 20px 24px;
-          font-family: 'Courier', monospace;
-          font-size: 16px;
-          border-bottom: 1px solid #e0e0e0;
-          text-decoration: none;
-          color: black;
-          transition: background 0.2s;
-        }
-
-        .leaderboard-row:hover {
-          background: #f8f8f8;
-        }
-
-        .leaderboard-row:last-of-type {
-          border-bottom: none;
-        }
-
-        .creator-name {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 14px;
-          color: #666;
-          font-weight: normal;
-        }
-
-        .view-all-link {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 14px;
-          color: black;
-          text-decoration: underline;
-          transition: opacity 0.2s;
-        }
-
-        .view-all-link:hover {
-          opacity: 0.6;
-        }
-
-        .cta-title {
-          font-family: 'DrukWide', sans-serif;
-          font-size: 36px;
-          font-weight: 900;
-          margin-bottom: 32px;
-        }
-
-        .submit-button {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 18px;
-          padding: 16px 48px;
-          border: 3px solid black;
-          border-radius: 8px;
-          background: black;
-          color: white;
-          text-decoration: none;
-          display: inline-block;
-          transition: all 0.2s;
-        }
-
-        .submit-button:hover {
-          background: white;
-          color: black;
-        }
-
-        .footer-text {
-          font-family: 'Courier', monospace;
-          font-size: 12px;
-          letter-spacing: 0.05em;
-          color: #666;
-        }
-
-        @media (max-width: 768px) {
-          .nav-button {
-            font-size: 14px;
-            padding: 6px 16px;
-          }
-
-          .hero-subtitle {
-            font-size: 14px;
-          }
-
-          .leaderboard-header,
-          .leaderboard-row {
-            font-size: 12px;
-            padding: 12px;
-          }
-
-          .creator-name {
-            display: block;
-            margin-top: 4px;
-          }
         }
       `}</style>
     </>
