@@ -70,7 +70,7 @@ export default function SubmitPage() {
 
     try {
       // Get AI analysis
-      const response = await fetch('/api/analyze-idea', {
+      const response = await fetch('/api/rate-idea', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
