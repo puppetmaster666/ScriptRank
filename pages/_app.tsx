@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app';
 import '../styles/globals.css';
 import Header from '../components/header';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/next"; // Correct import
 import '../styles/fonts.css'
 import Script from 'next/script';
 
@@ -25,6 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Header />
       <Component {...pageProps} />
       <Analytics />
+      <SpeedInsights />
     </>
   );
 }
