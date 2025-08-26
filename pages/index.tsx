@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { useState } from 'react' // Add this import
+import { useState } from 'react'
 
 export default function HomePage() {
   return (
@@ -34,7 +34,7 @@ export default function HomePage() {
       `}</style>
 
       <div className="min-h-screen bg-white">
-        {/* Hero Section */}
+        {/* Hero Section - Kept black for maximum impact */}
         <section className="hero">
           <div className="container">
             <h1>
@@ -312,20 +312,20 @@ export default function HomePage() {
 
         /* Hero */
         .hero {
-          background: black;
+          background: linear-gradient(to right, #0A0A1A, #000);
           color: white;
-          padding: 120px 0;
+          padding: 100px 0;
           text-align: center;
         }
 
         .hero h1 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: clamp(48px, 6vw, 96px);
+          font-size: clamp(42px, 6vw, 86px);
           font-weight: 900;
           font-style: italic;
           line-height: 0.95;
           letter-spacing: -0.02em;
-          margin-bottom: 40px;
+          margin-bottom: 30px;
           max-width: 1200px;
           margin-left: auto;
           margin-right: auto;
@@ -337,7 +337,7 @@ export default function HomePage() {
 
         .subtitle {
           font-family: 'Courier New', monospace;
-          font-size: 20px;
+          font-size: 18px;
           line-height: 1.6;
           opacity: 0.9;
           max-width: 800px;
@@ -354,8 +354,8 @@ export default function HomePage() {
 
         .value-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 60px;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 50px;
         }
 
         .value-card {
@@ -365,25 +365,26 @@ export default function HomePage() {
 
         .value-title {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 32px;
+          font-size: 28px;
           font-weight: 900;
           margin-bottom: 20px;
           text-transform: uppercase;
           letter-spacing: -0.02em;
+          color: #1E3A8A;
         }
 
         .value-desc {
           font-family: 'Courier New', monospace;
           font-size: 16px;
           line-height: 1.8;
-          color: #666;
+          color: #4B5563;
         }
 
         /* Comparison */
         .comparison {
           background: linear-gradient(to right, #1e3a8a, #1e40af);
           color: white;
-          padding: 60px 0;
+          padding: 80px 0;
         }
 
         .comparison-grid {
@@ -396,7 +397,7 @@ export default function HomePage() {
 
         .comparison h2 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 36px;
+          font-size: 32px;
           font-weight: 900;
           font-style: italic;
           margin-bottom: 30px;
@@ -419,7 +420,7 @@ export default function HomePage() {
         /* Leaderboard */
         .leaderboard-preview {
           padding: 80px 0;
-          background: white;
+          background: #F9FAFB;
         }
 
         .leaderboard-grid {
@@ -439,12 +440,12 @@ export default function HomePage() {
         .leaderboard-header {
           background: black;
           color: white;
-          padding: 30px;
+          padding: 25px;
         }
 
         .leaderboard-header h2 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 42px;
+          font-size: 36px;
           font-weight: 900;
           font-style: italic;
           text-transform: uppercase;
@@ -482,6 +483,8 @@ export default function HomePage() {
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s;
+          flex-shrink: 0;
+          margin-left: 15px;
         }
 
         .vote-btn:hover {
@@ -497,6 +500,7 @@ export default function HomePage() {
           font-family: 'Courier New', monospace;
           font-size: 14px;
           text-decoration: underline;
+          margin-left: 5px;
         }
 
         .expand-btn:hover {
@@ -517,6 +521,7 @@ export default function HomePage() {
           font-weight: 900;
           transform: rotate(3deg);
           border-radius: 8px;
+          z-index: 1;
         }
 
         .rank-1 { background: #FACC15; color: black; }
@@ -530,17 +535,18 @@ export default function HomePage() {
 
         .idea-title {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 24px;
+          font-size: 22px;
           font-weight: 900;
           text-transform: uppercase;
           margin-bottom: 8px;
           letter-spacing: -0.02em;
+          color: #111827;
         }
 
         .idea-meta {
           font-family: 'Courier New', monospace;
           font-size: 12px;
-          color: #666;
+          color: #6B7280;
           margin-bottom: 12px;
           text-transform: uppercase;
         }
@@ -550,7 +556,7 @@ export default function HomePage() {
           font-size: 14px;
           line-height: 1.5;
           margin-bottom: 16px;
-          color: #333;
+          color: #374151;
         }
 
         .score-grid {
@@ -567,7 +573,7 @@ export default function HomePage() {
 
         .score-value {
           font-family: 'Courier New', monospace;
-          font-size: 24px;
+          font-size: 22px;
           font-weight: bold;
           color: black;
         }
@@ -576,7 +582,7 @@ export default function HomePage() {
           font-family: 'Bahnschrift', sans-serif;
           font-size: 10px;
           text-transform: uppercase;
-          color: #999;
+          color: #6B7280;
           letter-spacing: 1px;
         }
 
@@ -655,12 +661,13 @@ export default function HomePage() {
           font-weight: bold;
           text-transform: uppercase;
           margin-bottom: 2px;
+          color: #111827;
         }
 
         .winner-score {
           font-family: 'Courier New', monospace;
           font-size: 10px;
-          color: #666;
+          color: #6B7280;
         }
 
         .sidebar-link {
@@ -676,6 +683,7 @@ export default function HomePage() {
           letter-spacing: 1px;
           margin-top: 10px;
           border-radius: 6px;
+          transition: background 0.2s;
         }
 
         .sidebar-link:hover {
@@ -705,6 +713,7 @@ export default function HomePage() {
           margin-bottom: 15px;
           line-height: 1.4;
           padding: 0 15px;
+          color: #D1D5DB;
         }
 
         .submit-button {
@@ -721,6 +730,7 @@ export default function HomePage() {
           letter-spacing: -0.02em;
           border-radius: 0 0 8px 8px;
           margin-top: 10px;
+          transition: background 0.2s;
         }
 
         .submit-button:hover {
@@ -735,26 +745,27 @@ export default function HomePage() {
 
         .how-it-works h2 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 56px;
+          font-size: 48px;
           font-weight: 900;
           font-style: italic;
           text-align: center;
           margin-bottom: 80px;
           text-transform: uppercase;
           letter-spacing: -0.02em;
+          color: #111827;
         }
 
         .steps-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 40px;
+          gap: 30px;
           max-width: 1400px;
           margin: 0 auto;
         }
 
         .step-card {
           text-align: center;
-          padding: 40px 20px;
+          padding: 30px 20px;
           background: white;
           border: 3px solid black;
           border-radius: 12px;
@@ -768,7 +779,7 @@ export default function HomePage() {
 
         .step-number {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 56px;
+          font-size: 48px;
           font-weight: 900;
           font-style: italic;
           color: #FACC15;
@@ -783,17 +794,18 @@ export default function HomePage() {
 
         .step-title {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 900;
           text-transform: uppercase;
           margin-bottom: 12px;
           letter-spacing: -0.02em;
+          color: #1E3A8A;
         }
 
         .step-desc {
           font-family: 'Courier New', monospace;
           font-size: 13px;
-          color: #666;
+          color: #4B5563;
           line-height: 1.5;
         }
 
@@ -832,7 +844,7 @@ export default function HomePage() {
 
         .cta-section h2 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 64px;
+          font-size: 56px;
           font-weight: 900;
           font-style: italic;
           margin-bottom: 30px;
@@ -842,24 +854,26 @@ export default function HomePage() {
 
         .cta-section p {
           font-family: 'Bahnschrift', sans-serif;
-          font-size: 24px;
+          font-size: 20px;
           margin-bottom: 50px;
           text-transform: uppercase;
           letter-spacing: 1px;
+          opacity: 0.9;
         }
 
         .cta-button {
           display: inline-block;
           background: #FACC15;
           color: black;
-          padding: 24px 60px;
+          padding: 20px 50px;
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 28px;
+          font-size: 24px;
           font-weight: 900;
           font-style: italic;
           text-decoration: none;
           transition: transform 0.3s;
           text-transform: uppercase;
+          border-radius: 8px;
         }
 
         .cta-button:hover {
@@ -878,9 +892,29 @@ export default function HomePage() {
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+          .steps-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+          }
+          
+          .leaderboard-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          
+          .leaderboard-sidebar {
+            margin-left: 0;
+          }
+        }
+
         @media (max-width: 768px) {
           .container {
             padding: 0 20px;
+          }
+          
+          .hero {
+            padding: 80px 0;
           }
           
           .comparison-grid {
@@ -888,13 +922,37 @@ export default function HomePage() {
             gap: 40px;
           }
           
+          .value-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          
           .score-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 15px;
           }
           
           .steps-grid {
             grid-template-columns: 1fr;
+          }
+          
+          .idea-header {
+            flex-direction: column;
+            gap: 15px;
+          }
+          
+          .vote-btn {
+            margin-left: 0;
+            align-self: flex-start;
+          }
+          
+          .cta-section h2 {
+            font-size: 42px;
+          }
+          
+          .cta-button {
+            padding: 16px 40px;
+            font-size: 20px;
           }
         }
       `}</style>
