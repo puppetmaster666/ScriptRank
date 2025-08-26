@@ -116,13 +116,13 @@ export default function HomePage() {
                 <table className="leaderboard-table">
                   <thead>
                     <tr>
-                      <th width="60">Rank</th>
+                      <th style={{width: '60px'}}>Rank</th>
                       <th>Name</th>
-                      <th width="100">Type</th>
+                      <th style={{width: '100px'}}>Type</th>
                       <th>Description</th>
-                      <th width="80">AI Score</th>
-                      <th width="80">Public</th>
-                      <th width="80">Total</th>
+                      <th style={{width: '80px'}}>AI Score</th>
+                      <th style={{width: '80px'}}>Public</th>
+                      <th style={{width: '80px'}}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
