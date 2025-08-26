@@ -1,53 +1,182 @@
+/* styles/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  /* Fresh Color Palette */
+  --sage-green: #87A878;
+  --light-sage: #B4C5AB;
+  --pale-green: #E8F0E3;
+  --cream: #FAF6F0;
+  --warm-beige: #F5EFE7;
+  --charcoal: #2C3E2F;
+  --soft-black: #1A1F1B;
+  --white: #FFFFFF;
+  --accent-coral: #F4A09C;
+  --accent-yellow: #F7D060;
+  
+  /* Typography */
+  --font-display: 'Instrument Serif', serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
-  font-family: 'Inter', sans-serif;
-}
-
-h1, h2, h3 {
-  letter-spacing: -0.025em;
-}
-/* Add to styles/globals.css */
-
-/* Custom font classes */
-.page-title {
-  font-family: 'DrukWide', Impact, sans-serif;
-  font-size: 3rem;
-  font-weight: 900;
-  text-align: center;
-  padding: 2rem;
-  letter-spacing: -0.02em;
-}
-
-.page-content {
-  position: relative;
-}
-
-.font-display {
-  font-family: 'DrukWide', Impact, sans-serif;
-}
-
-.font-ui {
-  font-family: 'Bahnschrift', system-ui, sans-serif;
-}
-
-.font-body {
-  font-family: 'Courier', 'Courier New', monospace;
-}
-
-/* Ensure minimalist design - no shadows or gradients */
-* {
-  text-rendering: optimizeLegibility;
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--soft-black);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Consistent focus states */
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--warm-beige);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sage-green);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--charcoal);
+}
+
+/* Focus States */
 *:focus-visible {
-  outline: 2px solid black;
+  outline: 2px solid var(--sage-green);
   outline-offset: 2px;
 }
+
+/* Button Base Styles */
+.btn-primary {
+  @apply inline-block bg-[#87A878] text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300;
+}
+
+.btn-primary:hover {
+  @apply transform -translate-y-1 shadow-lg;
+}
+
+.btn-secondary {
+  @apply inline-block bg-white text-[#87A878] px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 border-2 border-[#87A878];
+}
+
+.btn-secondary:hover {
+  @apply bg-[#87A878] text-white;
+}
+
+/* Card Styles */
+.card-fresh {
+  @apply bg-white rounded-2xl p-6 shadow-lg transition-all duration-300;
+}
+
+.card-fresh:hover {
+  @apply transform -translate-y-1 shadow-xl;
+}
+
+/* Typography Classes */
+.heading-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+/* Animation Classes */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -30px) rotate(120deg); }
+  66% { transform: translate(-20px, 20px) rotate(240deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 500px; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-float {
+  animation: float 20s ease-in-out infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Gradient Backgrounds */
+.gradient-sage {
+  background: linear-gradient(135deg, var(--sage-green) 0%, var(--light-sage) 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(180deg, var(--white) 0%, var(--warm-beige) 100%);
+}
+
+/* Status Badges */
+.badge-invest {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-green-100 text-green-800;
+}
+
+.badge-maybe {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-yellow-100 text-yellow-800;
+}
+
+.badge-pass {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-red-100 text-red-800;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    @apply px-4;
+  }
+}
+
+/* Remove old font references */
+.font-display,
+.font-ui,
+.font-body {
+  font-family: var(--font-sans) !important;
+}
+
+/* Custom Utilities */
+.text-sage { color: var(--sage-green); }
+.bg-sage { background-color: var(--sage-green); }
+.bg-cream { background-color: var(--cream); }
+.bg-warm-beige { background-color: var(--warm-beige); }
+.text-charcoal { color: var(--charcoal); }
+.text-soft-black { color: var(--soft-black); }
