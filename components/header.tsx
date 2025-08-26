@@ -45,9 +45,10 @@ export default function Header() {
     <>
       <style jsx global>{`
         @font-face {
-          font-family: 'FugazOne';
-          src: url('/fonts/FugazOne-Regular.ttf') format('truetype');
-          font-weight: 400;
+          font-family: 'ArgentumSans';
+          src: url('/fonts/ArgentumSans-BlackItalic.ttf') format('truetype');
+          font-weight: 900;
+          font-style: italic;
           font-display: swap;
         }
         
@@ -131,8 +132,10 @@ export default function Header() {
         }
 
         .logo-text {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 24px;
+          font-weight: 900;
+          font-style: italic;
           color: #2C2C2C;
           letter-spacing: -0.01em;
         }
