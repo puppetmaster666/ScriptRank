@@ -31,6 +31,10 @@ export default function WhyUsPage() {
           font-weight: 400;
           font-display: swap;
         }
+        
+        body {
+          background: #FAF7F0;
+        }
       `}</style>
 
       <div className="min-h-screen">
@@ -302,7 +306,8 @@ export default function WhyUsPage() {
           text-align: center;
           padding: 30px;
           background: #FDFCF8;
-          border: 1px solid #D4D4D4;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .value-icon {
@@ -506,7 +511,8 @@ export default function WhyUsPage() {
         .benefit-card {
           padding: 30px;
           background: #FDFCF8;
-          border: 1px solid #D4D4D4;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .benefit-card h3 {
@@ -548,7 +554,8 @@ export default function WhyUsPage() {
 
         .faq-item {
           margin-bottom: 20px;
-          border: 1px solid #D4D4D4;
+          border: 2px solid #E5E5E5;
+          border-radius: 8px;
           overflow: hidden;
         }
 
@@ -567,10 +574,6 @@ export default function WhyUsPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-        }
-
-        .faq-question:hover {
-          background: #F5F2EA;
         }
 
         .faq-icon {
@@ -628,8 +631,8 @@ export default function WhyUsPage() {
           font-weight: 900;
           font-style: italic;
           text-decoration: none;
+          border-radius: 6px;
           transition: all 0.3s;
-          border: 2px solid #2C2C2C;
         }
 
         .cta-button:hover {
@@ -645,8 +648,7 @@ export default function WhyUsPage() {
         }
 
         .cta-button.secondary:hover {
-          background: #2C2C2C;
-          color: #FAF7F0;
+          background: rgba(44, 44, 44, 0.1);
         }
 
         /* Footer */
