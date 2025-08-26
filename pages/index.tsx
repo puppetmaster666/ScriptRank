@@ -11,8 +11,6 @@ export default function HomePage() {
       </Head>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-        
         @font-face {
           font-family: 'DrukWide';
           src: url('/fonts/Druk-HeavyItalic-Trial.otf') format('opentype');
@@ -28,15 +26,10 @@ export default function HomePage() {
         }
         
         body {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Courier New', monospace;
           background: white;
-          color: #111;
+          color: #333;
           line-height: 1.6;
-        }
-
-        h1, h2, h3, h4 {
-          font-family: 'Archivo Black', sans-serif;
-          letter-spacing: -0.02em;
         }
       `}</style>
 
@@ -44,44 +37,28 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="hero">
           <div className="container">
-            <div className="hero-content">
-              <h1>
-                NO MONEY? NO PROBLEM.<br/>
-                <span className="highlight">LET AI JUDGE YOUR IDEA</span>
-              </h1>
-              <p className="subtitle">
-                SKIP THE EXPENSIVE MARKETING. SUBMIT YOUR IDEA. GET RANKED BY AI. WIN CASH PRIZES.
-              </p>
-              <div className="hero-buttons">
-                <Link href="/submit">
-                  <a className="cta-button primary">Submit Your Idea</a>
-                </Link>
-                <Link href="/how-it-works">
-                  <a className="cta-button secondary">How It Works</a>
-                </Link>
-              </div>
-            </div>
+            <h1>
+              NO MONEY? NO PROBLEM.<br/>
+              <span className="highlight">LET AI JUDGE YOUR IDEA</span>
+            </h1>
+            <p className="subtitle">
+              SKIP THE EXPENSIVE MARKETING. SUBMIT YOUR IDEA. GET RANKED BY AI. WIN CASH PRIZES.
+            </p>
           </div>
         </section>
 
         {/* Value Proposition */}
         <section className="value-props">
           <div className="container">
-            <div className="section-header">
-              <h2>Why Choose Our Arena?</h2>
-              <p>Traditional platforms require money to compete. We require only talent.</p>
-            </div>
             <div className="value-grid">
               <div className="value-card">
-                <div className="value-icon">💰</div>
-                <h3 className="value-title">Zero Marketing Budget</h3>
+                <h3 className="value-title">No Kickstarter Budget?</h3>
                 <p className="value-desc">
                   Other platforms need $10K+ for marketing to get noticed. Here? <strong>$0</strong>. 
                   Your idea speaks for itself.
                 </p>
               </div>
               <div className="value-card">
-                <div className="value-icon">🤖</div>
                 <h3 className="value-title">Instant AI Ranking</h3>
                 <p className="value-desc">
                   No waiting for backers. Our harsh AI scores you immediately. 
@@ -89,7 +66,6 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="value-card">
-                <div className="value-icon">🏆</div>
                 <h3 className="value-title">Monthly Cash Prizes</h3>
                 <p className="value-desc">
                   Top ideas win <strong>real money</strong>. Investors browse the leaderboard. 
@@ -103,14 +79,13 @@ export default function HomePage() {
         {/* Leaderboard Preview */}
         <section className="leaderboard-preview">
           <div className="container">
-            <div className="section-header">
-              <h2>THIS WEEK'S BATTLEGROUND</h2>
-              <p>The top ideas fighting for dominance this week</p>
-            </div>
-            
             <div className="leaderboard-grid">
               <div className="main-leaderboard">
                 <div className="leaderboard-table">
+                  <div className="leaderboard-header">
+                    <h2>THIS WEEK'S BATTLEGROUND</h2>
+                  </div>
+                  
                   {/* Top 10 Ideas */}
                   {[
                     { rank: 1, title: 'Neon Nights', type: 'Movie', author: 'Michael Rodriguez', desc: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet. The city itself becomes a character as augmented reality bleeds into the real world, creating a visually stunning exploration of memory, identity, and predestination.', aiScore: 8.73, publicScore: 9.1, publicVotes: 23, total: 8.92 },
@@ -124,7 +99,7 @@ export default function HomePage() {
                     { rank: 9, title: 'RentMyGarage', type: 'Business', author: 'Marcus Johnson', desc: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included. Smart locks provide secure access while an AI pricing algorithm ensures fair market rates based on location and demand.', aiScore: 7.63, publicScore: 7.2, publicVotes: 5, total: 7.41 },
                     { rank: 10, title: 'Echoes of Tomorrow', type: 'Movie', author: 'Jennifer Williams', desc: 'Sci-fi series about archaeologists who discover future artifacts buried in the past. Each artifact reveals humanity\'s fate. Mind-bending time paradoxes explore free will versus determinism in a race to prevent or ensure the future.', aiScore: 8.36, publicScore: 6.8, publicVotes: 3, total: 7.58 }
                   ].map((idea) => {
-                    const [expanded, setExpanded] = useState(false);
+                    const [expanded, setExpanded] = React.useState(false);
                     const shortDesc = idea.desc.substring(0, 100) + '...';
                     
                     return (
@@ -224,13 +199,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works */}
+        {/* How It Works - Single Line */}
         <section className="how-it-works">
           <div className="container">
-            <div className="section-header">
-              <h2>The Battleground Rules</h2>
-              <p>Four simple steps from submission to victory</p>
-            </div>
+            <h2>The Battleground Rules</h2>
             
             <div className="steps-grid">
               <div className="step-card">
@@ -272,44 +244,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Comparison Section */}
+        {/* Comparison Section - Moved Below */}
         <section className="comparison">
           <div className="container">
-            <div className="section-header">
-              <h2>The Old Way vs. Our Way</h2>
-              <p>Why traditional platforms are broken and how we fix them</p>
-            </div>
             <div className="comparison-grid">
-              <div className="comparison-card broken">
-                <h3>THE OLD WAY IS BROKEN</h3>
+              <div>
+                <h2 style={{color: '#EF4444'}}>THE OLD WAY IS BROKEN</h2>
                 <ul>
                   <li>
-                    <span className="comparison-icon">×</span>
+                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
                     <span>Kickstarter: Need $10K+ marketing budget</span>
                   </li>
                   <li>
-                    <span className="comparison-icon">×</span>
+                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
                     <span>IndieGoGo: Pay for ads or get buried</span>
                   </li>
                   <li>
-                    <span className="comparison-icon">×</span>
+                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
                     <span>ProductHunt: Need existing audience</span>
                   </li>
                 </ul>
               </div>
-              <div className="comparison-card fixed">
-                <h3>OUR WAY: MERIT ONLY</h3>
+              <div>
+                <h2 style={{color: '#10B981'}}>OUR WAY: MERIT ONLY</h2>
                 <ul>
                   <li>
-                    <span className="comparison-icon">✓</span>
+                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
                     <span>AI judges quality, not marketing spend</span>
                   </li>
                   <li>
-                    <span className="comparison-icon">✓</span>
+                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
                     <span>Great ideas automatically rank high</span>
                   </li>
                   <li>
-                    <span className="comparison-icon">✓</span>
+                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
                     <span>Investors see the best ideas first</span>
                   </li>
                 </ul>
@@ -321,12 +289,10 @@ export default function HomePage() {
         {/* CTA Section */}
         <section className="cta-section">
           <div className="container">
-            <div className="section-header">
-              <h2>No Budget? No Problem.</h2>
-              <p>Stop begging for money. Let your idea prove itself.</p>
-            </div>
+            <h2>No Budget? No Problem.</h2>
+            <p>Stop begging for money. Let your idea prove itself.</p>
             <Link href="/submit">
-              <a className="cta-button large">Submit Now →</a>
+              <a className="cta-button">Submit Now →</a>
             </Link>
           </div>
         </section>
@@ -334,81 +300,35 @@ export default function HomePage() {
         {/* Footer */}
         <footer>
           <p>© 2024 MAKE ME FAMOUS. WHERE IDEAS FIGHT TO WIN.</p>
-          <div className="footer-links">
-            <Link href="/why-us">
-              <a>Why Choose Us</a>
-            </Link>
-            <Link href="/privacy">
-              <a>Privacy Policy</a>
-            </Link>
-            <Link href="/terms">
-              <a>Terms of Service</a>
-            </Link>
-          </div>
         </footer>
       </div>
 
       <style jsx>{`
         .container {
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
-          padding: 0 20px;
-        }
-
-        .section-header {
-          text-align: center;
-          margin-bottom: 60px;
-        }
-
-        .section-header h2 {
-          font-size: 2.5rem;
-          margin-bottom: 16px;
-          color: #111;
-        }
-
-        .section-header p {
-          font-size: 1.1rem;
-          color: #666;
-          max-width: 600px;
-          margin: 0 auto;
+          padding: 0 40px;
         }
 
         /* Hero */
         .hero {
-          background: linear-gradient(to right, #0A0A1A, #000);
+          background: black;
           color: white;
-          padding: 120px 0 100px;
+          padding: 120px 0;
           text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .hero::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23facc15' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
-          opacity: 0.3;
-        }
-
-        .hero-content {
-          position: relative;
-          z-index: 2;
-          max-width: 900px;
-          margin: 0 auto;
         }
 
         .hero h1 {
           font-family: 'DrukWide', Impact, sans-serif;
-          font-size: clamp(2.5rem, 6vw, 4.5rem);
+          font-size: clamp(48px, 6vw, 96px);
           font-weight: 900;
           font-style: italic;
           line-height: 0.95;
           letter-spacing: -0.02em;
-          margin-bottom: 30px;
+          margin-bottom: 40px;
+          max-width: 1200px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .highlight {
@@ -416,108 +336,90 @@ export default function HomePage() {
         }
 
         .subtitle {
-          font-size: 1.2rem;
+          font-family: 'Courier New', monospace;
+          font-size: 20px;
           line-height: 1.6;
           opacity: 0.9;
-          max-width: 700px;
-          margin: 0 auto 40px;
-          font-weight: 400;
-        }
-
-        .hero-buttons {
-          display: flex;
-          gap: 20px;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .cta-button {
-          display: inline-block;
-          padding: 16px 32px;
-          font-family: 'Archivo', sans-serif;
-          font-weight: 700;
-          text-decoration: none;
-          border-radius: 8px;
-          transition: all 0.3s;
-          text-align: center;
-        }
-
-        .cta-button.primary {
-          background: #FACC15;
-          color: #000;
-          border: 2px solid #FACC15;
-        }
-
-        .cta-button.primary:hover {
-          background: #000;
-          color: #FACC15;
-          transform: translateY(-2px);
-        }
-
-        .cta-button.secondary {
-          background: transparent;
-          color: white;
-          border: 2px solid white;
-        }
-
-        .cta-button.secondary:hover {
-          background: white;
-          color: #000;
-          transform: translateY(-2px);
-        }
-
-        .cta-button.large {
-          padding: 20px 50px;
-          font-size: 1.2rem;
+          max-width: 800px;
+          margin: 0 auto;
+          letter-spacing: 0.5px;
         }
 
         /* Value Props */
         .value-props {
-          padding: 100px 0;
-          background: #fff;
+          background: white;
+          border-bottom: 8px solid #FACC15;
+          padding: 80px 0;
         }
 
         .value-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 40px;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 60px;
         }
 
         .value-card {
           text-align: center;
-          padding: 40px 30px;
-          background: #f8fafc;
-          border-radius: 16px;
-          transition: transform 0.3s, box-shadow 0.3s;
-          border: 1px solid #e2e8f0;
-        }
-
-        .value-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .value-icon {
-          font-size: 48px;
-          margin-bottom: 20px;
+          padding: 0 20px;
         }
 
         .value-title {
-          font-size: 1.5rem;
-          margin-bottom: 16px;
-          color: #1e293b;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 32px;
+          font-weight: 900;
+          margin-bottom: 20px;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
         }
 
         .value-desc {
-          font-size: 1rem;
-          color: #475569;
+          font-family: 'Courier New', monospace;
+          font-size: 16px;
+          line-height: 1.8;
+          color: #666;
+        }
+
+        /* Comparison */
+        .comparison {
+          background: linear-gradient(to right, #1e3a8a, #1e40af);
+          color: white;
+          padding: 60px 0;
+        }
+
+        .comparison-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          max-width: 1000px;
+          margin: 0 auto;
+        }
+
+        .comparison h2 {
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 36px;
+          font-weight: 900;
+          font-style: italic;
+          margin-bottom: 30px;
+          letter-spacing: -0.02em;
+        }
+
+        .comparison ul {
+          list-style: none;
+        }
+
+        .comparison li {
+          display: flex;
+          gap: 16px;
+          font-size: 16px;
           line-height: 1.6;
+          align-items: flex-start;
+          margin-bottom: 20px;
         }
 
         /* Leaderboard */
         .leaderboard-preview {
-          padding: 100px 0;
-          background: #f8fafc;
+          padding: 80px 0;
+          background: white;
         }
 
         .leaderboard-grid {
@@ -528,33 +430,36 @@ export default function HomePage() {
 
         .leaderboard-table {
           background: white;
-          border-radius: 16px;
+          border: 4px solid black;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          border: 1px solid #e2e8f0;
+          box-shadow: 10px 10px 0 rgba(0,0,0,0.1);
         }
 
         .leaderboard-header {
-          background: #1e293b;
+          background: black;
           color: white;
           padding: 30px;
         }
 
         .leaderboard-header h2 {
-          font-size: 1.8rem;
-          margin: 0;
-          color: white;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 42px;
+          font-weight: 900;
+          font-style: italic;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
         }
 
         .idea-row {
           padding: 25px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 2px solid #eee;
           transition: background 0.2s;
           position: relative;
         }
 
         .idea-row:hover {
-          background: #f1f5f9;
+          background: #f9f9f9;
         }
 
         .idea-header {
@@ -565,13 +470,13 @@ export default function HomePage() {
         }
 
         .vote-btn {
-          background: #1e293b;
+          background: black;
           color: white;
           border: none;
           padding: 8px 20px;
-          font-family: 'Archivo', sans-serif;
+          font-family: 'Bahnschrift', sans-serif;
           font-size: 12px;
-          font-weight: 600;
+          font-weight: bold;
           text-transform: uppercase;
           letter-spacing: 1px;
           border-radius: 6px;
@@ -587,15 +492,15 @@ export default function HomePage() {
         .expand-btn {
           background: none;
           border: none;
-          color: #3b82f6;
+          color: #1e3a8a;
           cursor: pointer;
+          font-family: 'Courier New', monospace;
           font-size: 14px;
           text-decoration: underline;
-          margin-left: 5px;
         }
 
         .expand-btn:hover {
-          color: #1e40af;
+          color: black;
         }
 
         .rank-badge {
@@ -607,12 +512,11 @@ export default function HomePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Archivo Black', sans-serif;
+          font-family: 'DrukWide', Impact, sans-serif;
           font-size: 20px;
           font-weight: 900;
           transform: rotate(3deg);
           border-radius: 8px;
-          z-index: 1;
         }
 
         .rank-1 { background: #FACC15; color: black; }
@@ -625,24 +529,28 @@ export default function HomePage() {
         }
 
         .idea-title {
-          font-size: 1.4rem;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 24px;
+          font-weight: 900;
+          text-transform: uppercase;
           margin-bottom: 8px;
-          color: #111;
+          letter-spacing: -0.02em;
         }
 
         .idea-meta {
-          font-size: 0.9rem;
-          color: #64748b;
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          color: #666;
           margin-bottom: 12px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
 
         .idea-desc {
-          font-size: 0.95rem;
-          line-height: 1.6;
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
+          line-height: 1.5;
           margin-bottom: 16px;
-          color: #374151;
+          color: #333;
         }
 
         .score-grid {
@@ -650,7 +558,7 @@ export default function HomePage() {
           grid-template-columns: repeat(3, 1fr);
           gap: 20px;
           padding-top: 16px;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #eee;
         }
 
         .score-item {
@@ -658,21 +566,22 @@ export default function HomePage() {
         }
 
         .score-value {
-          font-family: 'Archivo', sans-serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1e293b;
+          font-family: 'Courier New', monospace;
+          font-size: 24px;
+          font-weight: bold;
+          color: black;
         }
 
         .score-label {
-          font-size: 0.8rem;
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 10px;
           text-transform: uppercase;
-          color: #64748b;
+          color: #999;
           letter-spacing: 1px;
         }
 
         .leaderboard-footer {
-          background: #1e293b;
+          background: black;
           color: white;
           padding: 20px;
           text-align: center;
@@ -681,8 +590,8 @@ export default function HomePage() {
         .leaderboard-footer a {
           color: white;
           text-decoration: none;
-          font-family: 'Archivo', sans-serif;
-          font-weight: 600;
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 14px;
           text-transform: uppercase;
           letter-spacing: 1px;
         }
@@ -693,34 +602,33 @@ export default function HomePage() {
 
         /* Sidebar Cards */
         .leaderboard-sidebar {
-          display: flex;
-          flex-direction: column;
-          gap: 30px;
+          margin-left: 20px;
         }
 
         .sidebar-card {
           background: white;
-          border-radius: 16px;
+          border: 4px solid black;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          border: 1px solid #e2e8f0;
+          margin-bottom: 30px;
         }
 
         .sidebar-header {
           background: #FACC15;
           color: black;
-          padding: 20px;
+          padding: 15px;
         }
 
         .sidebar-header h3 {
-          font-size: 1.2rem;
-          margin: 0;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 18px;
+          font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: -0.02em;
         }
 
         .sidebar-content {
-          padding: 20px;
+          padding: 15px;
         }
 
         .winner-item {
@@ -728,7 +636,7 @@ export default function HomePage() {
           align-items: center;
           gap: 12px;
           padding: 10px;
-          background: #f8fafc;
+          background: #f8f8f8;
           margin-bottom: 10px;
           border-radius: 8px;
         }
@@ -742,61 +650,61 @@ export default function HomePage() {
         }
 
         .winner-title {
-          font-family: 'Archivo', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 600;
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 12px;
+          font-weight: bold;
           text-transform: uppercase;
           margin-bottom: 2px;
-          color: #111;
         }
 
         .winner-score {
-          font-size: 0.8rem;
-          color: #64748b;
+          font-family: 'Courier New', monospace;
+          font-size: 10px;
+          color: #666;
         }
 
         .sidebar-link {
           display: block;
-          background: #1e293b;
+          background: black;
           color: white;
           text-align: center;
-          padding: 12px;
+          padding: 10px;
           text-decoration: none;
-          font-family: 'Archivo', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 600;
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 1px;
           margin-top: 10px;
           border-radius: 6px;
-          transition: background 0.2s;
         }
 
         .sidebar-link:hover {
-          background: #334155;
+          background: #333;
         }
 
         /* Submit Card */
         .submit-card {
-          background: #1e293b;
+          background: black;
           color: white;
-          text-align: center;
+          border: 4px solid #FACC15;
         }
 
         .submit-card h3 {
-          font-size: 1.4rem;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 24px;
+          font-weight: 900;
           margin-bottom: 10px;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          padding: 20px 20px 0 20px;
+          letter-spacing: -0.02em;
+          padding: 15px 15px 0 15px;
         }
 
         .submit-card p {
-          font-size: 0.9rem;
-          margin-bottom: 20px;
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          margin-bottom: 15px;
           line-height: 1.4;
-          padding: 0 20px;
-          opacity: 0.9;
+          padding: 0 15px;
         }
 
         .submit-button {
@@ -804,52 +712,65 @@ export default function HomePage() {
           background: #FACC15;
           color: black;
           text-align: center;
-          padding: 16px;
+          padding: 14px;
           text-decoration: none;
-          font-family: 'Archivo', sans-serif;
-          font-size: 1rem;
-          font-weight: 700;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 16px;
+          font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          transition: background 0.2s;
+          letter-spacing: -0.02em;
+          border-radius: 0 0 8px 8px;
+          margin-top: 10px;
         }
 
         .submit-button:hover {
-          background: #fde047;
+          background: #FDE047;
         }
 
-        /* How It Works */
+        /* How It Works - Single Line */
         .how-it-works {
-          padding: 100px 0;
           background: white;
+          padding: 100px 0;
+        }
+
+        .how-it-works h2 {
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 56px;
+          font-weight: 900;
+          font-style: italic;
+          text-align: center;
+          margin-bottom: 80px;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
         }
 
         .steps-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 30px;
-          max-width: 1200px;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 40px;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
         .step-card {
           text-align: center;
           padding: 40px 20px;
-          background: #f8fafc;
-          border-radius: 16px;
+          background: white;
+          border: 3px solid black;
+          border-radius: 12px;
           transition: all 0.3s;
-          border: 1px solid #e2e8f0;
         }
 
         .step-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          box-shadow: 8px 8px 0 rgba(0,0,0,0.1);
         }
 
         .step-number {
-          font-family: 'Archivo Black', sans-serif;
-          font-size: 3rem;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 56px;
           font-weight: 900;
+          font-style: italic;
           color: #FACC15;
           margin-bottom: 15px;
         }
@@ -861,209 +782,119 @@ export default function HomePage() {
         }
 
         .step-title {
-          font-size: 1.3rem;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 20px;
+          font-weight: 900;
+          text-transform: uppercase;
           margin-bottom: 12px;
-          color: #1e293b;
+          letter-spacing: -0.02em;
         }
 
         .step-desc {
-          font-size: 0.95rem;
-          color: #475569;
-          line-height: 1.6;
+          font-family: 'Courier New', monospace;
+          font-size: 13px;
+          color: #666;
+          line-height: 1.5;
         }
 
         /* Warning Box */
         .warning-box {
           max-width: 800px;
           margin: 80px auto 0;
-          background: #dc2626;
-          border-radius: 16px;
+          background: #DC2626;
+          border: 4px solid #991B1B;
+          border-radius: 12px;
           padding: 40px;
           color: white;
           text-align: center;
-          border: 2px solid #991b1b;
         }
 
         .warning-box h3 {
-          font-family: 'Archivo Black', sans-serif;
-          font-size: 1.5rem;
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 24px;
           text-transform: uppercase;
           margin-bottom: 16px;
         }
 
         .warning-box p {
-          font-size: 1rem;
+          font-family: 'Courier New', monospace;
+          font-size: 16px;
           line-height: 1.6;
-          opacity: 0.9;
-        }
-
-        /* Comparison */
-        .comparison {
-          padding: 100px 0;
-          background: #f8fafc;
-        }
-
-        .comparison-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-          gap: 40px;
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-
-        .comparison-card {
-          padding: 40px;
-          border-radius: 16px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .comparison-card.broken {
-          background: white;
-          border: 2px solid #ef4444;
-        }
-
-        .comparison-card.fixed {
-          background: white;
-          border: 2px solid #10b981;
-        }
-
-        .comparison-card h3 {
-          font-size: 1.5rem;
-          margin-bottom: 30px;
-          text-align: center;
-        }
-
-        .comparison-card.broken h3 {
-          color: #ef4444;
-        }
-
-        .comparison-card.fixed h3 {
-          color: #10b981;
-        }
-
-        .comparison-card ul {
-          list-style: none;
-        }
-
-        .comparison-card li {
-          display: flex;
-          gap: 16px;
-          font-size: 1rem;
-          line-height: 1.6;
-          align-items: flex-start;
-          margin-bottom: 20px;
-        }
-
-        .comparison-icon {
-          font-weight: bold;
-          font-size: 24px;
-          flex-shrink: 0;
-        }
-
-        .comparison-card.broken .comparison-icon {
-          color: #ef4444;
-        }
-
-        .comparison-card.fixed .comparison-icon {
-          color: #10b981;
         }
 
         /* CTA */
         .cta-section {
-          padding: 100px 0;
           background: linear-gradient(to right, #1e3a8a, #1e40af);
-          color: white;
+          padding: 100px 0;
           text-align: center;
-        }
-
-        .cta-section .section-header h2 {
           color: white;
         }
 
-        .cta-section .section-header p {
-          color: rgba(255, 255, 255, 0.9);
+        .cta-section h2 {
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 64px;
+          font-weight: 900;
+          font-style: italic;
+          margin-bottom: 30px;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
+        }
+
+        .cta-section p {
+          font-family: 'Bahnschrift', sans-serif;
+          font-size: 24px;
+          margin-bottom: 50px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .cta-button {
+          display: inline-block;
+          background: #FACC15;
+          color: black;
+          padding: 24px 60px;
+          font-family: 'DrukWide', Impact, sans-serif;
+          font-size: 28px;
+          font-weight: 900;
+          font-style: italic;
+          text-decoration: none;
+          transition: transform 0.3s;
+          text-transform: uppercase;
+        }
+
+        .cta-button:hover {
+          transform: scale(1.05);
+          background: #FDE047;
         }
 
         /* Footer */
         footer {
-          background: #0f172a;
+          background: black;
           color: white;
-          padding: 60px 0;
+          padding: 40px 0;
           text-align: center;
-        }
-
-        footer p {
-          margin-bottom: 20px;
-          font-size: 0.9rem;
-          opacity: 0.8;
-        }
-
-        .footer-links {
-          display: flex;
-          gap: 20px;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .footer-links a {
-          color: #cbd5e1;
-          text-decoration: none;
-          font-size: 0.9rem;
-          transition: color 0.2s;
-        }
-
-        .footer-links a:hover {
-          color: #FACC15;
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
         }
 
         /* Responsive */
-        @media (max-width: 1024px) {
-          .leaderboard-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .steps-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
         @media (max-width: 768px) {
           .container {
-            padding: 0 16px;
+            padding: 0 20px;
           }
           
-          .hero {
-            padding: 80px 0 60px;
-          }
-          
-          .hero-buttons {
-            flex-direction: column;
-            align-items: center;
-          }
-          
-          .value-grid,
-          .comparison-grid,
-          .steps-grid {
+          .comparison-grid {
             grid-template-columns: 1fr;
-          }
-          
-          .section-header h2 {
-            font-size: 2rem;
-          }
-          
-          .idea-header {
-            flex-direction: column;
-            gap: 15px;
+            gap: 40px;
           }
           
           .score-grid {
             grid-template-columns: 1fr;
-            gap: 15px;
+            gap: 20px;
           }
           
-          .footer-links {
-            flex-direction: column;
-            gap: 10px;
+          .steps-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
