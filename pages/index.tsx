@@ -1,4 +1,4 @@
-// pages/index.tsx - COMPLETE FRESH DESIGN WITH ALL FEATURES
+// pages/index.tsx - BOLD AGGRESSIVE DESIGN WITH ALL FEATURES
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -39,27 +39,12 @@ interface IdeaPreview {
 export default function HomePage() {
   const [topIdeas, setTopIdeas] = useState<IdeaPreview[]>([])
   const [loading, setLoading] = useState(true)
-  const [typedText, setTypedText] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [timeFilter, setTimeFilter] = useState('week')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const fullText = 'Do You Have The Next Big Idea?'
 
   useEffect(() => {
     fetchTopIdeas()
-    
-    // Typing animation
-    let index = 0
-    const typingInterval = setInterval(() => {
-      if (index <= fullText.length) {
-        setTypedText(fullText.slice(0, index))
-        index++
-      } else {
-        clearInterval(typingInterval)
-      }
-    }, 50)
-
-    return () => clearInterval(typingInterval)
   }, [])
 
   useEffect(() => {
@@ -162,146 +147,239 @@ export default function HomePage() {
     return content.substring(0, maxLength).trim() + '...'
   }
 
-  const getRankClass = (index: number) => {
-    if (index === 0) return 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white'
-    if (index === 1) return 'bg-gradient-to-r from-gray-300 to-gray-400 text-white'
-    if (index === 2) return 'bg-gradient-to-r from-amber-600 to-amber-700 text-white'
-    return 'bg-white text-charcoal border border-sage/20'
-  }
-
-  const getInvestmentBadgeClass = (status?: string) => {
-    switch (status) {
-      case 'INVEST':
-        return 'bg-green-100 text-green-800'
-      case 'MAYBE':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-red-100 text-red-800'
-    }
-  }
-
   return (
     <>
       <Head>
-        <title>Make Me Famous - Submit Your Next Big Idea</title>
-        <meta name="description" content="Submit your idea and get scored by our AI. Join the leaderboard for prizes and opportunities." />
+        <title>Make Me Famous - No Marketing Budget? No Problem. AI Ranks Your Idea.</title>
+        <meta name="description" content="Skip the marketing. Let AI judge your idea. Get on the leaderboard. Win cash prizes. Connect with investors." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Add new aggressive fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Barlow:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="min-h-screen bg-cream">
-        {/* Hero Section */}
-        <section className="relative gradient-sage min-h-[80vh] flex items-center justify-center overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              animation: 'float 20s ease-in-out infinite'
-            }} />
-          </div>
+      <style jsx global>{`
+        :root {
+          --primary-blue: #1e3a8a;
+          --dark-blue: #1e293b;
+          --steel-gray: #64748b;
+          --light-gray: #e2e8f0;
+          --bg-gray: #f8fafc;
+          --accent-red: #dc2626;
+          --accent-green: #16a34a;
+          --accent-yellow: #facc15;
+        }
 
-          {/* Hero Content */}
-          <div className="relative z-10 text-center px-6 sm:px-8 max-w-5xl mx-auto">
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl text-white mb-6 leading-tight">
-              {typedText}
-              <span className="animate-pulse inline-block ml-2 text-accent-yellow">|</span>
-            </h1>
-            <p className="font-mono text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Submit your concept. Get brutally honest AI feedback.<br/>
-              Join the leaderboard. Win real prizes.
-            </p>
-            <Link href="/submit">
-              <a className="inline-block bg-white text-sage px-10 py-4 rounded-full font-semibold text-lg hover:transform hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
-                Submit Your Idea →
-              </a>
-            </Link>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Barlow', sans-serif;
+          background: var(--bg-gray);
+          color: var(--dark-blue);
+        }
+
+        .font-display {
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          letter-spacing: 0.03em;
+        }
+
+        .font-heading {
+          font-family: 'Oswald', sans-serif;
+          font-weight: 700;
+        }
+
+        .font-mono {
+          font-family: 'Roboto Mono', monospace;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section - BOLD & AGGRESSIVE */}
+        <section className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+            <div className="text-center mb-12">
+              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-6 leading-none">
+                NO MONEY? NO PROBLEM.
+                <br />
+                <span className="text-yellow-400">LET AI JUDGE YOUR IDEA</span>
+              </h1>
+              <p className="font-heading text-xl sm:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto">
+                SKIP THE EXPENSIVE MARKETING. SUBMIT YOUR IDEA. GET RANKED BY AI. WIN CASH PRIZES.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Value Proposition Section - NEW */}
+        <section className="bg-white border-t-8 border-yellow-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="text-5xl mb-4">🚫💰</div>
+                <h3 className="font-heading text-2xl mb-3 text-gray-900">NO KICKSTARTER BUDGET?</h3>
+                <p className="text-gray-600">
+                  Other platforms need $10K+ for marketing to get noticed. Here? <strong>$0</strong>. 
+                  Your idea speaks for itself.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="text-5xl mb-4">🤖⚡</div>
+                <h3 className="font-heading text-2xl mb-3 text-gray-900">INSTANT AI RANKING</h3>
+                <p className="text-gray-600">
+                  No waiting for backers. Our harsh AI scores you immediately. 
+                  Good ideas rise to the top <strong>automatically</strong>.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="text-5xl mb-4">💵🏆</div>
+                <h3 className="font-heading text-2xl mb-3 text-gray-900">MONTHLY CASH PRIZES</h3>
+                <p className="text-gray-600">
+                  Top ideas win <strong>real money</strong>. Investors browse the leaderboard. 
+                  Every month is a new chance.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It's Different - NEW */}
+        <section className="bg-slate-900 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="md:w-1/2">
+                <h2 className="font-display text-4xl sm:text-5xl mb-4 text-yellow-400">
+                  THE OLD WAY IS BROKEN
+                </h2>
+                <ul className="space-y-3 text-lg">
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-500">❌</span>
+                    <span>Kickstarter: Need $10K+ marketing budget to get seen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-500">❌</span>
+                    <span>IndieGoGo: Pay for ads or get buried</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-red-500">❌</span>
+                    <span>ProductHunt: Need existing audience to win</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="md:w-1/2">
+                <h2 className="font-display text-4xl sm:text-5xl mb-4 text-green-400">
+                  OUR WAY: MERIT ONLY
+                </h2>
+                <ul className="space-y-3 text-lg">
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>AI judges quality, not marketing spend</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Great ideas automatically rank high</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Investors see the best ideas first</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Stats Bar */}
-        <div className="max-w-6xl mx-auto px-6 -mt-20 relative z-20">
-          <div className="bg-white rounded-3xl shadow-large p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="font-display text-4xl text-sage mb-2">10K+</div>
-                <div className="text-sm uppercase tracking-wider text-charcoal/60">Ideas Submitted</div>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="font-display text-5xl">10K+</div>
+                <div className="font-heading text-sm uppercase tracking-wider opacity-80">Ideas Submitted</div>
               </div>
-              <div className="text-center">
-                <div className="font-display text-4xl text-sage mb-2">$50K</div>
-                <div className="text-sm uppercase tracking-wider text-charcoal/60">Prizes Given</div>
+              <div>
+                <div className="font-display text-5xl">$50K</div>
+                <div className="font-heading text-sm uppercase tracking-wider opacity-80">Prizes Given</div>
               </div>
-              <div className="text-center">
-                <div className="font-display text-4xl text-sage mb-2">3.2</div>
-                <div className="text-sm uppercase tracking-wider text-charcoal/60">Avg AI Score</div>
+              <div>
+                <div className="font-display text-5xl">3.2</div>
+                <div className="font-heading text-sm uppercase tracking-wider opacity-80">Avg AI Score</div>
               </div>
-              <div className="text-center">
-                <div className="font-display text-4xl text-sage mb-2">92%</div>
-                <div className="text-sm uppercase tracking-wider text-charcoal/60">Get Roasted</div>
+              <div>
+                <div className="font-display text-5xl">12</div>
+                <div className="font-heading text-sm uppercase tracking-wider opacity-80">Ideas Funded</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content Section */}
-        <section className="max-w-7xl mx-auto px-6 py-16">
-          {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-3 mb-8">
+        {/* Main Leaderboard Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          {/* Aggressive Tab Navigation */}
+          <div className="flex flex-wrap gap-2 mb-8">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-6 py-3 rounded-full font-medium transition-all ${
+              className={`px-6 py-3 font-heading text-lg uppercase tracking-wider transition-all ${
                 activeTab === 'all' 
-                  ? 'bg-sage text-white' 
-                  : 'bg-white text-charcoal hover:bg-sage-pale'
+                  ? 'bg-blue-900 text-white' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-900'
               }`}
             >
-              All Ideas
+              ALL IDEAS
             </button>
             <button
               onClick={() => setActiveTab('movies')}
-              className={`px-6 py-3 rounded-full font-medium transition-all ${
+              className={`px-6 py-3 font-heading text-lg uppercase tracking-wider transition-all ${
                 activeTab === 'movies' 
-                  ? 'bg-sage text-white' 
-                  : 'bg-white text-charcoal hover:bg-sage-pale'
+                  ? 'bg-blue-900 text-white' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-900'
               }`}
             >
-              🎬 Movies
+              🎬 MOVIES
             </button>
             <button
               onClick={() => setActiveTab('games')}
-              className={`px-6 py-3 rounded-full font-medium transition-all ${
+              className={`px-6 py-3 font-heading text-lg uppercase tracking-wider transition-all ${
                 activeTab === 'games' 
-                  ? 'bg-sage text-white' 
-                  : 'bg-white text-charcoal hover:bg-sage-pale'
+                  ? 'bg-blue-900 text-white' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-900'
               }`}
             >
-              🎮 Games
+              🎮 GAMES
             </button>
             <button
               onClick={() => setActiveTab('business')}
-              className={`px-6 py-3 rounded-full font-medium transition-all ${
+              className={`px-6 py-3 font-heading text-lg uppercase tracking-wider transition-all ${
                 activeTab === 'business' 
-                  ? 'bg-sage text-white' 
-                  : 'bg-white text-charcoal hover:bg-sage-pale'
+                  ? 'bg-blue-900 text-white' 
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-900'
               }`}
             >
-              💼 Business
+              💼 BUSINESS
             </button>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Ideas Section */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-3xl p-8 shadow-soft">
-                <h2 className="font-display text-3xl text-soft-black mb-6">
-                  This {timeFilter === 'week' ? "Week's" : timeFilter === 'month' ? "Month's" : "Year's"} Top Ideas
-                </h2>
+              <div className="bg-white border-4 border-gray-900 shadow-xl">
+                <div className="bg-gray-900 text-white p-6">
+                  <h2 className="font-display text-4xl">
+                    THIS {timeFilter.toUpperCase()}'S BATTLEGROUND
+                  </h2>
+                </div>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-sage border-r-transparent"></div>
-                    <p className="mt-4 text-charcoal/60">Loading amazing ideas...</p>
+                  <div className="p-12 text-center">
+                    <div className="inline-block h-12 w-12 animate-spin border-4 border-blue-900 border-t-transparent"></div>
+                    <p className="mt-4 font-heading text-gray-600">LOADING WARRIORS...</p>
                   </div>
                 ) : topIdeas.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="divide-y-4 divide-gray-200">
                     {topIdeas.map((idea, index) => {
                       const aiScore = getAIScore(idea)
                       const publicScore = idea.publicScore?.average || 0
@@ -311,151 +389,154 @@ export default function HomePage() {
                       return (
                         <div 
                           key={idea.id} 
-                          className="relative bg-warm-beige rounded-2xl p-6 transition-all duration-300 hover:shadow-medium cursor-pointer"
+                          className="relative p-6 hover:bg-gray-50 transition-all cursor-pointer"
                           onClick={() => toggleExpanded(idea.id)}
                         >
                           {/* Rank Badge */}
-                          <div className={`absolute -top-3 -right-3 w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shadow-lg ${getRankClass(index)}`}>
-                            {index + 1}
-                          </div>
-
-                          {/* Title and Meta */}
-                          <h3 className="font-display text-2xl text-soft-black mb-3 pr-12">
-                            {idea.title}
-                          </h3>
-                          
-                          <div className="flex flex-wrap items-center gap-3 mb-4">
-                            <span className="px-3 py-1 bg-sage-pale text-sage rounded-full text-sm font-medium uppercase tracking-wider">
-                              {idea.type}
-                            </span>
-                            <span className="text-charcoal/60 text-sm">
-                              by {idea.creatorName}
-                            </span>
-                            {idea.aiScores?.investmentStatus && (
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getInvestmentBadgeClass(idea.aiScores.investmentStatus)}`}>
-                                {idea.aiScores.investmentStatus}
-                              </span>
-                            )}
+                          <div className={`absolute -top-4 -left-4 w-16 h-16 flex items-center justify-center font-display text-2xl transform rotate-3 ${
+                            index === 0 ? 'bg-yellow-400 text-black' :
+                            index === 1 ? 'bg-gray-400 text-white' :
+                            index === 2 ? 'bg-orange-600 text-white' :
+                            'bg-gray-800 text-white'
+                          }`}>
+                            #{index + 1}
                           </div>
 
                           {/* Content */}
-                          <p className="text-charcoal leading-relaxed mb-4">
-                            {isExpanded ? idea.content : truncateContent(idea.content)}
-                          </p>
-
-                          {/* Expanded Content */}
-                          {isExpanded && (
-                            <div className="mt-4 pt-4 border-t border-sage/10 animate-slideDown">
-                              {idea.targetAudience && (
-                                <div className="mb-3">
-                                  <strong className="text-sm text-charcoal/70">Target Audience:</strong>
-                                  <p className="text-charcoal mt-1">{idea.targetAudience}</p>
-                                </div>
+                          <div className="pl-12">
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="font-heading text-2xl text-gray-900 uppercase">
+                                {idea.title}
+                              </h3>
+                              {idea.aiScores?.investmentStatus && (
+                                <span className={`px-3 py-1 font-mono text-xs font-bold ${
+                                  idea.aiScores.investmentStatus === 'INVEST' ? 'bg-green-500 text-white' :
+                                  idea.aiScores.investmentStatus === 'MAYBE' ? 'bg-yellow-500 text-black' :
+                                  'bg-red-500 text-white'
+                                }`}>
+                                  {idea.aiScores.investmentStatus}
+                                </span>
                               )}
-                              
-                              {idea.uniqueValue && (
-                                <div className="mb-3">
-                                  <strong className="text-sm text-charcoal/70">What Makes It Unique:</strong>
-                                  <p className="text-charcoal mt-1">{idea.uniqueValue}</p>
-                                </div>
-                              )}
-                              
-                              {idea.aiScores?.verdict && (
-                                <div className="bg-white rounded-xl p-4 mt-4">
-                                  <strong className="text-sm text-charcoal/70">AI Verdict:</strong>
-                                  <p className="text-charcoal mt-1 italic">"{idea.aiScores.verdict}"</p>
-                                </div>
-                              )}
-                              
-                              <Link href={`/ideas/${idea.id}`}>
-                                <a className="inline-block mt-4 text-sage font-medium hover:underline">
-                                  View Full Details →
-                                </a>
-                              </Link>
                             </div>
-                          )}
 
-                          {/* Scores */}
-                          <div className="flex gap-6 pt-4 border-t border-sage/10">
-                            <div className="text-center">
-                              <div className="font-mono text-2xl font-bold text-sage">{aiScore.toFixed(1)}</div>
-                              <div className="text-xs uppercase tracking-wider text-charcoal/50">AI Score</div>
+                            <div className="flex items-center gap-4 mb-3 text-sm">
+                              <span className="font-mono text-gray-600">TYPE: {idea.type.toUpperCase()}</span>
+                              <span className="font-mono text-gray-600">BY: {idea.creatorName.toUpperCase()}</span>
                             </div>
-                            {publicVoteCount > 0 && (
-                              <div className="text-center">
-                                <div className="font-mono text-2xl font-bold text-sage">{publicScore.toFixed(1)}</div>
-                                <div className="text-xs uppercase tracking-wider text-charcoal/50">Public ({publicVoteCount})</div>
+
+                            <p className="text-gray-700 mb-4 font-medium">
+                              {isExpanded ? idea.content : truncateContent(idea.content)}
+                            </p>
+
+                            {/* Expanded Content */}
+                            {isExpanded && (
+                              <div className="bg-gray-100 p-4 border-l-4 border-blue-900 mb-4">
+                                {idea.aiScores?.verdict && (
+                                  <div className="mb-4">
+                                    <strong className="font-heading text-sm uppercase">AI VERDICT:</strong>
+                                    <p className="text-gray-800 mt-1 italic">"{idea.aiScores.verdict}"</p>
+                                  </div>
+                                )}
+                                <Link href={`/ideas/${idea.id}`}>
+                                  <a className="font-heading text-blue-900 uppercase hover:underline">
+                                    FULL ANALYSIS →
+                                  </a>
+                                </Link>
                               </div>
                             )}
+
+                            {/* Score Display */}
+                            <div className="grid grid-cols-3 gap-4 pt-4 border-t-2 border-gray-200">
+                              <div>
+                                <div className="font-mono text-3xl font-bold text-blue-900">{aiScore.toFixed(1)}</div>
+                                <div className="font-heading text-xs uppercase text-gray-500">AI SCORE</div>
+                              </div>
+                              {publicVoteCount > 0 && (
+                                <div>
+                                  <div className="font-mono text-3xl font-bold text-green-600">{publicScore.toFixed(1)}</div>
+                                  <div className="font-heading text-xs uppercase text-gray-500">PUBLIC ({publicVoteCount})</div>
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-mono text-3xl font-bold text-purple-600">
+                                  {publicVoteCount > 0 ? ((aiScore + publicScore) / 2).toFixed(1) : aiScore.toFixed(1)}
+                                </div>
+                                <div className="font-heading text-xs uppercase text-gray-500">TOTAL</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">💡</div>
-                    <p className="text-charcoal/60 mb-6">No ideas submitted yet. Be the first!</p>
+                  <div className="p-12 text-center">
+                    <div className="text-6xl mb-4">⚔️</div>
+                    <p className="font-heading text-xl text-gray-600 mb-6">NO WARRIORS IN THE ARENA YET</p>
                     <Link href="/submit">
-                      <a className="btn-primary">Submit Your Idea</a>
+                      <a className="inline-block bg-blue-900 text-white px-8 py-4 font-heading text-xl uppercase hover:bg-blue-800">
+                        BE THE FIRST →
+                      </a>
                     </Link>
                   </div>
                 )}
 
-                <div className="text-center mt-8">
+                <div className="bg-gray-900 text-white p-4 text-center">
                   <Link href="/leaderboard">
-                    <a className="text-sage font-medium hover:underline">View Full Leaderboard →</a>
+                    <a className="font-heading text-lg uppercase hover:text-yellow-400">
+                      ENTER FULL BATTLEGROUND →
+                    </a>
                   </Link>
                 </div>
               </div>
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6">
               {/* Previous Month Winners */}
-              <div className="bg-warm-beige rounded-3xl p-6 shadow-soft mb-6">
-                <h3 className="font-display text-2xl text-soft-black mb-4">Previous Month Winners</h3>
-                
-                <div className="space-y-3">
-                  <div className="bg-white rounded-xl p-4 flex items-center gap-3">
-                    <span className="text-2xl">🥇</span>
+              <div className="bg-white border-4 border-gray-900 shadow-xl">
+                <div className="bg-yellow-400 text-black p-4">
+                  <h3 className="font-display text-2xl">LAST MONTH'S CHAMPIONS</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-100">
+                    <span className="text-3xl">🥇</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-soft-black">The Memory Thief</div>
-                      <div className="text-sm font-mono text-sage">Score: 9.2</div>
+                      <div className="font-heading font-bold">THE MEMORY THIEF</div>
+                      <div className="font-mono text-sm text-gray-600">SCORE: 9.2</div>
                     </div>
                   </div>
-                  
-                  <div className="bg-white rounded-xl p-4 flex items-center gap-3">
-                    <span className="text-2xl">🥈</span>
+                  <div className="flex items-center gap-3 p-3 bg-gray-100">
+                    <span className="text-3xl">🥈</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-soft-black">Quantum Break</div>
-                      <div className="text-sm font-mono text-sage">Score: 8.9</div>
+                      <div className="font-heading font-bold">QUANTUM BREAK</div>
+                      <div className="font-mono text-sm text-gray-600">SCORE: 8.9</div>
                     </div>
                   </div>
-                  
-                  <div className="bg-white rounded-xl p-4 flex items-center gap-3">
-                    <span className="text-2xl">🥉</span>
+                  <div className="flex items-center gap-3 p-3 bg-gray-100">
+                    <span className="text-3xl">🥉</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-soft-black">Mind Maze VR</div>
-                      <div className="text-sm font-mono text-sage">Score: 8.7</div>
+                      <div className="font-heading font-bold">MIND MAZE VR</div>
+                      <div className="font-mono text-sm text-gray-600">SCORE: 8.7</div>
                     </div>
                   </div>
                 </div>
-
                 <Link href="/archive">
-                  <a className="block mt-4 text-center bg-sage text-white py-3 rounded-xl font-medium hover:bg-sage-light transition-colors">
-                    View Full Archive →
+                  <a className="block bg-gray-900 text-white text-center py-3 font-heading uppercase hover:bg-gray-800">
+                    VIEW HALL OF FAME →
                   </a>
                 </Link>
               </div>
 
-              {/* Call to Action Card */}
-              <div className="bg-gradient-to-br from-sage to-sage-light rounded-3xl p-6 text-white">
-                <h3 className="font-display text-2xl mb-3">Ready to compete?</h3>
-                <p className="text-white/90 mb-4">Submit your idea and see how it stacks up against the competition.</p>
+              {/* CTA Card */}
+              <div className="bg-gradient-to-br from-red-600 to-red-800 text-white p-6 border-4 border-gray-900">
+                <h3 className="font-display text-3xl mb-3">READY TO FIGHT?</h3>
+                <p className="mb-4 font-medium">
+                  Submit your idea. Face the AI. Climb the ranks.
+                </p>
                 <Link href="/submit">
-                  <a className="block text-center bg-white text-sage py-3 rounded-xl font-medium hover:shadow-lg transition-all">
-                    Submit Now →
+                  <a className="block text-center bg-white text-red-700 py-3 font-heading text-lg uppercase hover:bg-yellow-400">
+                    ENTER ARENA →
                   </a>
                 </Link>
               </div>
@@ -463,39 +544,37 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works Section */}
-        <section className="gradient-warm py-20 px-6">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="font-display text-5xl text-center text-soft-black mb-12">How It Works</h2>
+        {/* How It Works */}
+        <section className="bg-gray-900 text-white py-16">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <h2 className="font-display text-5xl text-center mb-12 text-yellow-400">
+              THE BATTLEGROUND RULES
+            </h2>
             
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               {[
-                { num: 1, emoji: '💡', title: 'Submit Your Idea', desc: 'Movie script? Game concept? Business plan? Write 30-500 words explaining why it\'s revolutionary.' },
-                { num: 2, emoji: '🔥', title: 'Get AI Scored', desc: 'Our harsh AI judges like a skeptical VC. Market potential, innovation, execution - all scored 0-10.' },
-                { num: 3, emoji: '📈', title: 'Community Votes', desc: 'Real people rate and comment. Watch your idea climb (or crash) on the live leaderboard.' },
-                { num: 4, emoji: '🏆', title: 'Win Real Prizes', desc: 'Monthly winners get $5,000 in prizes. Top ideas get pitched to real investors & studios.' }
+                { num: 1, emoji: '⚔️', title: 'SUBMIT YOUR WEAPON', desc: 'Your idea is your weapon. 30-500 words. Make it count.' },
+                { num: 2, emoji: '🤖', title: 'FACE THE AI JUDGE', desc: 'Brutal AI scores 0-10. No mercy. Most fail.' },
+                { num: 3, emoji: '🗳️', title: 'SURVIVE PUBLIC VOTE', desc: 'Community votes. Weak ideas die. Strong ideas rise.' },
+                { num: 4, emoji: '💰', title: 'CLAIM YOUR PRIZE', desc: '$5,000 monthly prizes. Real investors watching.' }
               ].map((step) => (
-                <div key={step.num} className="bg-white rounded-2xl p-6 text-center hover:transform hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-sage-pale text-sage rounded-full font-bold text-lg mb-4">
-                    {step.num}
-                  </div>
-                  <div className="text-4xl mb-3">{step.emoji}</div>
-                  <h3 className="font-bold text-lg text-soft-black mb-2">{step.title}</h3>
-                  <p className="text-charcoal/70 text-sm">{step.desc}</p>
+                <div key={step.num} className="text-center">
+                  <div className="font-display text-6xl text-yellow-400 mb-3">{step.num}</div>
+                  <div className="text-5xl mb-3">{step.emoji}</div>
+                  <h3 className="font-heading text-xl mb-2 uppercase">{step.title}</h3>
+                  <p className="text-gray-400 text-sm">{step.desc}</p>
                 </div>
               ))}
             </div>
-            
-            {/* Warning Box */}
-            <div className="mt-12 max-w-3xl mx-auto bg-accent-coral/10 border-2 border-accent-coral/20 rounded-2xl p-6">
+
+            <div className="mt-12 max-w-3xl mx-auto bg-red-900 border-4 border-red-500 p-6">
               <div className="flex gap-4">
-                <span className="text-3xl">⚠️</span>
+                <span className="text-4xl">⚠️</span>
                 <div>
-                  <h3 className="font-bold text-soft-black mb-2">Fair Warning</h3>
-                  <p className="text-charcoal/80">
-                    The AI doesn't sugarcoat. Most ideas score 3-6. 
-                    It's trained to think like a harsh VC who's seen everything. 
-                    If you can't handle brutal honesty, this isn't for you.
+                  <h3 className="font-heading text-xl uppercase mb-2">WARNING</h3>
+                  <p className="text-red-200">
+                    The AI doesn't care about your feelings. Most ideas score 3-6. 
+                    If you can't handle brutal truth, leave now.
                   </p>
                 </div>
               </div>
@@ -503,29 +582,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Footer CTA */}
-        <section className="bg-sage py-16 px-6 text-center">
-          <h2 className="font-display text-5xl text-white mb-6">Ready to Get Famous?</h2>
+        {/* Final CTA */}
+        <section className="bg-gradient-to-r from-blue-900 to-blue-700 py-16 text-center text-white">
+          <h2 className="font-display text-6xl mb-6">NO BUDGET? NO PROBLEM.</h2>
+          <p className="font-heading text-2xl mb-8 max-w-2xl mx-auto">
+            STOP BEGGING FOR MONEY. LET YOUR IDEA PROVE ITSELF.
+          </p>
           <Link href="/submit">
-            <a className="inline-block bg-white text-sage px-12 py-5 rounded-full font-bold text-xl hover:transform hover:scale-105 hover:shadow-xl transition-all">
-              Submit Your Idea Now
+            <a className="inline-block bg-yellow-400 text-black px-12 py-5 font-display text-3xl hover:bg-yellow-300 transform hover:scale-105 transition-all">
+              SUBMIT NOW →
             </a>
           </Link>
         </section>
 
-        {/* Simple Footer */}
-        <footer className="bg-charcoal text-white/60 py-8 px-6 text-center">
-          <p className="font-mono text-sm">© 2024 Make Me Famous. Where Ideas Compete.</p>
+        {/* Footer */}
+        <footer className="bg-black text-white py-8 text-center">
+          <p className="font-mono text-sm">© 2024 MAKE ME FAMOUS. WHERE IDEAS FIGHT TO WIN.</p>
         </footer>
       </div>
-
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          33% { transform: translate(30px, -30px) rotate(120deg); }
-          66% { transform: translate(-20px, 20px) rotate(240deg); }
-        }
-      `}</style>
     </>
   )
 }
