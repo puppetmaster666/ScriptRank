@@ -1,4 +1,4 @@
-// pages/index.tsx - COMPLETE FIXED FILE
+// pages/index.tsx - COMPLETE VERSION WITH ALL FEATURES - MOBILE OPTIMIZED
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -191,24 +191,26 @@ export default function HomePage() {
       <Head>
         <title>Make Me Famous - Submit Your Next Big Idea</title>
         <meta name="description" content="Do you have the next Tarantino script? Submit your idea and get scored by our AI. Join the leaderboard for prizes and opportunities." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div className="min-h-screen bg-white">
-        {/* Hero Section */}
-        <section className="px-8 py-20 bg-black text-white">
-          <h1 className="text-center text-white min-h-[64px]" style={{ 
+        {/* Hero Section - MOBILE OPTIMIZED */}
+        <section className="px-4 sm:px-8 py-12 sm:py-20 bg-black text-white">
+          <h1 className="text-center text-white min-h-[40px] sm:min-h-[64px]" style={{ 
             fontFamily: 'DrukWide, Impact, sans-serif',
-            fontSize: 'clamp(32px, 5vw, 64px)',
+            fontSize: 'clamp(24px, 6vw, 64px)',
             fontWeight: 900,
             letterSpacing: '-0.02em',
-            lineHeight: 1
+            lineHeight: 1.1,
+            wordBreak: 'break-word'
           }}>
             {typedText}
             <span className="typing-cursor">|</span>
           </h1>
-          <p className="text-center mt-8 text-white opacity-90" style={{
+          <p className="text-center mt-6 sm:mt-8 text-white opacity-90 px-4" style={{
             fontFamily: 'Courier New, monospace',
-            fontSize: '18px',
+            fontSize: 'clamp(14px, 2.5vw, 18px)',
             lineHeight: 1.6,
             letterSpacing: '0.02em'
           }}>
@@ -218,10 +220,200 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* Leaderboard Section */}
-        <section className="px-8 py-16">
+        {/* Leaderboard Section with Previous Month - COMPLETE VERSION */}
+        <section className="px-4 sm:px-8 py-8 sm:py-16">
           <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-4 gap-8">
+            {/* Mobile Layout */}
+            <div className="lg:hidden">
+              {/* Previous Month Section - NOW ON MOBILE */}
+              <div className="mb-6 p-4 bg-white border-2 border-black rounded-xl">
+                <h3 className="text-lg font-bold mb-3" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
+                  PREVIOUS MONTH WINNERS
+                </h3>
+                <div className="text-sm text-gray-600 mb-3">
+                  {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🥇</span>
+                      <div>
+                        <div className="font-semibold text-sm">The Memory Thief</div>
+                        <div className="text-xs text-gray-600">Score: 9.2</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🥈</span>
+                      <div>
+                        <div className="font-semibold text-sm">Quantum Break</div>
+                        <div className="text-xs text-gray-600">Score: 8.9</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🥉</span>
+                      <div>
+                        <div className="font-semibold text-sm">Mind Maze VR</div>
+                        <div className="text-xs text-gray-600">Score: 8.7</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Link href="/archive" className="block mt-3 text-center py-2 border-2 border-black rounded-lg text-sm font-bold hover:bg-black hover:text-white transition">
+                  View Full Archive →
+                </Link>
+              </div>
+
+              {/* Current Leaderboard */}
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
+                  TOP IDEAS THIS {timeFilter.toUpperCase()}
+                </h2>
+                
+                {/* Filter Pills */}
+                <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+                  {['all', 'movies', 'games', 'business'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-3 py-1 border rounded-full text-sm whitespace-nowrap transition-all ${
+                        activeTab === tab ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'
+                      }`}
+                      style={{ fontFamily: 'Bahnschrift, sans-serif' }}
+                    >
+                      {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile Ideas Cards with Expandable Content */}
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : topIdeas.length > 0 ? (
+                  topIdeas.map((idea, index) => {
+                    const aiScore = getAIScore(idea)
+                    const publicScore = idea.publicScore?.average || 0
+                    const publicVoteCount = idea.publicScore?.count || 0
+                    const isExpanded = expandedId === idea.id
+                    
+                    return (
+                      <div key={idea.id} className="bg-white border-2 border-black rounded-lg overflow-hidden">
+                        <div 
+                          className="p-4 cursor-pointer"
+                          onClick={() => toggleExpanded(idea.id)}
+                        >
+                          {/* Rank Badge and Status */}
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                                index === 0 ? 'bg-yellow-400 text-black' :
+                                index === 1 ? 'bg-gray-300 text-black' :
+                                index === 2 ? 'bg-amber-600 text-white' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {index + 1}
+                              </span>
+                              <span className="text-xs text-gray-500 font-bold uppercase">
+                                {getTypeLabel(idea.type)}
+                              </span>
+                            </div>
+                            {idea.aiScores?.investmentStatus && (
+                              <span className={`text-xs font-bold px-2 py-1 rounded ${
+                                idea.aiScores.investmentStatus === 'INVEST' ? 'bg-green-100 text-green-800' :
+                                idea.aiScores.investmentStatus === 'MAYBE' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {idea.aiScores.investmentStatus}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Title */}
+                          <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Bahnschrift, sans-serif' }}>
+                            {idea.title}
+                          </h3>
+
+                          {/* Brief */}
+                          <p className="text-sm text-gray-600 mb-3">
+                            {isExpanded ? idea.content : truncateContent(idea.content)}
+                            {idea.content.length > 80 && (
+                              <span className="text-blue-600 ml-2 font-bold">
+                                {isExpanded ? '▼ Less' : '▶ More'}
+                              </span>
+                            )}
+                          </p>
+
+                          {/* Creator & Scores */}
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">
+                              by {idea.creatorName}
+                            </span>
+                            <div className="flex gap-3 text-xs">
+                              <span>AI: <strong>{aiScore.toFixed(1)}</strong></span>
+                              {publicVoteCount > 0 && (
+                                <span>Public: <strong>{publicScore.toFixed(1)}</strong></span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded Content */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 bg-gray-50 border-t border-gray-200">
+                            {idea.targetAudience && (
+                              <div className="mt-3">
+                                <strong className="text-xs text-gray-600">Target Audience:</strong>
+                                <p className="text-sm mt-1">{idea.targetAudience}</p>
+                              </div>
+                            )}
+                            
+                            {idea.uniqueValue && (
+                              <div className="mt-3">
+                                <strong className="text-xs text-gray-600">What Makes It Unique:</strong>
+                                <p className="text-sm mt-1">{idea.uniqueValue}</p>
+                              </div>
+                            )}
+                            
+                            {idea.aiScores?.verdict && (
+                              <div className="mt-3 p-3 bg-white rounded-lg border">
+                                <strong className="text-xs text-gray-600">AI Verdict:</strong>
+                                <p className="text-sm mt-1 italic">"{idea.aiScores.verdict}"</p>
+                              </div>
+                            )}
+                            
+                            <Link 
+                              href={`/ideas/${idea.id}`}
+                              className="block mt-4 text-center py-2 bg-black text-white rounded-lg text-sm font-bold"
+                            >
+                              View Full Details →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    No ideas submitted yet. Be the first!
+                  </div>
+                )}
+              </div>
+
+              {/* View All Button */}
+              <div className="mt-6 text-center">
+                <Link href="/leaderboard" className="inline-block bg-black text-white px-6 py-3 rounded-lg font-bold">
+                  VIEW FULL LEADERBOARD →
+                </Link>
+              </div>
+            </div>
+
+            {/* Desktop Layout - KEEP ALL ORIGINAL FEATURES */}
+            <div className="hidden lg:grid lg:grid-cols-4 gap-8">
               {/* Main Table - Takes 3 columns */}
               <div className="lg:col-span-3">
                 {/* Tab and Filters Container */}
@@ -264,7 +456,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 
-                {/* Table Container - Attached to tab */}
+                {/* Table Container */}
                 <div style={{
                   border: '2px solid black',
                   borderRadius: '0 12px 12px 12px',
@@ -388,7 +580,6 @@ export default function HomePage() {
                                 {aiScore.toFixed(2)}
                               </div>
                               
-                              {/* FIXED PUBLIC SCORE SECTION */}
                               <div style={{ width: '80px', textAlign: 'center' }}>
                                 {publicVoteCount > 0 ? (
                                   <div>
@@ -405,7 +596,7 @@ export default function HomePage() {
                               </div>
                             </div>
                             
-                            {/* Expandable Content Section */}
+                            {/* Expandable Content - Desktop */}
                             {isExpanded && (
                               <div style={{
                                 padding: '20px 24px 20px 74px',
@@ -543,7 +734,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Sidebar - Takes 1 column */}
+              {/* Sidebar - PREVIOUS MONTH SECTION - DESKTOP */}
               <div className="lg:col-span-1">
                 <div style={{
                   border: '2px solid black',
@@ -599,12 +790,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works Section */}
-        <section className="px-8 py-16 bg-black text-white">
+        {/* How It Works Section - MOBILE OPTIMIZED */}
+        <section className="px-4 sm:px-8 py-12 sm:py-16 bg-black text-white">
           <div className="max-w-7xl mx-auto">
             <h2 style={{
               fontFamily: 'DrukWide, Impact, sans-serif',
-              fontSize: '48px',
+              fontSize: 'clamp(32px, 5vw, 48px)',
               fontWeight: 900,
               textAlign: 'center',
               marginBottom: '16px'
@@ -613,27 +804,27 @@ export default function HomePage() {
             </h2>
             <p style={{
               fontFamily: 'Courier New, monospace',
-              fontSize: '18px',
+              fontSize: 'clamp(14px, 2.5vw, 18px)',
               textAlign: 'center',
-              marginBottom: '64px',
+              marginBottom: 'clamp(32px, 8vw, 64px)',
               opacity: 0.9
             }}>
               FOUR STEPS TO FAME OR SHAME
             </p>
 
             {/* Steps Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
               {/* Step 1 */}
               <div className="relative">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-xl">
+                <div className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 w-10 h-10 sm:w-12 sm:h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg sm:text-xl">
                   1
                 </div>
-                <div className="bg-gray-900 rounded-xl p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
-                  <div className="text-4xl mb-4">💡</div>
-                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-xl font-bold mb-3">
+                <div className="bg-gray-900 rounded-xl p-5 sm:p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💡</div>
+                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">
                     SUBMIT YOUR IDEA
                   </h3>
-                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                     Movie script? Game concept? Business plan? 
                     Write 30-500 words explaining why it's the next big thing.
                   </p>
@@ -642,15 +833,15 @@ export default function HomePage() {
 
               {/* Step 2 */}
               <div className="relative">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-xl">
+                <div className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 w-10 h-10 sm:w-12 sm:h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg sm:text-xl">
                   2
                 </div>
-                <div className="bg-gray-900 rounded-xl p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
-                  <div className="text-4xl mb-4">🔥</div>
-                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-xl font-bold mb-3">
+                <div className="bg-gray-900 rounded-xl p-5 sm:p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🔥</div>
+                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">
                     GET AI SCORED
                   </h3>
-                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                     Our harsh AI judges like a skeptical VC. 
                     Market potential, innovation, execution - all scored 0-10.
                   </p>
@@ -659,15 +850,15 @@ export default function HomePage() {
 
               {/* Step 3 */}
               <div className="relative">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-xl">
+                <div className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 w-10 h-10 sm:w-12 sm:h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg sm:text-xl">
                   3
                 </div>
-                <div className="bg-gray-900 rounded-xl p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
-                  <div className="text-4xl mb-4">📈</div>
-                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-xl font-bold mb-3">
+                <div className="bg-gray-900 rounded-xl p-5 sm:p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📈</div>
+                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">
                     CLIMB THE RANKS
                   </h3>
-                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                     The community votes. Real people comment. 
                     Watch your idea climb (or crash) in real-time.
                   </p>
@@ -676,15 +867,15 @@ export default function HomePage() {
 
               {/* Step 4 */}
               <div className="relative">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-xl">
+                <div className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 w-10 h-10 sm:w-12 sm:h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-lg sm:text-xl">
                   4
                 </div>
-                <div className="bg-gray-900 rounded-xl p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
-                  <div className="text-4xl mb-4">🏆</div>
-                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-xl font-bold mb-3">
+                <div className="bg-gray-900 rounded-xl p-5 sm:p-6 h-full hover:bg-gray-800 transition-all duration-300 hover:transform hover:scale-105">
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🏆</div>
+                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">
                     WIN REAL PRIZES
                   </h3>
-                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                     Monthly winners get $5,000 in prizes. 
                     Top ideas get pitched to real investors & studios.
                   </p>
@@ -693,50 +884,50 @@ export default function HomePage() {
             </div>
 
             {/* Stats Bar */}
-            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-center">
-                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-3xl font-bold mb-1">
+            <div className="mt-12 sm:mt-16 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 sm:p-6 text-center">
+                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-2xl sm:text-3xl font-bold mb-1">
                   10K+
                 </div>
-                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                   Ideas Submitted
                 </div>
               </div>
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-6 text-center">
-                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-3xl font-bold mb-1">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-4 sm:p-6 text-center">
+                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-2xl sm:text-3xl font-bold mb-1">
                   $50K
                 </div>
-                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                   Prizes Given
                 </div>
               </div>
-              <div className="bg-gradient-to-r from-pink-600 to-red-600 rounded-lg p-6 text-center">
-                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-3xl font-bold mb-1">
+              <div className="bg-gradient-to-r from-pink-600 to-red-600 rounded-lg p-4 sm:p-6 text-center">
+                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-2xl sm:text-3xl font-bold mb-1">
                   3.2
                 </div>
-                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                   Avg AI Score
                 </div>
               </div>
-              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-lg p-6 text-center">
-                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-3xl font-bold mb-1">
+              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-lg p-4 sm:p-6 text-center">
+                <div style={{ fontFamily: 'DrukWide, sans-serif' }} className="text-2xl sm:text-3xl font-bold mb-1">
                   12
                 </div>
-                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                <div style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                   Ideas Funded
                 </div>
               </div>
             </div>
 
             {/* Warning Box */}
-            <div className="mt-12 max-w-3xl mx-auto bg-red-900 border-2 border-red-500 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <span className="text-3xl">⚠️</span>
+            <div className="mt-8 sm:mt-12 max-w-3xl mx-auto bg-red-900 border-2 border-red-500 rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                <span className="text-2xl sm:text-3xl">⚠️</span>
                 <div>
-                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-lg font-bold mb-2">
+                  <h3 style={{ fontFamily: 'Bahnschrift, sans-serif' }} className="text-base sm:text-lg font-bold mb-2">
                     FAIR WARNING
                   </h3>
-                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-sm opacity-90">
+                  <p style={{ fontFamily: 'Courier New, monospace' }} className="text-xs sm:text-sm opacity-90">
                     The AI doesn't sugarcoat. Most ideas score 3-6. 
                     It's trained to think like a harsh VC who's seen everything. 
                     If you can't handle brutal honesty, this isn't for you.
@@ -746,11 +937,11 @@ export default function HomePage() {
             </div>
 
             {/* CTA Button */}
-            <div className="text-center mt-12">
+            <div className="text-center mt-8 sm:mt-12">
               <Link href="/how-it-works" style={{
                 fontFamily: 'Bahnschrift, sans-serif',
-                fontSize: '16px',
-                padding: '12px 32px',
+                fontSize: 'clamp(14px, 2.5vw, 16px)',
+                padding: '12px 24px',
                 border: '2px solid white',
                 borderRadius: '8px',
                 background: 'transparent',
@@ -767,11 +958,11 @@ export default function HomePage() {
         </section>
 
         {/* Call to Action */}
-        <section className="px-8 py-16 border-t-2 border-black">
+        <section className="px-4 sm:px-8 py-12 sm:py-16 border-t-2 border-black">
           <div className="text-center">
             <h2 style={{
               fontFamily: 'DrukWide, Impact, sans-serif',
-              fontSize: '36px',
+              fontSize: 'clamp(24px, 5vw, 36px)',
               fontWeight: 900,
               marginBottom: '32px'
             }}>
@@ -779,8 +970,8 @@ export default function HomePage() {
             </h2>
             <Link href="/submit" style={{
               fontFamily: 'Bahnschrift, sans-serif',
-              fontSize: '18px',
-              padding: '16px 48px',
+              fontSize: 'clamp(16px, 2.5vw, 18px)',
+              padding: 'clamp(12px, 2vw, 16px) clamp(32px, 6vw, 48px)',
               border: '3px solid black',
               borderRadius: '8px',
               background: 'black',
@@ -796,10 +987,10 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="px-8 py-8 border-t-2 border-black">
+        <footer className="px-4 sm:px-8 py-6 sm:py-8 border-t-2 border-black">
           <div className="text-center" style={{
             fontFamily: 'Courier New, monospace',
-            fontSize: '12px',
+            fontSize: 'clamp(10px, 2vw, 12px)',
             letterSpacing: '0.05em',
             color: '#666'
           }}>
