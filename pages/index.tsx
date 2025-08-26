@@ -12,10 +12,16 @@ export default function HomePage() {
 
       <style jsx global>{`
         @font-face {
-          font-family: 'DrukWide';
-          src: url('/fonts/Druk-HeavyItalic-Trial.otf') format('opentype');
-          font-weight: 900;
-          font-style: italic;
+          font-family: 'FugazOne';
+          src: url('/fonts/FugazOne-Regular.ttf') format('truetype');
+          font-weight: 400;
+          font-display: swap;
+        }
+        
+        @font-face {
+          font-family: 'WorkSans';
+          src: url('/fonts/WorkSans-Regular.ttf') format('truetype');
+          font-weight: 400;
           font-display: swap;
         }
         
@@ -26,15 +32,15 @@ export default function HomePage() {
         }
         
         body {
-          font-family: 'Courier New', monospace;
-          background: white;
-          color: #333;
+          font-family: 'WorkSans', serif;
+          background: #FAF7F0;
+          color: #2C2C2C;
           line-height: 1.6;
         }
       `}</style>
 
-      <div className="min-h-screen bg-white">
-        {/* Hero Section */}
+      <div className="min-h-screen">
+        {/* Hero Section - Stays Black */}
         <section className="hero">
           <div className="container">
             <h1>
@@ -104,14 +110,14 @@ export default function HomePage() {
                     
                     return (
                       <div key={idea.rank} className="idea-row">
-                        <div className={`rank-badge ${idea.rank <= 3 ? `rank-${idea.rank}` : 'rank-default'}`}>
-                          #{idea.rank}
+                        <div className={`rank-number`}>
+                          {idea.rank}
                         </div>
                         <div className="idea-content">
                           <div className="idea-header">
                             <div>
                               <h3 className="idea-title">{idea.title}</h3>
-                              <div className="idea-meta">Type: {idea.type} • By: {idea.author}</div>
+                              <div className="idea-meta">{idea.type} • {idea.author}</div>
                             </div>
                             <button className="vote-btn">VOTE</button>
                           </div>
@@ -151,7 +157,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Sidebar - Narrower */}
+              {/* Sidebar */}
               <div className="leaderboard-sidebar">
                 {/* Previous Month Winners */}
                 <div className="sidebar-card">
@@ -160,21 +166,21 @@ export default function HomePage() {
                   </div>
                   <div className="sidebar-content">
                     <div className="winner-item">
-                      <span className="winner-badge gold">🥇</span>
+                      <span className="winner-rank">1</span>
                       <div className="winner-info">
                         <div className="winner-title">THE MEMORY THIEF</div>
                         <div className="winner-score">SCORE: 9.2</div>
                       </div>
                     </div>
                     <div className="winner-item">
-                      <span className="winner-badge silver">🥈</span>
+                      <span className="winner-rank">2</span>
                       <div className="winner-info">
                         <div className="winner-title">QUANTUM BREAK</div>
                         <div className="winner-score">SCORE: 8.9</div>
                       </div>
                     </div>
                     <div className="winner-item">
-                      <span className="winner-badge bronze">🥉</span>
+                      <span className="winner-rank">3</span>
                       <div className="winner-info">
                         <div className="winner-title">MIND MAZE VR</div>
                         <div className="winner-score">SCORE: 8.7</div>
@@ -199,7 +205,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works - Single Line */}
+        {/* How It Works */}
         <section className="how-it-works">
           <div className="container">
             <h2>The Battleground Rules</h2>
@@ -207,35 +213,31 @@ export default function HomePage() {
             <div className="steps-grid">
               <div className="step-card">
                 <div className="step-number">1</div>
-                <span className="step-icon">⚔️</span>
                 <h3 className="step-title">Submit Your Weapon</h3>
                 <p className="step-desc">Your idea is your weapon. 30-500 words. Make it count.</p>
               </div>
               
               <div className="step-card">
                 <div className="step-number">2</div>
-                <span className="step-icon">🤖</span>
                 <h3 className="step-title">Face the AI Judge</h3>
                 <p className="step-desc">Brutal AI scores 0-10. No mercy. Most fail.</p>
               </div>
               
               <div className="step-card">
                 <div className="step-number">3</div>
-                <span className="step-icon">🗳️</span>
                 <h3 className="step-title">Survive Public Vote</h3>
                 <p className="step-desc">Community votes. Weak ideas die. Strong ideas rise.</p>
               </div>
               
               <div className="step-card">
                 <div className="step-number">4</div>
-                <span className="step-icon">💰</span>
                 <h3 className="step-title">Claim Your Prize</h3>
                 <p className="step-desc">$5,000 monthly prizes. Real investors watching.</p>
               </div>
             </div>
 
             <div className="warning-box">
-              <h3>Warning</h3>
+              <h3>WARNING</h3>
               <p>
                 The AI doesn't care about your feelings. Most ideas score 3-6. 
                 If you can't handle brutal truth, leave now.
@@ -244,40 +246,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Comparison Section - Moved Below */}
+        {/* Comparison Section */}
         <section className="comparison">
           <div className="container">
             <div className="comparison-grid">
               <div>
-                <h2 style={{color: '#EF4444'}}>THE OLD WAY IS BROKEN</h2>
+                <h2>THE OLD WAY IS BROKEN</h2>
                 <ul>
                   <li>
-                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
+                    <span className="x-mark">×</span>
                     <span>Kickstarter: Need $10K+ marketing budget</span>
                   </li>
                   <li>
-                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
+                    <span className="x-mark">×</span>
                     <span>IndieGoGo: Pay for ads or get buried</span>
                   </li>
                   <li>
-                    <span style={{color: '#EF4444', fontWeight: 'bold', fontSize: '24px'}}>×</span>
+                    <span className="x-mark">×</span>
                     <span>ProductHunt: Need existing audience</span>
                   </li>
                 </ul>
               </div>
               <div>
-                <h2 style={{color: '#10B981'}}>OUR WAY: MERIT ONLY</h2>
+                <h2>OUR WAY: MERIT ONLY</h2>
                 <ul>
                   <li>
-                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
+                    <span className="check-mark">✓</span>
                     <span>AI judges quality, not marketing spend</span>
                   </li>
                   <li>
-                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
+                    <span className="check-mark">✓</span>
                     <span>Great ideas automatically rank high</span>
                   </li>
                   <li>
-                    <span style={{color: '#10B981', fontWeight: 'bold', fontSize: '20px'}}>✓</span>
+                    <span className="check-mark">✓</span>
                     <span>Investors see the best ideas first</span>
                   </li>
                 </ul>
@@ -310,7 +312,7 @@ export default function HomePage() {
           padding: 0 40px;
         }
 
-        /* Hero */
+        /* Hero - Stays Black */
         .hero {
           background: black;
           color: white;
@@ -319,11 +321,10 @@ export default function HomePage() {
         }
 
         .hero h1 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'FugazOne', serif;
           font-size: clamp(48px, 6vw, 96px);
-          font-weight: 900;
-          font-style: italic;
-          line-height: 0.95;
+          font-weight: 400;
+          line-height: 1;
           letter-spacing: -0.02em;
           margin-bottom: 40px;
           max-width: 1200px;
@@ -332,12 +333,12 @@ export default function HomePage() {
         }
 
         .highlight {
-          color: #FACC15;
+          color: #D4A574;
         }
 
         .subtitle {
-          font-family: 'Courier New', monospace;
-          font-size: 20px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 18px;
           line-height: 1.6;
           opacity: 0.9;
           max-width: 800px;
@@ -347,9 +348,9 @@ export default function HomePage() {
 
         /* Value Props */
         .value-props {
-          background: white;
-          border-bottom: 8px solid #FACC15;
+          background: #FAF7F0;
           padding: 80px 0;
+          border-top: 1px solid #2C2C2C;
         }
 
         .value-grid {
@@ -364,26 +365,398 @@ export default function HomePage() {
         }
 
         .value-title {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 32px;
-          font-weight: 900;
+          font-family: 'FugazOne', serif;
+          font-size: 28px;
           margin-bottom: 20px;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
+          color: #2C2C2C;
         }
 
         .value-desc {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 16px;
           line-height: 1.8;
-          color: #666;
+          color: #4A4A4A;
+        }
+
+        /* Leaderboard */
+        .leaderboard-preview {
+          padding: 80px 0;
+          background: #FAF7F0;
+        }
+
+        .leaderboard-grid {
+          display: grid;
+          grid-template-columns: 3fr 1fr;
+          gap: 40px;
+        }
+
+        .leaderboard-table {
+          background: #FDFCF8;
+          border: 1px solid #2C2C2C;
+          overflow: hidden;
+        }
+
+        .leaderboard-header {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          padding: 25px 30px;
+          border-bottom: 1px solid #2C2C2C;
+        }
+
+        .leaderboard-header h2 {
+          font-family: 'FugazOne', serif;
+          font-size: 32px;
+          letter-spacing: -0.01em;
+        }
+
+        .idea-row {
+          padding: 25px 30px;
+          border-bottom: 1px solid #D4D4D4;
+          transition: background 0.2s;
+          position: relative;
+          display: flex;
+          gap: 25px;
+        }
+
+        .idea-row:last-of-type {
+          border-bottom: none;
+        }
+
+        .idea-row:hover {
+          background: #F5F2EA;
+        }
+
+        .rank-number {
+          font-family: 'FugazOne', serif;
+          font-size: 36px;
+          color: #2C2C2C;
+          min-width: 45px;
+          text-align: right;
+          padding-top: 10px;
+        }
+
+        .idea-content {
+          flex: 1;
+        }
+
+        .idea-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 12px;
+        }
+
+        .vote-btn {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          border: 1px solid #2C2C2C;
+          padding: 8px 20px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 12px;
+          font-weight: 400;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .vote-btn:hover {
+          background: #FAF7F0;
+          color: #2C2C2C;
+        }
+
+        .expand-btn {
+          background: none;
+          border: none;
+          color: #8B7355;
+          cursor: pointer;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          text-decoration: underline;
+          margin-left: 5px;
+        }
+
+        .expand-btn:hover {
+          color: #2C2C2C;
+        }
+
+        .idea-title {
+          font-family: 'FugazOne', serif;
+          font-size: 22px;
+          color: #2C2C2C;
+          margin-bottom: 6px;
+        }
+
+        .idea-meta {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          color: #6B6B6B;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .idea-desc {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 15px;
+          line-height: 1.7;
+          margin-bottom: 16px;
+          color: #4A4A4A;
+        }
+
+        .score-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+          padding-top: 16px;
+          border-top: 1px solid #E5E5E5;
+        }
+
+        .score-item {
+          text-align: center;
+        }
+
+        .score-value {
+          font-family: 'FugazOne', serif;
+          font-size: 24px;
+          color: #2C2C2C;
+        }
+
+        .score-label {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 11px;
+          text-transform: uppercase;
+          color: #8B8B8B;
+          letter-spacing: 0.5px;
+          margin-top: 4px;
+        }
+
+        .leaderboard-footer {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          padding: 20px;
+          text-align: center;
+        }
+
+        .leaderboard-footer a {
+          color: #FAF7F0;
+          text-decoration: none;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .leaderboard-footer a:hover {
+          color: #D4A574;
+        }
+
+        /* Sidebar Cards */
+        .sidebar-card {
+          background: #FDFCF8;
+          border: 1px solid #2C2C2C;
+          margin-bottom: 30px;
+        }
+
+        .sidebar-header {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          padding: 15px 20px;
+        }
+
+        .sidebar-header h3 {
+          font-family: 'FugazOne', serif;
+          font-size: 16px;
+          letter-spacing: -0.01em;
+        }
+
+        .sidebar-content {
+          padding: 20px;
+        }
+
+        .winner-item {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 12px;
+          background: #FAF7F0;
+          margin-bottom: 10px;
+          border: 1px solid #E5E5E5;
+        }
+
+        .winner-rank {
+          font-family: 'FugazOne', serif;
+          font-size: 24px;
+          color: #2C2C2C;
+          min-width: 30px;
+          text-align: center;
+        }
+
+        .winner-info {
+          flex: 1;
+        }
+
+        .winner-title {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          font-weight: 400;
+          text-transform: uppercase;
+          margin-bottom: 2px;
+          color: #2C2C2C;
+        }
+
+        .winner-score {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 11px;
+          color: #6B6B6B;
+        }
+
+        .sidebar-link {
+          display: block;
+          background: #2C2C2C;
+          color: #FAF7F0;
+          text-align: center;
+          padding: 12px;
+          text-decoration: none;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-top: 15px;
+          border: 1px solid #2C2C2C;
+          transition: all 0.2s;
+        }
+
+        .sidebar-link:hover {
+          background: #FAF7F0;
+          color: #2C2C2C;
+        }
+
+        /* Submit Card */
+        .submit-card {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          border: 1px solid #2C2C2C;
+        }
+
+        .submit-card h3 {
+          font-family: 'FugazOne', serif;
+          font-size: 20px;
+          margin-bottom: 10px;
+          padding: 20px 20px 0 20px;
+        }
+
+        .submit-card p {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          margin-bottom: 15px;
+          line-height: 1.5;
+          padding: 0 20px;
+        }
+
+        .submit-button {
+          display: block;
+          background: #D4A574;
+          color: #2C2C2C;
+          text-align: center;
+          padding: 14px;
+          text-decoration: none;
+          font-family: 'FugazOne', serif;
+          font-size: 16px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-top: 10px;
+          transition: all 0.2s;
+        }
+
+        .submit-button:hover {
+          background: #C19660;
+        }
+
+        /* How It Works */
+        .how-it-works {
+          background: #FDFCF8;
+          padding: 100px 0;
+        }
+
+        .how-it-works h2 {
+          font-family: 'FugazOne', serif;
+          font-size: 48px;
+          text-align: center;
+          margin-bottom: 60px;
+          color: #2C2C2C;
+        }
+
+        .steps-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 30px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .step-card {
+          text-align: center;
+          padding: 30px 20px;
+          background: #FAF7F0;
+          border: 1px solid #2C2C2C;
+          transition: all 0.3s;
+        }
+
+        .step-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .step-number {
+          font-family: 'FugazOne', serif;
+          font-size: 48px;
+          color: #D4A574;
+          margin-bottom: 15px;
+        }
+
+        .step-title {
+          font-family: 'FugazOne', serif;
+          font-size: 18px;
+          color: #2C2C2C;
+          margin-bottom: 12px;
+        }
+
+        .step-desc {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          color: #6B6B6B;
+          line-height: 1.6;
+        }
+
+        /* Warning Box */
+        .warning-box {
+          max-width: 700px;
+          margin: 60px auto 0;
+          background: #2C2C2C;
+          padding: 40px;
+          color: #FAF7F0;
+          text-align: center;
+        }
+
+        .warning-box h3 {
+          font-family: 'FugazOne', serif;
+          font-size: 24px;
+          margin-bottom: 16px;
+          color: #D4A574;
+        }
+
+        .warning-box p {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 16px;
+          line-height: 1.6;
         }
 
         /* Comparison */
         .comparison {
-          background: linear-gradient(to right, #1e3a8a, #1e40af);
-          color: white;
-          padding: 60px 0;
+          background: #2C2C2C;
+          color: #FAF7F0;
+          padding: 80px 0;
         }
 
         .comparison-grid {
@@ -395,12 +768,9 @@ export default function HomePage() {
         }
 
         .comparison h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 36px;
-          font-weight: 900;
-          font-style: italic;
+          font-family: 'FugazOne', serif;
+          font-size: 32px;
           margin-bottom: 30px;
-          letter-spacing: -0.02em;
         }
 
         .comparison ul {
@@ -410,470 +780,72 @@ export default function HomePage() {
         .comparison li {
           display: flex;
           gap: 16px;
+          font-family: 'WorkSans', sans-serif;
           font-size: 16px;
           line-height: 1.6;
           align-items: flex-start;
           margin-bottom: 20px;
         }
 
-        /* Leaderboard */
-        .leaderboard-preview {
-          padding: 80px 0;
-          background: white;
-        }
-
-        .leaderboard-grid {
-          display: grid;
-          grid-template-columns: 3fr 1fr;
-          gap: 30px;
-        }
-
-        .leaderboard-table {
-          background: white;
-          border: 4px solid black;
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 10px 10px 0 rgba(0,0,0,0.1);
-        }
-
-        .leaderboard-header {
-          background: black;
-          color: white;
-          padding: 30px;
-        }
-
-        .leaderboard-header h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 42px;
-          font-weight: 900;
-          font-style: italic;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-        }
-
-        .idea-row {
-          padding: 25px;
-          border-bottom: 2px solid #eee;
-          transition: background 0.2s;
-          position: relative;
-        }
-
-        .idea-row:hover {
-          background: #f9f9f9;
-        }
-
-        .idea-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 12px;
-        }
-
-        .vote-btn {
-          background: black;
-          color: white;
-          border: none;
-          padding: 8px 20px;
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 12px;
+        .x-mark {
+          color: #EF4444;
           font-weight: bold;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
+          font-size: 24px;
         }
 
-        .vote-btn:hover {
-          background: #FACC15;
-          color: black;
-        }
-
-        .expand-btn {
-          background: none;
-          border: none;
-          color: #1e3a8a;
-          cursor: pointer;
-          font-family: 'Courier New', monospace;
-          font-size: 14px;
-          text-decoration: underline;
-        }
-
-        .expand-btn:hover {
-          color: black;
-        }
-
-        .rank-badge {
-          position: absolute;
-          top: -12px;
-          left: -12px;
-          width: 50px;
-          height: 50px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'DrukWide', Impact, sans-serif;
+        .check-mark {
+          color: #10B981;
+          font-weight: bold;
           font-size: 20px;
-          font-weight: 900;
-          transform: rotate(3deg);
-          border-radius: 8px;
-        }
-
-        .rank-1 { background: #FACC15; color: black; }
-        .rank-2 { background: #9CA3AF; color: white; }
-        .rank-3 { background: #EA580C; color: white; }
-        .rank-default { background: #1F2937; color: white; }
-
-        .idea-content {
-          padding-left: 50px;
-        }
-
-        .idea-title {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 24px;
-          font-weight: 900;
-          text-transform: uppercase;
-          margin-bottom: 8px;
-          letter-spacing: -0.02em;
-        }
-
-        .idea-meta {
-          font-family: 'Courier New', monospace;
-          font-size: 12px;
-          color: #666;
-          margin-bottom: 12px;
-          text-transform: uppercase;
-        }
-
-        .idea-desc {
-          font-family: 'Courier New', monospace;
-          font-size: 14px;
-          line-height: 1.5;
-          margin-bottom: 16px;
-          color: #333;
-        }
-
-        .score-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-          padding-top: 16px;
-          border-top: 1px solid #eee;
-        }
-
-        .score-item {
-          text-align: center;
-        }
-
-        .score-value {
-          font-family: 'Courier New', monospace;
-          font-size: 24px;
-          font-weight: bold;
-          color: black;
-        }
-
-        .score-label {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 10px;
-          text-transform: uppercase;
-          color: #999;
-          letter-spacing: 1px;
-        }
-
-        .leaderboard-footer {
-          background: black;
-          color: white;
-          padding: 20px;
-          text-align: center;
-        }
-
-        .leaderboard-footer a {
-          color: white;
-          text-decoration: none;
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .leaderboard-footer a:hover {
-          color: #FACC15;
-        }
-
-        /* Sidebar Cards */
-        .leaderboard-sidebar {
-          margin-left: 20px;
-        }
-
-        .sidebar-card {
-          background: white;
-          border: 4px solid black;
-          border-radius: 12px;
-          overflow: hidden;
-          margin-bottom: 30px;
-        }
-
-        .sidebar-header {
-          background: #FACC15;
-          color: black;
-          padding: 15px;
-        }
-
-        .sidebar-header h3 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 18px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-        }
-
-        .sidebar-content {
-          padding: 15px;
-        }
-
-        .winner-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px;
-          background: #f8f8f8;
-          margin-bottom: 10px;
-          border-radius: 8px;
-        }
-
-        .winner-badge {
-          font-size: 24px;
-        }
-
-        .winner-info {
-          flex: 1;
-        }
-
-        .winner-title {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 12px;
-          font-weight: bold;
-          text-transform: uppercase;
-          margin-bottom: 2px;
-        }
-
-        .winner-score {
-          font-family: 'Courier New', monospace;
-          font-size: 10px;
-          color: #666;
-        }
-
-        .sidebar-link {
-          display: block;
-          background: black;
-          color: white;
-          text-align: center;
-          padding: 10px;
-          text-decoration: none;
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-top: 10px;
-          border-radius: 6px;
-        }
-
-        .sidebar-link:hover {
-          background: #333;
-        }
-
-        /* Submit Card */
-        .submit-card {
-          background: black;
-          color: white;
-          border: 4px solid #FACC15;
-        }
-
-        .submit-card h3 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 24px;
-          font-weight: 900;
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-          padding: 15px 15px 0 15px;
-        }
-
-        .submit-card p {
-          font-family: 'Courier New', monospace;
-          font-size: 12px;
-          margin-bottom: 15px;
-          line-height: 1.4;
-          padding: 0 15px;
-        }
-
-        .submit-button {
-          display: block;
-          background: #FACC15;
-          color: black;
-          text-align: center;
-          padding: 14px;
-          text-decoration: none;
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 16px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-          border-radius: 0 0 8px 8px;
-          margin-top: 10px;
-        }
-
-        .submit-button:hover {
-          background: #FDE047;
-        }
-
-        /* How It Works - Single Line */
-        .how-it-works {
-          background: white;
-          padding: 100px 0;
-        }
-
-        .how-it-works h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 56px;
-          font-weight: 900;
-          font-style: italic;
-          text-align: center;
-          margin-bottom: 80px;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-        }
-
-        .steps-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 40px;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .step-card {
-          text-align: center;
-          padding: 40px 20px;
-          background: white;
-          border: 3px solid black;
-          border-radius: 12px;
-          transition: all 0.3s;
-        }
-
-        .step-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 8px 8px 0 rgba(0,0,0,0.1);
-        }
-
-        .step-number {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 56px;
-          font-weight: 900;
-          font-style: italic;
-          color: #FACC15;
-          margin-bottom: 15px;
-        }
-
-        .step-icon {
-          font-size: 36px;
-          margin-bottom: 15px;
-          display: block;
-        }
-
-        .step-title {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 20px;
-          font-weight: 900;
-          text-transform: uppercase;
-          margin-bottom: 12px;
-          letter-spacing: -0.02em;
-        }
-
-        .step-desc {
-          font-family: 'Courier New', monospace;
-          font-size: 13px;
-          color: #666;
-          line-height: 1.5;
-        }
-
-        /* Warning Box */
-        .warning-box {
-          max-width: 800px;
-          margin: 80px auto 0;
-          background: #DC2626;
-          border: 4px solid #991B1B;
-          border-radius: 12px;
-          padding: 40px;
-          color: white;
-          text-align: center;
-        }
-
-        .warning-box h3 {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 24px;
-          text-transform: uppercase;
-          margin-bottom: 16px;
-        }
-
-        .warning-box p {
-          font-family: 'Courier New', monospace;
-          font-size: 16px;
-          line-height: 1.6;
         }
 
         /* CTA */
         .cta-section {
-          background: linear-gradient(to right, #1e3a8a, #1e40af);
+          background: #D4A574;
           padding: 100px 0;
           text-align: center;
-          color: white;
+          color: #2C2C2C;
         }
 
         .cta-section h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 64px;
-          font-weight: 900;
-          font-style: italic;
-          margin-bottom: 30px;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
+          font-family: 'FugazOne', serif;
+          font-size: 56px;
+          margin-bottom: 20px;
         }
 
         .cta-section p {
-          font-family: 'Bahnschrift', sans-serif;
-          font-size: 24px;
-          margin-bottom: 50px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 20px;
+          margin-bottom: 40px;
           text-transform: uppercase;
           letter-spacing: 1px;
         }
 
         .cta-button {
           display: inline-block;
-          background: #FACC15;
-          color: black;
-          padding: 24px 60px;
-          font-family: 'DrukWide', Impact, sans-serif;
-          font-size: 28px;
-          font-weight: 900;
-          font-style: italic;
+          background: #2C2C2C;
+          color: #FAF7F0;
+          padding: 20px 50px;
+          font-family: 'FugazOne', serif;
+          font-size: 24px;
           text-decoration: none;
-          transition: transform 0.3s;
+          border: 2px solid #2C2C2C;
+          transition: all 0.3s;
           text-transform: uppercase;
         }
 
         .cta-button:hover {
-          transform: scale(1.05);
-          background: #FDE047;
+          background: #FAF7F0;
+          color: #2C2C2C;
         }
 
         /* Footer */
         footer {
-          background: black;
-          color: white;
+          background: #2C2C2C;
+          color: #FAF7F0;
           padding: 40px 0;
           text-align: center;
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
         }
 
@@ -881,6 +853,11 @@ export default function HomePage() {
         @media (max-width: 768px) {
           .container {
             padding: 0 20px;
+          }
+          
+          .leaderboard-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
           }
           
           .comparison-grid {
@@ -895,6 +872,15 @@ export default function HomePage() {
           
           .steps-grid {
             grid-template-columns: 1fr;
+          }
+          
+          .rank-number {
+            font-size: 28px;
+          }
+          
+          .idea-row {
+            flex-direction: column;
+            gap: 10px;
           }
         }
       `}</style>
