@@ -119,10 +119,11 @@ export default function HomePage() {
                       <th style={{width: '60px'}}>Rank</th>
                       <th>Name</th>
                       <th style={{width: '100px'}}>Type</th>
-                      <th>Description</th>
-                      <th style={{width: '80px'}}>AI Score</th>
+                      <th className="hide-mobile">Description</th>
+                      <th style={{width: '80px'}}>AI</th>
                       <th style={{width: '80px'}}>Public</th>
                       <th style={{width: '80px'}}>Total</th>
+                      <th style={{width: '60px'}}>Vote</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -149,13 +150,16 @@ export default function HomePage() {
                           <div className="idea-author">by {idea.author}</div>
                         </td>
                         <td className="type-cell">{idea.type}</td>
-                        <td className="desc-cell">{idea.desc}</td>
+                        <td className="desc-cell hide-mobile">{idea.desc}</td>
                         <td className="score-cell">{idea.aiScore}</td>
                         <td className="score-cell">
                           <div>{idea.publicScore}</div>
                           <div className="votes">({idea.publicVotes})</div>
                         </td>
                         <td className="total-cell">{idea.total}</td>
+                        <td className="vote-cell">
+                          <button className="vote-btn">↑</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -660,6 +664,27 @@ export default function HomePage() {
           font-weight: 400;
         }
 
+        .vote-cell {
+          text-align: center;
+        }
+
+        .vote-btn {
+          background: #2C2C2C;
+          color: #FAF7F0;
+          border: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          font-size: 18px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .vote-btn:hover {
+          background: #D4A574;
+          transform: scale(1.1);
+        }
+
         .leaderboard-footer {
           background: #2C2C2C;
           color: #FAF7F0;
@@ -886,7 +911,11 @@ export default function HomePage() {
         
         @media (max-width: 768px) {
           .container, .container-wide {
-            padding: 0 20px;
+            padding: 0 15px;
+          }
+          
+          .hide-mobile {
+            display: none;
           }
           
           .comparison-grid {
@@ -899,12 +928,46 @@ export default function HomePage() {
           }
           
           .leaderboard-table {
-            font-size: 12px;
+            font-size: 11px;
           }
           
-          .leaderboard-table th,
+          .leaderboard-table th {
+            padding: 8px 3px;
+            font-size: 10px;
+          }
+          
           .leaderboard-table td {
-            padding: 10px 5px;
+            padding: 8px 3px;
+          }
+          
+          .rank-number {
+            font-size: 18px;
+          }
+          
+          .idea-title {
+            font-size: 13px;
+          }
+          
+          .idea-author {
+            font-size: 10px;
+          }
+          
+          .score-cell, .total-cell {
+            font-size: 14px;
+          }
+          
+          .votes {
+            font-size: 9px;
+          }
+          
+          .vote-btn {
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+          }
+          
+          .type-cell {
+            font-size: 10px;
           }
         }
       `}</style>
