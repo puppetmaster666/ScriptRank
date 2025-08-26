@@ -160,6 +160,12 @@ export default function Header() {
               <Link href="/how-it-works">
                 <a className="nav-link">HOW IT WORKS</a>
               </Link>
+              <Link href="/why-us">
+                <a className="nav-link">WHY US</a>
+              </Link>
+              <Link href="/leaderboard">
+                <a className="nav-link">LEADERBOARD</a>
+              </Link>
               <Link href="/leaderboard">
                 <a className="nav-link">LEADERBOARD</a>
               </Link>
@@ -225,6 +231,12 @@ export default function Header() {
               </Link>
               <Link href="/how-it-works">
                 <a className="mobile-nav-link">HOW IT WORKS</a>
+              </Link>
+              <Link href="/why-us">
+                <a className="mobile-nav-link">WHY US</a>
+              </Link>
+              <Link href="/leaderboard">
+                <a className="mobile-nav-link">LEADERBOARD</a>
               </Link>
               <Link href="/leaderboard">
                 <a className="mobile-nav-link">LEADERBOARD</a>
