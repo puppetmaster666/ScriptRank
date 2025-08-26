@@ -12,9 +12,10 @@ export default function HomePage() {
 
       <style jsx global>{`
         @font-face {
-          font-family: 'FugazOne';
-          src: url('/fonts/FugazOne-Regular.ttf') format('truetype');
-          font-weight: 400;
+          font-family: 'ArgentumSans';
+          src: url('/fonts/ArgentumSans-BlackItalic.ttf') format('truetype');
+          font-weight: 900;
+          font-style: italic;
           font-display: swap;
         }
         
@@ -82,120 +83,124 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Leaderboard Preview */}
+        {/* Leaderboard Preview with Two Sidebars */}
         <section className="leaderboard-preview">
-          <div className="container">
-            <div className="leaderboard-grid">
-              <div className="main-leaderboard">
-                <div className="leaderboard-table">
-                  <div className="leaderboard-header">
-                    <h2>THIS WEEK'S BATTLEGROUND</h2>
+          <div className="container-wide">
+            <h2 className="section-title">THIS WEEK'S BATTLEGROUND</h2>
+            
+            <div className="leaderboard-layout">
+              {/* Left Sidebar - Sponsors */}
+              <div className="sidebar-left">
+                <div className="sidebar-card">
+                  <h4>SPONSORS</h4>
+                  <div className="sponsor-list">
+                    <div className="sponsor-item">
+                      <div className="sponsor-logo">AI VENTURES</div>
+                      <p className="sponsor-desc">Funding tomorrow's ideas today</p>
+                    </div>
+                    <div className="sponsor-item">
+                      <div className="sponsor-logo">TECH CAPITAL</div>
+                      <p className="sponsor-desc">$50M for innovative startups</p>
+                    </div>
+                    <div className="sponsor-item">
+                      <div className="sponsor-logo">FUTURE FUND</div>
+                      <p className="sponsor-desc">Early-stage investor network</p>
+                    </div>
                   </div>
-                  
-                  {/* Top 10 Ideas */}
-                  {[
-                    { rank: 1, title: 'Neon Nights', type: 'Movie', author: 'Michael Rodriguez', desc: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet. The city itself becomes a character as augmented reality bleeds into the real world, creating a visually stunning exploration of memory, identity, and predestination.', aiScore: 8.73, publicScore: 9.1, publicVotes: 23, total: 8.92 },
-                    { rank: 2, title: 'GreenEats', type: 'Business', author: 'David Park', desc: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Return containers get you discounts. Partner with local restaurants to create a sustainable food ecosystem that eliminates single-use plastics while providing convenience and cost savings.', aiScore: 8.43, publicScore: 8.7, publicVotes: 18, total: 8.57 },
-                    { rank: 3, title: 'Battle Royale Chess', type: 'Game', author: 'James Mitchell', desc: '100 players start on a giant chess board. Capture pieces to gain their powers. Last player standing wins. Real-time strategy meets classic chess in an innovative multiplayer experience that combines tactical thinking with fast-paced action.', aiScore: 8.04, publicScore: 8.3, publicVotes: 31, total: 8.17 },
-                    { rank: 4, title: 'The Last Comedian', type: 'Movie', author: 'Sarah Chen', desc: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny. A dark comedy that questions what makes us human, exploring themes of authenticity, creativity, and the irreplaceable value of human imperfection.', aiScore: 8.24, publicScore: 7.8, publicVotes: 12, total: 8.02 },
-                    { rank: 5, title: 'Memory Lane VR', type: 'Game', author: 'Alex Thompson', desc: 'A VR game where players literally walk through their memories and can change small details to alter their present. Each choice creates ripple effects, teaching players about consequence and the butterfly effect through deeply personal gameplay.', aiScore: 7.92, publicScore: 8.1, publicVotes: 15, total: 8.01 },
-                    { rank: 6, title: 'AI Resume Coach', type: 'Business', author: 'Lisa Anderson', desc: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords and requirements. Uses GPT to rewrite descriptions while maintaining authenticity, helping job seekers beat ATS systems and land more interviews.', aiScore: 8.12, publicScore: 7.6, publicVotes: 8, total: 7.86 },
-                    { rank: 7, title: 'Mind Maze VR', type: 'Game', author: 'Emily Davis', desc: 'Puzzle VR game where each level is based on psychological concepts. Solve your own mind to escape. Features adaptive difficulty based on player behavior, creating a personalized journey through consciousness and self-discovery.', aiScore: 7.81, publicScore: 7.9, publicVotes: 10, total: 7.85 },
-                    { rank: 8, title: 'Street Kings', type: 'Movie', author: 'Robert Taylor', desc: 'Crime drama following chess hustlers in NYC who use the game to run an underground empire. Each chess move mirrors their criminal strategy, creating a layered narrative where the game board reflects the streets of New York.', aiScore: 7.71, publicScore: 7.5, publicVotes: 6, total: 7.60 },
-                    { rank: 9, title: 'RentMyGarage', type: 'Business', author: 'Marcus Johnson', desc: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included. Smart locks provide secure access while an AI pricing algorithm ensures fair market rates based on location and demand.', aiScore: 7.63, publicScore: 7.2, publicVotes: 5, total: 7.41 },
-                    { rank: 10, title: 'Echoes of Tomorrow', type: 'Movie', author: 'Jennifer Williams', desc: 'Sci-fi series about archaeologists who discover future artifacts buried in the past. Each artifact reveals humanity\'s fate. Mind-bending time paradoxes explore free will versus determinism in a race to prevent or ensure the future.', aiScore: 8.36, publicScore: 6.8, publicVotes: 3, total: 7.58 }
-                  ].map((idea) => {
-                    const [expanded, setExpanded] = useState(false);
-                    const shortDesc = idea.desc.substring(0, 100) + '...';
-                    
-                    return (
-                      <div key={idea.rank} className="idea-row">
-                        <div className={`rank-number`}>
-                          {idea.rank}
-                        </div>
-                        <div className="idea-content">
-                          <div className="idea-header">
-                            <div>
-                              <h3 className="idea-title">{idea.title}</h3>
-                              <div className="idea-meta">{idea.type} • {idea.author}</div>
-                            </div>
-                            <button className="vote-btn">VOTE</button>
-                          </div>
-                          <p className="idea-desc">
-                            {expanded ? idea.desc : shortDesc}
-                            <button 
-                              onClick={() => setExpanded(!expanded)} 
-                              className="expand-btn"
-                            >
-                              {expanded ? ' Show less' : ' Read more'}
-                            </button>
-                          </p>
-                          <div className="score-grid">
-                            <div className="score-item">
-                              <div className="score-value">{idea.aiScore}</div>
-                              <div className="score-label">AI Score</div>
-                            </div>
-                            <div className="score-item">
-                              <div className="score-value">{idea.publicScore}</div>
-                              <div className="score-label">Public ({idea.publicVotes})</div>
-                            </div>
-                            <div className="score-item">
-                              <div className="score-value">{idea.total}</div>
-                              <div className="score-label">Total</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  <div className="leaderboard-footer">
-                    <Link href="/leaderboard">
-                      <a>VIEW FULL LEADERBOARD →</a>
-                    </Link>
-                  </div>
+                  <a href="/sponsors" className="sidebar-link">BECOME A SPONSOR →</a>
                 </div>
               </div>
 
-              {/* Sidebar */}
-              <div className="leaderboard-sidebar">
+              {/* Main Leaderboard */}
+              <div className="main-leaderboard">
+                <table className="leaderboard-table">
+                  <thead>
+                    <tr>
+                      <th width="60">Rank</th>
+                      <th>Name</th>
+                      <th width="100">Type</th>
+                      <th>Description</th>
+                      <th width="80">AI Score</th>
+                      <th width="80">Public</th>
+                      <th width="80">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { rank: 1, title: 'Neon Nights', type: 'Movie', author: 'Michael Rodriguez', desc: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet.', aiScore: 8.73, publicScore: 9.1, publicVotes: 23, total: 8.92 },
+                      { rank: 2, title: 'GreenEats', type: 'Business', author: 'David Park', desc: 'Zero-waste meal delivery using only reusable containers tracked by blockchain.', aiScore: 8.43, publicScore: 8.7, publicVotes: 18, total: 8.57 },
+                      { rank: 3, title: 'Battle Royale Chess', type: 'Game', author: 'James Mitchell', desc: '100 players start on a giant chess board. Capture pieces to gain their powers.', aiScore: 8.04, publicScore: 8.3, publicVotes: 31, total: 8.17 },
+                      { rank: 4, title: 'The Last Comedian', type: 'Movie', author: 'Sarah Chen', desc: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny.', aiScore: 8.24, publicScore: 7.8, publicVotes: 12, total: 8.02 },
+                      { rank: 5, title: 'Memory Lane VR', type: 'Game', author: 'Alex Thompson', desc: 'A VR game where players literally walk through their memories and can change small details.', aiScore: 7.92, publicScore: 8.1, publicVotes: 15, total: 8.01 },
+                      { rank: 6, title: 'AI Resume Coach', type: 'Business', author: 'Lisa Anderson', desc: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords.', aiScore: 8.12, publicScore: 7.6, publicVotes: 8, total: 7.86 },
+                      { rank: 7, title: 'Mind Maze VR', type: 'Game', author: 'Emily Davis', desc: 'Puzzle VR game where each level is based on psychological concepts.', aiScore: 7.81, publicScore: 7.9, publicVotes: 10, total: 7.85 },
+                      { rank: 8, title: 'Street Kings', type: 'Movie', author: 'Robert Taylor', desc: 'Crime drama following chess hustlers in NYC who use the game to run an underground empire.', aiScore: 7.71, publicScore: 7.5, publicVotes: 6, total: 7.60 },
+                      { rank: 9, title: 'RentMyGarage', type: 'Business', author: 'Marcus Johnson', desc: 'Uber for storage space. Homeowners rent out garage space by the square foot.', aiScore: 7.63, publicScore: 7.2, publicVotes: 5, total: 7.41 },
+                      { rank: 10, title: 'Echoes of Tomorrow', type: 'Movie', author: 'Jennifer Williams', desc: 'Sci-fi series about archaeologists who discover future artifacts buried in the past.', aiScore: 8.36, publicScore: 6.8, publicVotes: 3, total: 7.58 }
+                    ].map((idea) => (
+                      <tr key={idea.rank}>
+                        <td className="rank-cell">
+                          <span className={`rank-number ${idea.rank <= 3 ? `top-${idea.rank}` : ''}`}>
+                            {idea.rank}
+                          </span>
+                        </td>
+                        <td className="name-cell">
+                          <div className="idea-title">{idea.title}</div>
+                          <div className="idea-author">by {idea.author}</div>
+                        </td>
+                        <td className="type-cell">{idea.type}</td>
+                        <td className="desc-cell">{idea.desc}</td>
+                        <td className="score-cell">{idea.aiScore}</td>
+                        <td className="score-cell">
+                          <div>{idea.publicScore}</div>
+                          <div className="votes">({idea.publicVotes})</div>
+                        </td>
+                        <td className="total-cell">{idea.total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="leaderboard-footer">
+                  <Link href="/leaderboard">
+                    <a>VIEW FULL LEADERBOARD →</a>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Sidebar */}
+              <div className="sidebar-right">
                 {/* Previous Month Winners */}
                 <div className="sidebar-card">
-                  <div className="sidebar-header">
-                    <h3>LAST MONTH'S CHAMPIONS</h3>
-                  </div>
-                  <div className="sidebar-content">
+                  <h4>LAST MONTH</h4>
+                  <div className="winner-list">
                     <div className="winner-item">
-                      <span className="winner-rank">1</span>
-                      <div className="winner-info">
+                      <span className="winner-rank gold">1</span>
+                      <div>
                         <div className="winner-title">THE MEMORY THIEF</div>
-                        <div className="winner-score">SCORE: 9.2</div>
+                        <div className="winner-score">9.2</div>
                       </div>
                     </div>
                     <div className="winner-item">
-                      <span className="winner-rank">2</span>
-                      <div className="winner-info">
+                      <span className="winner-rank silver">2</span>
+                      <div>
                         <div className="winner-title">QUANTUM BREAK</div>
-                        <div className="winner-score">SCORE: 8.9</div>
+                        <div className="winner-score">8.9</div>
                       </div>
                     </div>
                     <div className="winner-item">
-                      <span className="winner-rank">3</span>
-                      <div className="winner-info">
+                      <span className="winner-rank bronze">3</span>
+                      <div>
                         <div className="winner-title">MIND MAZE VR</div>
-                        <div className="winner-score">SCORE: 8.7</div>
+                        <div className="winner-score">8.7</div>
                       </div>
                     </div>
-                    <Link href="/archive">
-                      <a className="sidebar-link">VIEW HALL OF FAME →</a>
-                    </Link>
                   </div>
                 </div>
 
                 {/* Submit CTA */}
                 <div className="sidebar-card submit-card">
-                  <h3>READY TO FIGHT?</h3>
-                  <p>Submit your idea. Face the AI. Climb the ranks.</p>
+                  <h4>READY TO FIGHT?</h4>
+                  <p>Submit your idea and face the AI judge.</p>
                   <Link href="/submit">
                     <a className="submit-button">ENTER ARENA →</a>
                   </Link>
@@ -307,9 +312,15 @@ export default function HomePage() {
 
       <style jsx>{`
         .container {
-          max-width: 1400px;
+          max-width: 1200px;
           margin: 0 auto;
-          padding: 0 40px;
+          padding: 0 20px;
+        }
+
+        .container-wide {
+          max-width: 1600px;
+          margin: 0 auto;
+          padding: 0 20px;
         }
 
         /* Hero - Stays Black */
@@ -321,9 +332,10 @@ export default function HomePage() {
         }
 
         .hero h1 {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: clamp(48px, 6vw, 96px);
-          font-weight: 400;
+          font-weight: 900;
+          font-style: italic;
           line-height: 1;
           letter-spacing: -0.02em;
           margin-bottom: 40px;
@@ -350,7 +362,7 @@ export default function HomePage() {
         .value-props {
           background: #FAF7F0;
           padding: 80px 0;
-          border-top: 1px solid #2C2C2C;
+          border-bottom: 1px solid #D4D4D4;
         }
 
         .value-grid {
@@ -365,8 +377,10 @@ export default function HomePage() {
         }
 
         .value-title {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 28px;
+          font-weight: 900;
+          font-style: italic;
           margin-bottom: 20px;
           color: #2C2C2C;
         }
@@ -378,157 +392,272 @@ export default function HomePage() {
           color: #4A4A4A;
         }
 
-        /* Leaderboard */
+        /* Leaderboard Section */
         .leaderboard-preview {
           padding: 80px 0;
-          background: #FAF7F0;
-        }
-
-        .leaderboard-grid {
-          display: grid;
-          grid-template-columns: 3fr 1fr;
-          gap: 40px;
-        }
-
-        .leaderboard-table {
           background: #FDFCF8;
-          border: 1px solid #2C2C2C;
-          overflow: hidden;
         }
 
-        .leaderboard-header {
-          background: #2C2C2C;
-          color: #FAF7F0;
-          padding: 25px 30px;
-          border-bottom: 1px solid #2C2C2C;
+        .section-title {
+          font-family: 'ArgentumSans', serif;
+          font-size: 48px;
+          font-weight: 900;
+          font-style: italic;
+          text-align: center;
+          margin-bottom: 60px;
+          color: #2C2C2C;
         }
 
-        .leaderboard-header h2 {
-          font-family: 'FugazOne', serif;
-          font-size: 32px;
-          letter-spacing: -0.01em;
+        .leaderboard-layout {
+          display: grid;
+          grid-template-columns: 200px 1fr 200px;
+          gap: 30px;
         }
 
-        .idea-row {
-          padding: 25px 30px;
-          border-bottom: 1px solid #D4D4D4;
-          transition: background 0.2s;
-          position: relative;
-          display: flex;
-          gap: 25px;
+        /* Sidebars */
+        .sidebar-card {
+          background: #FAF7F0;
+          border: 1px solid #D4D4D4;
+          padding: 20px;
+          margin-bottom: 20px;
         }
 
-        .idea-row:last-of-type {
+        .sidebar-card h4 {
+          font-family: 'ArgentumSans', serif;
+          font-size: 16px;
+          font-weight: 900;
+          font-style: italic;
+          margin-bottom: 15px;
+          color: #2C2C2C;
+        }
+
+        /* Sponsors */
+        .sponsor-list {
+          margin-bottom: 20px;
+        }
+
+        .sponsor-item {
+          padding: 12px 0;
+          border-bottom: 1px solid #E5E5E5;
+        }
+
+        .sponsor-item:last-child {
           border-bottom: none;
         }
 
-        .idea-row:hover {
-          background: #F5F2EA;
-        }
-
-        .rank-number {
-          font-family: 'FugazOne', serif;
-          font-size: 36px;
+        .sponsor-logo {
+          font-family: 'ArgentumSans', serif;
+          font-size: 12px;
+          font-weight: 900;
+          font-style: italic;
           color: #2C2C2C;
-          min-width: 45px;
-          text-align: right;
-          padding-top: 10px;
+          margin-bottom: 4px;
         }
 
-        .idea-content {
-          flex: 1;
+        .sponsor-desc {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 11px;
+          color: #6B6B6B;
         }
 
-        .idea-header {
+        /* Winners */
+        .winner-list {
           display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 12px;
+          flex-direction: column;
+          gap: 10px;
         }
 
-        .vote-btn {
+        .winner-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px;
+          background: #FDFCF8;
+        }
+
+        .winner-rank {
+          font-family: 'ArgentumSans', serif;
+          font-size: 20px;
+          font-weight: 900;
+          font-style: italic;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+
+        .winner-rank.gold { background: #D4A574; color: white; }
+        .winner-rank.silver { background: #9CA3AF; color: white; }
+        .winner-rank.bronze { background: #CD7F32; color: white; }
+
+        .winner-title {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          color: #2C2C2C;
+        }
+
+        .winner-score {
+          font-family: 'ArgentumSans', serif;
+          font-size: 14px;
+          font-weight: 900;
+          font-style: italic;
+          color: #D4A574;
+        }
+
+        /* Submit Card */
+        .submit-card {
           background: #2C2C2C;
           color: #FAF7F0;
-          border: 1px solid #2C2C2C;
-          padding: 8px 20px;
+          border: none;
+        }
+
+        .submit-card h4 {
+          color: #D4A574;
+        }
+
+        .submit-card p {
           font-family: 'WorkSans', sans-serif;
           font-size: 12px;
-          font-weight: 400;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          cursor: pointer;
+          margin-bottom: 15px;
+        }
+
+        .submit-button {
+          display: block;
+          background: #D4A574;
+          color: #2C2C2C;
+          text-align: center;
+          padding: 12px;
+          font-family: 'ArgentumSans', serif;
+          font-size: 14px;
+          font-weight: 900;
+          font-style: italic;
+          text-decoration: none;
           transition: all 0.2s;
         }
 
-        .vote-btn:hover {
-          background: #FAF7F0;
-          color: #2C2C2C;
+        .submit-button:hover {
+          background: #C19660;
         }
 
-        .expand-btn {
-          background: none;
-          border: none;
-          color: #8B7355;
-          cursor: pointer;
-          font-family: 'WorkSans', sans-serif;
-          font-size: 14px;
-          text-decoration: underline;
-          margin-left: 5px;
-        }
-
-        .expand-btn:hover {
-          color: #2C2C2C;
-        }
-
-        .idea-title {
-          font-family: 'FugazOne', serif;
-          font-size: 22px;
-          color: #2C2C2C;
-          margin-bottom: 6px;
-        }
-
-        .idea-meta {
-          font-family: 'WorkSans', sans-serif;
-          font-size: 13px;
-          color: #6B6B6B;
-          margin-bottom: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .idea-desc {
-          font-family: 'WorkSans', sans-serif;
-          font-size: 15px;
-          line-height: 1.7;
-          margin-bottom: 16px;
-          color: #4A4A4A;
-        }
-
-        .score-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-          padding-top: 16px;
-          border-top: 1px solid #E5E5E5;
-        }
-
-        .score-item {
+        .sidebar-link {
+          display: block;
           text-align: center;
-        }
-
-        .score-value {
-          font-family: 'FugazOne', serif;
-          font-size: 24px;
-          color: #2C2C2C;
-        }
-
-        .score-label {
+          padding: 10px;
+          background: #2C2C2C;
+          color: #FAF7F0;
           font-family: 'WorkSans', sans-serif;
           font-size: 11px;
           text-transform: uppercase;
-          color: #8B8B8B;
           letter-spacing: 0.5px;
-          margin-top: 4px;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+
+        .sidebar-link:hover {
+          background: #4A4A4A;
+        }
+
+        /* Main Leaderboard Table */
+        .main-leaderboard {
+          background: white;
+          overflow: hidden;
+        }
+
+        .leaderboard-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .leaderboard-table thead {
+          background: #2C2C2C;
+          color: #FAF7F0;
+        }
+
+        .leaderboard-table th {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 15px;
+          text-align: left;
+          border-bottom: 1px solid #2C2C2C;
+        }
+
+        .leaderboard-table tbody tr {
+          border-bottom: 1px solid #E5E5E5;
+          transition: background 0.2s;
+        }
+
+        .leaderboard-table tbody tr:hover {
+          background: #FAF7F0;
+        }
+
+        .leaderboard-table td {
+          padding: 15px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+        }
+
+        .rank-cell {
+          text-align: center;
+        }
+
+        .rank-number {
+          font-family: 'ArgentumSans', serif;
+          font-size: 24px;
+          font-weight: 900;
+          font-style: italic;
+          color: #2C2C2C;
+        }
+
+        .rank-number.top-1 { color: #D4A574; }
+        .rank-number.top-2 { color: #9CA3AF; }
+        .rank-number.top-3 { color: #CD7F32; }
+
+        .idea-title {
+          font-family: 'ArgentumSans', serif;
+          font-size: 16px;
+          font-weight: 900;
+          font-style: italic;
+          color: #2C2C2C;
+          margin-bottom: 2px;
+        }
+
+        .idea-author {
+          font-size: 12px;
+          color: #6B6B6B;
+        }
+
+        .type-cell {
+          text-transform: uppercase;
+          font-size: 12px;
+          color: #6B6B6B;
+        }
+
+        .desc-cell {
+          color: #4A4A4A;
+          line-height: 1.4;
+        }
+
+        .score-cell, .total-cell {
+          text-align: center;
+          font-family: 'ArgentumSans', serif;
+          font-size: 18px;
+          font-weight: 900;
+          font-style: italic;
+          color: #2C2C2C;
+        }
+
+        .votes {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 10px;
+          color: #6B6B6B;
+          font-weight: 400;
         }
 
         .leaderboard-footer {
@@ -551,137 +680,17 @@ export default function HomePage() {
           color: #D4A574;
         }
 
-        /* Sidebar Cards */
-        .sidebar-card {
-          background: #FDFCF8;
-          border: 1px solid #2C2C2C;
-          margin-bottom: 30px;
-        }
-
-        .sidebar-header {
-          background: #2C2C2C;
-          color: #FAF7F0;
-          padding: 15px 20px;
-        }
-
-        .sidebar-header h3 {
-          font-family: 'FugazOne', serif;
-          font-size: 16px;
-          letter-spacing: -0.01em;
-        }
-
-        .sidebar-content {
-          padding: 20px;
-        }
-
-        .winner-item {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 12px;
-          background: #FAF7F0;
-          margin-bottom: 10px;
-          border: 1px solid #E5E5E5;
-        }
-
-        .winner-rank {
-          font-family: 'FugazOne', serif;
-          font-size: 24px;
-          color: #2C2C2C;
-          min-width: 30px;
-          text-align: center;
-        }
-
-        .winner-info {
-          flex: 1;
-        }
-
-        .winner-title {
-          font-family: 'WorkSans', sans-serif;
-          font-size: 13px;
-          font-weight: 400;
-          text-transform: uppercase;
-          margin-bottom: 2px;
-          color: #2C2C2C;
-        }
-
-        .winner-score {
-          font-family: 'WorkSans', sans-serif;
-          font-size: 11px;
-          color: #6B6B6B;
-        }
-
-        .sidebar-link {
-          display: block;
-          background: #2C2C2C;
-          color: #FAF7F0;
-          text-align: center;
-          padding: 12px;
-          text-decoration: none;
-          font-family: 'WorkSans', sans-serif;
-          font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-top: 15px;
-          border: 1px solid #2C2C2C;
-          transition: all 0.2s;
-        }
-
-        .sidebar-link:hover {
-          background: #FAF7F0;
-          color: #2C2C2C;
-        }
-
-        /* Submit Card */
-        .submit-card {
-          background: #2C2C2C;
-          color: #FAF7F0;
-          border: 1px solid #2C2C2C;
-        }
-
-        .submit-card h3 {
-          font-family: 'FugazOne', serif;
-          font-size: 20px;
-          margin-bottom: 10px;
-          padding: 20px 20px 0 20px;
-        }
-
-        .submit-card p {
-          font-family: 'WorkSans', sans-serif;
-          font-size: 14px;
-          margin-bottom: 15px;
-          line-height: 1.5;
-          padding: 0 20px;
-        }
-
-        .submit-button {
-          display: block;
-          background: #D4A574;
-          color: #2C2C2C;
-          text-align: center;
-          padding: 14px;
-          text-decoration: none;
-          font-family: 'FugazOne', serif;
-          font-size: 16px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-top: 10px;
-          transition: all 0.2s;
-        }
-
-        .submit-button:hover {
-          background: #C19660;
-        }
-
         /* How It Works */
         .how-it-works {
-          background: #FDFCF8;
+          background: #FAF7F0;
           padding: 100px 0;
         }
 
         .how-it-works h2 {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 48px;
+          font-weight: 900;
+          font-style: italic;
           text-align: center;
           margin-bottom: 60px;
           color: #2C2C2C;
@@ -698,8 +707,8 @@ export default function HomePage() {
         .step-card {
           text-align: center;
           padding: 30px 20px;
-          background: #FAF7F0;
-          border: 1px solid #2C2C2C;
+          background: #FDFCF8;
+          border: 1px solid #D4D4D4;
           transition: all 0.3s;
         }
 
@@ -709,15 +718,19 @@ export default function HomePage() {
         }
 
         .step-number {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 48px;
+          font-weight: 900;
+          font-style: italic;
           color: #D4A574;
           margin-bottom: 15px;
         }
 
         .step-title {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 18px;
+          font-weight: 900;
+          font-style: italic;
           color: #2C2C2C;
           margin-bottom: 12px;
         }
@@ -740,8 +753,10 @@ export default function HomePage() {
         }
 
         .warning-box h3 {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 24px;
+          font-weight: 900;
+          font-style: italic;
           margin-bottom: 16px;
           color: #D4A574;
         }
@@ -768,8 +783,10 @@ export default function HomePage() {
         }
 
         .comparison h2 {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 32px;
+          font-weight: 900;
+          font-style: italic;
           margin-bottom: 30px;
         }
 
@@ -808,8 +825,10 @@ export default function HomePage() {
         }
 
         .cta-section h2 {
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 56px;
+          font-weight: 900;
+          font-style: italic;
           margin-bottom: 20px;
         }
 
@@ -826,8 +845,10 @@ export default function HomePage() {
           background: #2C2C2C;
           color: #FAF7F0;
           padding: 20px 50px;
-          font-family: 'FugazOne', serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 24px;
+          font-weight: 900;
+          font-style: italic;
           text-decoration: none;
           border: 2px solid #2C2C2C;
           transition: all 0.3s;
@@ -850,14 +871,22 @@ export default function HomePage() {
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-          .container {
-            padding: 0 20px;
+        @media (max-width: 1200px) {
+          .leaderboard-layout {
+            grid-template-columns: 1fr;
+            gap: 20px;
           }
           
-          .leaderboard-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
+          .sidebar-left, .sidebar-right {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .container, .container-wide {
+            padding: 0 20px;
           }
           
           .comparison-grid {
@@ -865,22 +894,17 @@ export default function HomePage() {
             gap: 40px;
           }
           
-          .score-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-          }
-          
           .steps-grid {
             grid-template-columns: 1fr;
           }
           
-          .rank-number {
-            font-size: 28px;
+          .leaderboard-table {
+            font-size: 12px;
           }
           
-          .idea-row {
-            flex-direction: column;
-            gap: 10px;
+          .leaderboard-table th,
+          .leaderboard-table td {
+            padding: 10px 5px;
           }
         }
       `}</style>
