@@ -80,6 +80,16 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
+            
+            {/* Human Ideas Only Banner */}
+            <div className="human-only-banner">
+              <h4>HUMAN CREATIVITY ONLY</h4>
+              <p>
+                We believe in authentic human innovation. AI-generated submissions are prohibited. 
+                Our detection systems flag suspicious content, and verified winners must prove ownership through video calls. 
+                <strong> Let YOUR mind shine, not a machine's.</strong>
+              </p>
+            </div>
           </div>
         </section>
 
@@ -119,11 +129,10 @@ export default function HomePage() {
                       <th style={{width: '60px'}}>Rank</th>
                       <th>Name</th>
                       <th style={{width: '100px'}}>Type</th>
-                      <th className="hide-mobile">Description</th>
-                      <th style={{width: '80px'}}>AI</th>
+                      <th>Description</th>
+                      <th style={{width: '80px'}}>AI Score</th>
                       <th style={{width: '80px'}}>Public</th>
                       <th style={{width: '80px'}}>Total</th>
-                      <th style={{width: '60px'}}>Vote</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -150,16 +159,13 @@ export default function HomePage() {
                           <div className="idea-author">by {idea.author}</div>
                         </td>
                         <td className="type-cell">{idea.type}</td>
-                        <td className="desc-cell hide-mobile">{idea.desc}</td>
+                        <td className="desc-cell">{idea.desc}</td>
                         <td className="score-cell">{idea.aiScore}</td>
                         <td className="score-cell">
                           <div>{idea.publicScore}</div>
                           <div className="votes">({idea.publicVotes})</div>
                         </td>
                         <td className="total-cell">{idea.total}</td>
-                        <td className="vote-cell">
-                          <button className="vote-btn">↑</button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -394,6 +400,33 @@ export default function HomePage() {
           font-size: 16px;
           line-height: 1.8;
           color: #4A4A4A;
+        }
+
+        /* Human Only Banner */
+        .human-only-banner {
+          margin-top: 60px;
+          padding: 40px;
+          background: #2C2C2C;
+          color: #FAF7F0;
+          text-align: center;
+          border-left: 6px solid #D4A574;
+        }
+
+        .human-only-banner h4 {
+          font-family: 'ArgentumSans', serif;
+          font-size: 28px;
+          font-weight: 900;
+          font-style: italic;
+          color: #D4A574;
+          margin-bottom: 15px;
+        }
+
+        .human-only-banner p {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 16px;
+          line-height: 1.8;
+          max-width: 800px;
+          margin: 0 auto;
         }
 
         /* Leaderboard Section */
@@ -664,27 +697,6 @@ export default function HomePage() {
           font-weight: 400;
         }
 
-        .vote-cell {
-          text-align: center;
-        }
-
-        .vote-btn {
-          background: #2C2C2C;
-          color: #FAF7F0;
-          border: none;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          font-size: 18px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .vote-btn:hover {
-          background: #D4A574;
-          transform: scale(1.1);
-        }
-
         .leaderboard-footer {
           background: #2C2C2C;
           color: #FAF7F0;
@@ -911,11 +923,7 @@ export default function HomePage() {
         
         @media (max-width: 768px) {
           .container, .container-wide {
-            padding: 0 15px;
-          }
-          
-          .hide-mobile {
-            display: none;
+            padding: 0 20px;
           }
           
           .comparison-grid {
@@ -928,46 +936,12 @@ export default function HomePage() {
           }
           
           .leaderboard-table {
-            font-size: 11px;
+            font-size: 12px;
           }
           
-          .leaderboard-table th {
-            padding: 8px 3px;
-            font-size: 10px;
-          }
-          
+          .leaderboard-table th,
           .leaderboard-table td {
-            padding: 8px 3px;
-          }
-          
-          .rank-number {
-            font-size: 18px;
-          }
-          
-          .idea-title {
-            font-size: 13px;
-          }
-          
-          .idea-author {
-            font-size: 10px;
-          }
-          
-          .score-cell, .total-cell {
-            font-size: 14px;
-          }
-          
-          .votes {
-            font-size: 9px;
-          }
-          
-          .vote-btn {
-            width: 28px;
-            height: 28px;
-            font-size: 14px;
-          }
-          
-          .type-cell {
-            font-size: 10px;
+            padding: 10px 5px;
           }
         }
       `}</style>
