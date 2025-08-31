@@ -3,31 +3,16 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 import ArchiveSidebar from '@/components/ArchiveSidebar'
-
-interface Idea {
-  id: string
-  rank?: number
-  title: string
-  type: string
-  author: string
-  desc: string
-  aiScore: number
-  marketScore?: number
-  innovationScore?: number
-  executionScore?: number
-  publicScore: number
-  publicVotes: number
-  total: number
-}
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<'ai' | 'market' | 'innovation' | 'execution' | 'public'>('ai')
+  const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'game' | 'business'>('all')
+  const [sortBy, setSortBy] = useState<'ai' | 'public' | 'total'>('ai')
   const [expandedIdea, setExpandedIdea] = useState<number | null>(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [ideas, setIdeas] = useState<Idea[]>([])
+  const [ideas, setIdeas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -52,6 +37,11 @@ export default function HomePage() {
       const snapshot = await getDocs(ideasQuery)
       const fetchedIdeas = snapshot.docs.map((doc, index) => {
         const data = doc.data()
+        const aiScore = data.aiScores?.overall || data.aiScore || 0
+        const publicScore = data.publicScore?.average || 0
+        const publicVotes = data.publicScore?.count || 0
+        const total = publicScore > 0 ? (aiScore + publicScore) / 2 : aiScore
+        
         return {
           id: doc.id,
           rank: index + 1,
@@ -59,52 +49,53 @@ export default function HomePage() {
           type: data.type,
           author: data.username || data.userName || 'Anonymous',
           desc: data.content,
-          aiScore: data.aiScores?.overall || data.aiScore || 0,
-          marketScore: data.aiScores?.market || 0,
-          innovationScore: data.aiScores?.innovation || 0,
-          executionScore: data.aiScores?.execution || 0,
-          publicScore: data.publicScore?.average || 0,
-          publicVotes: data.publicScore?.count || 0,
-          total: data.aiScores?.overall || data.aiScore || 0
+          aiScore: aiScore,
+          publicScore: publicScore,
+          publicVotes: publicVotes,
+          total: total
         }
-      }) as Idea[]
+      })
       
       setIdeas(fetchedIdeas)
     } catch (error) {
       console.error('Error fetching ideas:', error)
-      // Fallback to mock data if database fails
-      setIdeas(mockIdeas)
+      // Fallback mock data
+      setIdeas([
+        { rank: 1, title: 'Neon Nights', type: 'movie', author: 'Michael Rodriguez', desc: 'A cyberpunk thriller set in 2087 Tokyo. A detective with memory implants must solve murders that haven\'t happened yet. The city itself becomes a character as augmented reality bleeds into the real world, creating a visually stunning neo-noir experience that questions the nature of reality and justice.', aiScore: 8.73, publicScore: 9.1, publicVotes: 23, total: 8.92 },
+        { rank: 2, title: 'GreenEats', type: 'business', author: 'David Park', desc: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Customers return containers for discounts, creating a circular economy. Partner restaurants reduce packaging costs while appealing to eco-conscious consumers.', aiScore: 8.43, publicScore: 8.7, publicVotes: 18, total: 8.57 },
+        { rank: 3, title: 'Battle Royale Chess', type: 'game', author: 'James Mitchell', desc: '100 players start on a giant chess board. Capture pieces to gain their powers. Last player standing wins. Combines strategic thinking with fast-paced action, creating a unique competitive experience.', aiScore: 8.04, publicScore: 8.3, publicVotes: 31, total: 8.17 },
+        { rank: 4, title: 'The Last Comedian', type: 'movie', author: 'Sarah Chen', desc: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny. A dark comedy exploring what makes us uniquely human in an age of artificial intelligence.', aiScore: 8.24, publicScore: 7.8, publicVotes: 12, total: 8.02 },
+        { rank: 5, title: 'Memory Lane VR', type: 'game', author: 'Alex Thompson', desc: 'A VR game where players literally walk through their memories and can change small details to alter their present. Each choice creates ripple effects, exploring themes of regret, nostalgia, and the butterfly effect.', aiScore: 7.92, publicScore: 8.1, publicVotes: 15, total: 8.01 },
+        { rank: 6, title: 'AI Resume Coach', type: 'business', author: 'Lisa Anderson', desc: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords and requirements. Uses GPT to rewrite descriptions while maintaining authenticity and personal voice.', aiScore: 8.12, publicScore: 7.6, publicVotes: 8, total: 7.86 },
+        { rank: 7, title: 'Mind Maze VR', type: 'game', author: 'Emily Davis', desc: 'Puzzle VR game where each level is based on psychological concepts. Players solve their own mind to escape, featuring adaptive difficulty based on player behavior and psychological profiles.', aiScore: 7.81, publicScore: 7.9, publicVotes: 10, total: 7.85 },
+        { rank: 8, title: 'Street Kings', type: 'movie', author: 'Robert Taylor', desc: 'Crime drama following chess hustlers in NYC who use the game to run an underground empire. Each chess move mirrors their criminal strategy, creating a layered narrative about strategy and survival.', aiScore: 7.71, publicScore: 7.5, publicVotes: 6, total: 7.60 },
+        { rank: 9, title: 'RentMyGarage', type: 'business', author: 'Marcus Johnson', desc: 'Uber for storage space. Homeowners rent out garage space by the square foot. Smart locks provide secure access while insurance protects both parties. Perfect for urban areas with limited storage.', aiScore: 7.63, publicScore: 7.2, publicVotes: 5, total: 7.41 },
+        { rank: 10, title: 'Echoes of Tomorrow', type: 'movie', author: 'Jennifer Williams', desc: 'Sci-fi series about archaeologists who discover future artifacts buried in the past. Each artifact reveals humanity\'s potential fate, creating a mind-bending exploration of time paradoxes and free will.', aiScore: 8.36, publicScore: 6.8, publicVotes: 3, total: 7.58 }
+      ])
     } finally {
       setLoading(false)
     }
   }
 
-  // Mock data as fallback
-  const mockIdeas: Idea[] = [
-    { id: '1', rank: 1, title: 'Neon Nights', type: 'movie', author: 'Michael Rodriguez', desc: 'A cyberpunk thriller set in 2087 Tokyo...', aiScore: 8.73, marketScore: 8.52, innovationScore: 9.01, executionScore: 8.64, publicScore: 9.1, publicVotes: 23, total: 8.73 },
-    { id: '2', rank: 2, title: 'GreenEats', type: 'business', author: 'David Park', desc: 'Zero-waste meal delivery using only reusable containers...', aiScore: 8.43, marketScore: 8.79, innovationScore: 8.02, executionScore: 8.31, publicScore: 8.7, publicVotes: 18, total: 8.43 },
-    { id: '3', rank: 3, title: 'Battle Royale Chess', type: 'game', author: 'James Mitchell', desc: '100 players start on a giant chess board...', aiScore: 8.04, marketScore: 8.22, innovationScore: 8.15, executionScore: 7.76, publicScore: 8.3, publicVotes: 31, total: 8.04 },
-  ]
-
-  const handleVoteClick = (ideaId: string) => {
+  const handleVoteClick = (ideaId: number) => {
     if (!user) {
       setShowLoginModal(true)
     } else {
-      window.location.href = `/ideas/${ideaId}`
+      window.location.href = `/ideas/fake-${ideaId}`
     }
   }
 
-  const sortedIdeas = [...ideas].sort((a, b) => {
-    switch(activeTab) {
-      case 'market':
-        return (b.marketScore || 0) - (a.marketScore || 0)
-      case 'innovation':
-        return (b.innovationScore || 0) - (a.innovationScore || 0)
-      case 'execution':
-        return (b.executionScore || 0) - (a.executionScore || 0)
+  const filteredIdeas = activeTab === 'all' 
+    ? ideas 
+    : ideas.filter(idea => idea.type === activeTab)
+
+  const sortedIdeas = [...filteredIdeas].sort((a, b) => {
+    switch(sortBy) {
       case 'public':
         return b.publicScore - a.publicScore
-      default:
+      case 'total':
+        return b.total - a.total
+      default: // 'ai'
         return b.aiScore - a.aiScore
     }
   })
@@ -151,32 +142,13 @@ export default function HomePage() {
           color: #1a1a1a;
           line-height: 1.6;
         }
-
-        /* Scrollbar styling for fresh look */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: #F1F5F9;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #CBD5E1;
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: #94A3B8;
-        }
       `}</style>
 
       <div className="min-h-screen">
-        {/* Hero Section - Compact with ArgentumSans */}
+        {/* Hero Section - Compact */}
         <section className="hero">
           <div className="container">
-            <h1 className="hero-title">
+            <h1>
               NO MONEY? NO PROBLEM.<br/>
               <span className="highlight">LET AI JUDGE YOUR IDEA</span>
             </h1>
@@ -186,21 +158,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Compressed Value Props */}
+        {/* Value Proposition - Compressed */}
         <section className="value-props">
           <div className="container">
             <div className="value-grid">
               <div className="value-card">
-                <h3>💰 $0 Marketing</h3>
-                <p>No Kickstarter budget needed</p>
+                <div className="value-icon">💰</div>
+                <h3>No Kickstarter Budget?</h3>
+                <p>Other platforms need $10K+ marketing. Here? <strong>$0</strong>.</p>
               </div>
               <div className="value-card">
-                <h3>⚡ Instant Ranking</h3>
-                <p>AI scores immediately</p>
+                <div className="value-icon">⚡</div>
+                <h3>Instant AI Ranking</h3>
+                <p>No waiting for backers. Good ideas rise <strong>automatically</strong>.</p>
               </div>
               <div className="value-card">
-                <h3>🏆 Monthly Prizes</h3>
-                <p>Real cash for winners</p>
+                <div className="value-icon">🏆</div>
+                <h3>Monthly Cash Prizes</h3>
+                <p>Top ideas win <strong>real money</strong> and investor attention.</p>
               </div>
             </div>
           </div>
@@ -212,101 +187,130 @@ export default function HomePage() {
             <div className="content-grid">
               {/* Left: Leaderboard */}
               <div className="leaderboard-column">
-                <div className="leaderboard-wrapper">
-                  {/* Browser-style Tabs */}
-                  <div className="tab-bar">
-                    <button 
-                      className={`tab ${activeTab === 'ai' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('ai')}
-                    >
-                      AI Score
-                    </button>
-                    <button 
-                      className={`tab ${activeTab === 'market' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('market')}
-                    >
-                      Market
-                    </button>
-                    <button 
-                      className={`tab ${activeTab === 'innovation' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('innovation')}
-                    >
-                      Innovation
-                    </button>
-                    <button 
-                      className={`tab ${activeTab === 'execution' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('execution')}
-                    >
-                      Execution
-                    </button>
-                    <button 
-                      className={`tab ${activeTab === 'public' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('public')}
-                    >
-                      Public
-                    </button>
-                  </div>
+                <h2>THIS WEEK'S BATTLEGROUND</h2>
+                
+                {/* Filter Tabs */}
+                <div className="filter-tabs">
+                  <button 
+                    className={`tab ${activeTab === 'all' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    All Ideas
+                  </button>
+                  <button 
+                    className={`tab ${activeTab === 'movie' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('movie')}
+                  >
+                    🎬 Movies
+                  </button>
+                  <button 
+                    className={`tab ${activeTab === 'game' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('game')}
+                  >
+                    🎮 Games
+                  </button>
+                  <button 
+                    className={`tab ${activeTab === 'business' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('business')}
+                  >
+                    💼 Business
+                  </button>
+                </div>
 
-                  {/* Leaderboard Content */}
-                  <div className="leaderboard-content">
-                    <div className="leaderboard-header">
-                      <div className="header-rank">#</div>
-                      <div className="header-idea">Idea</div>
-                      <div className="header-score">Score</div>
-                      <div className="header-action"></div>
-                    </div>
-                    
-                    <div className="leaderboard-body">
-                      {loading ? (
-                        <div className="loading-state">Loading ideas...</div>
-                      ) : (
-                        sortedIdeas.map((idea, index) => (
-                          <div key={idea.id} className="leaderboard-item">
-                            <div className="item-rank">
-                              <span className={`rank-badge ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}`}>
-                                {index + 1}
-                              </span>
-                            </div>
-                            
-                            <div className="item-content">
-                              <h3>{idea.title}</h3>
-                              <div className="item-meta">
-                                <span className="author">by {idea.author}</span>
-                                <span className="type">{idea.type}</span>
-                              </div>
-                            </div>
-                            
-                            <div className="item-score">
-                              <div className="score-main">
-                                {activeTab === 'market' ? idea.marketScore?.toFixed(2) :
-                                 activeTab === 'innovation' ? idea.innovationScore?.toFixed(2) :
-                                 activeTab === 'execution' ? idea.executionScore?.toFixed(2) :
-                                 activeTab === 'public' ? idea.publicScore.toFixed(2) :
-                                 idea.aiScore.toFixed(2)}
-                              </div>
-                              {activeTab === 'public' && (
-                                <div className="score-votes">({idea.publicVotes})</div>
-                              )}
-                            </div>
-                            
-                            <div className="item-action">
-                              <button 
-                                className="vote-btn"
-                                onClick={() => handleVoteClick(idea.id)}
-                              >
-                                →
-                              </button>
+                {/* Sort Options */}
+                <div className="sort-bar">
+                  <span className="sort-label">Sort by:</span>
+                  <button 
+                    className={`sort-btn ${sortBy === 'ai' ? 'active' : ''}`}
+                    onClick={() => setSortBy('ai')}
+                  >
+                    AI Score
+                  </button>
+                  <button 
+                    className={`sort-btn ${sortBy === 'public' ? 'active' : ''}`}
+                    onClick={() => setSortBy('public')}
+                  >
+                    Public Score
+                  </button>
+                  <button 
+                    className={`sort-btn ${sortBy === 'total' ? 'active' : ''}`}
+                    onClick={() => setSortBy('total')}
+                  >
+                    Total Score
+                  </button>
+                </div>
+
+                {/* Leaderboard */}
+                <div className="leaderboard-wrapper">
+                  <div className="leaderboard-header">
+                    <div className="header-rank">Rank</div>
+                    <div className="header-idea">Idea</div>
+                    <div className="header-scores">Scores</div>
+                    <div className="header-action">Action</div>
+                  </div>
+                  
+                  <div className="leaderboard-body">
+                    {sortedIdeas.map((idea, index) => (
+                      <div key={idea.rank} className="leaderboard-item">
+                        <div className="item-rank">
+                          <span className={`rank-badge ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}`}>
+                            {index + 1}
+                          </span>
+                        </div>
+                        
+                        <div className="item-content">
+                          <div className="item-header">
+                            <h3>{idea.title}</h3>
+                            <span className={`type-badge ${idea.type}`}>
+                              {idea.type === 'movie' ? '🎬' : idea.type === 'game' ? '🎮' : '💼'} {idea.type}
+                            </span>
+                          </div>
+                          <p className="item-author">by {idea.author}</p>
+                          <p className={`item-desc ${expandedIdea === idea.rank ? 'expanded' : ''}`}>
+                            {idea.desc}
+                          </p>
+                          <button 
+                            className="expand-btn"
+                            onClick={() => setExpandedIdea(expandedIdea === idea.rank ? null : idea.rank)}
+                          >
+                            {expandedIdea === idea.rank ? 'Show less ↑' : 'Read more ↓'}
+                          </button>
+                        </div>
+                        
+                        <div className="item-scores">
+                          <div className="score-item">
+                            <div className="score-label">AI</div>
+                            <div className="score-value">{idea.aiScore.toFixed(2)}</div>
+                          </div>
+                          <div className="score-item">
+                            <div className="score-label">Public</div>
+                            <div className="score-value">
+                              {idea.publicScore.toFixed(2)}
+                              <span className="vote-count">({idea.publicVotes})</span>
                             </div>
                           </div>
-                        ))
-                      )}
-                    </div>
-                    
-                    <div className="leaderboard-footer">
-                      <Link href="/leaderboard">
-                        <a>VIEW FULL LEADERBOARD →</a>
-                      </Link>
-                    </div>
+                          <div className="score-item total">
+                            <div className="score-label">Total</div>
+                            <div className="score-value">{idea.total.toFixed(2)}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="item-action">
+                          <button 
+                            className="vote-btn"
+                            onClick={() => handleVoteClick(idea.rank)}
+                          >
+                            {user ? 'Vote' : 'Sign in to Vote'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="leaderboard-footer">
+                    <Link href="/leaderboard">
+                      <a>VIEW FULL LEADERBOARD →</a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -351,6 +355,49 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* How It Works */}
+        <section className="how-it-works">
+          <div className="container">
+            <h2>The Battleground Rules</h2>
+            <div className="steps-grid">
+              <div className="step-card">
+                <div className="step-number">1</div>
+                <h3>Submit Your Weapon</h3>
+                <p>Your idea is your weapon. 30-500 words.</p>
+              </div>
+              <div className="step-card">
+                <div className="step-number">2</div>
+                <h3>Face the AI Judge</h3>
+                <p>Brutal AI scores 0-10. No mercy.</p>
+              </div>
+              <div className="step-card">
+                <div className="step-number">3</div>
+                <h3>Survive Public Vote</h3>
+                <p>Community votes. Strong ideas rise.</p>
+              </div>
+              <div className="step-card">
+                <div className="step-number">4</div>
+                <h3>Claim Your Prize</h3>
+                <p>$5,000 monthly prizes. Real investors.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="cta-section">
+          <div className="container">
+            <h2>No Budget? No Problem.</h2>
+            <p>Stop begging for money. Let your idea prove itself.</p>
+            <Link href="/submit">
+              <a className="cta-button">Submit Now →</a>
+            </Link>
+          </div>
+        </section>
+
+        <footer>
+          <p>© 2024 MAKE ME FAMOUS. WHERE IDEAS FIGHT TO WIN.</p>
+        </footer>
+
         {/* Login Modal */}
         {showLoginModal && (
           <LoginModal onClose={() => setShowLoginModal(false)} />
@@ -364,7 +411,7 @@ export default function HomePage() {
           padding: 0 20px;
         }
 
-        /* Hero - Compact with ArgentumSans for main message */
+        /* Hero - Compact */
         .hero {
           background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
           color: white;
@@ -372,14 +419,14 @@ export default function HomePage() {
           text-align: center;
         }
 
-        .hero-title {
+        .hero h1 {
           font-family: 'ArgentumSans', serif;
-          font-size: clamp(28px, 4vw, 48px);
+          font-size: clamp(32px, 4.5vw, 48px);
           font-weight: 900;
           font-style: italic;
           line-height: 1.1;
           letter-spacing: -0.02em;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
 
         .highlight {
@@ -391,46 +438,60 @@ export default function HomePage() {
         .subtitle {
           font-family: 'WorkSans', sans-serif;
           font-size: 15px;
-          line-height: 1.5;
+          line-height: 1.6;
           opacity: 0.9;
           max-width: 500px;
           margin: 0 auto;
         }
 
-        /* Compressed Value Props */
+        /* Value Props - Compressed */
         .value-props {
           background: #F8FAFC;
-          padding: 20px 0;
-          border-bottom: 1px solid #E2E8F0;
+          padding: 30px 0;
         }
 
         .value-grid {
-          display: flex;
-          justify-content: center;
-          gap: 40px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 24px;
         }
 
         .value-card {
+          background: #F0F9FF;
+          padding: 20px;
+          border-radius: 12px;
           text-align: center;
+          transition: all 0.3s;
+        }
+
+        .value-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .value-icon {
+          font-size: 36px;
+          margin-bottom: 12px;
         }
 
         .value-card h3 {
           font-family: 'Raleway', sans-serif;
-          font-size: 14px;
+          font-size: 18px;
           font-weight: 700;
+          margin-bottom: 8px;
           color: #0F172A;
-          margin-bottom: 4px;
         }
 
         .value-card p {
           font-family: 'WorkSans', sans-serif;
-          font-size: 12px;
-          color: #64748B;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #475569;
         }
 
-        /* Main Content Grid */
+        /* Main Content */
         .main-content {
-          padding: 30px 0 60px;
+          padding: 40px 0 60px;
           background: #FFFFFF;
         }
 
@@ -440,119 +501,145 @@ export default function HomePage() {
           gap: 30px;
         }
 
-        /* Leaderboard Column */
-        .leaderboard-column {
-          min-width: 0;
+        .leaderboard-column h2 {
+          font-family: 'Raleway', sans-serif;
+          font-size: 32px;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 30px;
+          color: #0F172A;
         }
 
-        .leaderboard-wrapper {
-          background: #FFFFFF;
-          border: 1px solid #E2E8F0;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        /* Browser-style Tabs */
-        .tab-bar {
+        /* Filter Tabs */
+        .filter-tabs {
           display: flex;
-          background: #F1F5F9;
-          border-bottom: 1px solid #E2E8F0;
-          padding: 0;
-          align-items: flex-end;
+          justify-content: center;
+          gap: 12px;
+          margin-bottom: 20px;
         }
 
         .tab {
           padding: 10px 20px;
-          background: #E2E8F0;
+          background: #F0F9FF;
           border: none;
-          border-right: 1px solid #CBD5E1;
-          font-family: 'Raleway', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          color: #64748B;
+          border-radius: 8px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          color: #475569;
           cursor: pointer;
           transition: all 0.2s;
-          margin: 0;
-          border-radius: 8px 8px 0 0;
-          margin-top: 8px;
-          margin-left: 8px;
-        }
-
-        .tab:first-child {
-          margin-left: 12px;
         }
 
         .tab:hover {
-          background: #F8FAFC;
+          background: #DBEAFE;
           color: #0F172A;
         }
 
         .tab.active {
-          background: #FFFFFF;
-          color: #0F172A;
-          border-bottom: 1px solid #FFFFFF;
-          position: relative;
-          z-index: 1;
-          margin-bottom: -1px;
+          background: #3B82F6;
+          color: white;
         }
 
-        /* Leaderboard Content */
-        .leaderboard-content {
-          background: #FFFFFF;
+        /* Sort Bar */
+        .sort-bar {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          margin-bottom: 20px;
+          padding: 12px;
+          background: #F8FAFC;
+          border-radius: 8px;
+        }
+
+        .sort-label {
+          font-family: 'Raleway', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          color: #64748B;
+        }
+
+        .sort-btn {
+          padding: 6px 12px;
+          background: white;
+          border: 1px solid #E2E8F0;
+          border-radius: 6px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          color: #475569;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .sort-btn:hover {
+          border-color: #3B82F6;
+          color: #3B82F6;
+        }
+
+        .sort-btn.active {
+          background: #3B82F6;
+          color: white;
+          border-color: #3B82F6;
+        }
+
+        /* Leaderboard */
+        .leaderboard-wrapper {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .leaderboard-header {
           display: grid;
-          grid-template-columns: 40px 1fr 80px 40px;
-          gap: 12px;
-          padding: 12px 16px;
-          background: #F8FAFC;
-          font-family: 'Raleway', sans-serif;
-          font-size: 11px;
-          font-weight: 700;
+          grid-template-columns: 60px 1fr 200px 120px;
+          gap: 20px;
+          padding: 20px;
+          background: #0F172A;
+          color: white;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 12px;
+          font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          color: #64748B;
         }
 
         .leaderboard-body {
-          max-height: 500px;
-          overflow-y: auto;
-        }
-
-        .loading-state {
-          padding: 40px;
-          text-align: center;
-          color: #64748B;
-          font-family: 'WorkSans', sans-serif;
+          padding: 0;
         }
 
         .leaderboard-item {
           display: grid;
-          grid-template-columns: 40px 1fr 80px 40px;
-          gap: 12px;
-          padding: 12px 16px;
-          border-bottom: 1px solid #F1F5F9;
+          grid-template-columns: 60px 1fr 200px 120px;
+          gap: 20px;
+          padding: 20px;
+          border-bottom: 1px solid #E5E5E5;
           transition: all 0.2s;
-          align-items: center;
         }
 
         .leaderboard-item:hover {
           background: #F0F9FF;
         }
 
-        .rank-badge {
-          font-family: 'Raleway', sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          color: #64748B;
-          width: 28px;
-          height: 28px;
+        .item-rank {
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 6px;
-          background: #F8FAFC;
+        }
+
+        .rank-badge {
+          font-family: 'Raleway', sans-serif;
+          font-size: 20px;
+          font-weight: 700;
+          color: #64748B;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          background: #F1F5F9;
         }
 
         .rank-badge.gold {
@@ -572,84 +659,142 @@ export default function HomePage() {
 
         .item-content h3 {
           font-family: 'Raleway', sans-serif;
-          font-size: 14px;
-          font-weight: 700;
-          color: #0F172A;
-          margin-bottom: 2px;
-        }
-
-        .item-meta {
-          display: flex;
-          gap: 12px;
-          font-family: 'WorkSans', sans-serif;
-          font-size: 12px;
-        }
-
-        .author {
-          color: #64748B;
-        }
-
-        .type {
-          color: #94A3B8;
-          text-transform: capitalize;
-        }
-
-        .item-score {
-          text-align: right;
-        }
-
-        .score-main {
-          font-family: 'Raleway', sans-serif;
           font-size: 18px;
           font-weight: 700;
           color: #0F172A;
+          margin-bottom: 4px;
         }
 
-        .score-votes {
+        .item-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+
+        .type-badge {
           font-family: 'WorkSans', sans-serif;
           font-size: 11px;
-          color: #94A3B8;
+          text-transform: uppercase;
+          padding: 4px 8px;
+          border-radius: 4px;
+          background: #F0F9FF;
+        }
+
+        .type-badge.movie { color: #8B4513; }
+        .type-badge.game { color: #4B0082; }
+        .type-badge.business { color: #006400; }
+
+        .item-author {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          color: #6B6B6B;
+          margin-bottom: 8px;
+        }
+
+        .item-desc {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          line-height: 1.4;
+          color: #475569;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        }
+
+        .item-desc.expanded {
+          -webkit-line-clamp: unset;
+        }
+
+        .expand-btn {
+          margin-top: 8px;
+          background: none;
+          border: none;
+          color: #3B82F6;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .expand-btn:hover {
+          text-decoration: underline;
+        }
+
+        .item-scores {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .score-item {
+          text-align: center;
+        }
+
+        .score-label {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 11px;
+          text-transform: uppercase;
+          color: #6B6B6B;
+          margin-bottom: 4px;
+        }
+
+        .score-value {
+          font-family: 'Raleway', sans-serif;
+          font-size: 20px;
+          font-weight: 700;
+          color: #0F172A;
+        }
+
+        .vote-count {
+          display: block;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 10px;
+          color: #6B6B6B;
+          font-weight: 400;
+        }
+
+        .score-item.total .score-value {
+          color: #3B82F6;
         }
 
         .vote-btn {
-          width: 32px;
-          height: 32px;
           background: #3B82F6;
           color: white;
           border: none;
           border-radius: 6px;
+          padding: 10px 20px;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
-          font-size: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          white-space: nowrap;
         }
 
         .vote-btn:hover {
           background: #2563EB;
-          transform: translateX(2px);
         }
 
         .leaderboard-footer {
-          background: #F8FAFC;
-          padding: 12px;
+          background: #0F172A;
+          padding: 20px;
           text-align: center;
-          border-top: 1px solid #E2E8F0;
         }
 
         .leaderboard-footer a {
-          color: #3B82F6;
+          color: white;
           text-decoration: none;
-          font-family: 'Raleway', sans-serif;
-          font-size: 12px;
-          font-weight: 700;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 14px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 1px;
         }
 
         .leaderboard-footer a:hover {
-          color: #2563EB;
+          color: #60A5FA;
         }
 
         /* Sidebar */
@@ -668,7 +813,7 @@ export default function HomePage() {
 
         .sidebar-title {
           font-family: 'Raleway', sans-serif;
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 700;
           color: #0F172A;
           margin-bottom: 16px;
@@ -684,14 +829,14 @@ export default function HomePage() {
 
         .submit-cta h3 {
           font-family: 'Raleway', sans-serif;
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 700;
           margin-bottom: 8px;
         }
 
         .submit-cta p {
           font-family: 'WorkSans', sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           margin-bottom: 16px;
           opacity: 0.9;
         }
@@ -700,7 +845,7 @@ export default function HomePage() {
           display: inline-block;
           background: white;
           color: #3B82F6;
-          padding: 10px 24px;
+          padding: 12px 28px;
           font-family: 'Raleway', sans-serif;
           font-size: 14px;
           font-weight: 700;
@@ -716,7 +861,7 @@ export default function HomePage() {
 
         /* Sponsors */
         .sponsors {
-          background: #FFFFFF;
+          background: white;
           border: 1px solid #E2E8F0;
         }
 
@@ -752,6 +897,112 @@ export default function HomePage() {
           letter-spacing: 0.5px;
         }
 
+        /* How It Works */
+        .how-it-works {
+          background: #F8FAFC;
+          padding: 60px 0;
+        }
+
+        .how-it-works h2 {
+          font-family: 'Raleway', sans-serif;
+          font-size: 36px;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 40px;
+          color: #0F172A;
+        }
+
+        .steps-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+        }
+
+        .step-card {
+          text-align: center;
+          padding: 30px 20px;
+          background: white;
+          border-radius: 12px;
+          transition: all 0.3s;
+        }
+
+        .step-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-number {
+          font-family: 'Raleway', sans-serif;
+          font-size: 36px;
+          font-weight: 700;
+          color: #3B82F6;
+          margin-bottom: 12px;
+        }
+
+        .step-card h3 {
+          font-family: 'Raleway', sans-serif;
+          font-size: 18px;
+          font-weight: 700;
+          color: #0F172A;
+          margin-bottom: 8px;
+        }
+
+        .step-card p {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+          color: #6B6B6B;
+          line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta-section {
+          background: #3B82F6;
+          padding: 60px 0;
+          text-align: center;
+          color: white;
+        }
+
+        .cta-section h2 {
+          font-family: 'Raleway', sans-serif;
+          font-size: 36px;
+          font-weight: 700;
+          margin-bottom: 16px;
+        }
+
+        .cta-section p {
+          font-family: 'WorkSans', sans-serif;
+          font-size: 16px;
+          margin-bottom: 30px;
+        }
+
+        .cta-button {
+          display: inline-block;
+          background: white;
+          color: #3B82F6;
+          padding: 14px 32px;
+          font-family: 'Raleway', sans-serif;
+          font-size: 18px;
+          font-weight: 700;
+          text-decoration: none;
+          border-radius: 6px;
+          transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        footer {
+          background: #0F172A;
+          color: white;
+          padding: 30px 0;
+          text-align: center;
+          font-family: 'WorkSans', sans-serif;
+          font-size: 13px;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .content-grid {
@@ -766,25 +1017,26 @@ export default function HomePage() {
           }
         }
 
-        @media (max-width: 640px) {
-          .tab-bar {
-            overflow-x: auto;
-            padding-bottom: 2px;
+        @media (max-width: 768px) {
+          .hero h1 {
+            font-size: 28px;
           }
           
-          .tab {
-            font-size: 11px;
-            padding: 8px 12px;
-            white-space: nowrap;
+          .steps-grid {
+            grid-template-columns: 1fr;
           }
           
           .leaderboard-header,
           .leaderboard-item {
-            grid-template-columns: 32px 1fr 60px;
+            grid-template-columns: 1fr;
+            gap: 12px;
           }
           
-          .header-action,
-          .item-action {
+          .header-rank, .header-scores, .header-action {
+            display: none;
+          }
+          
+          .item-rank, .item-scores, .item-action {
             display: none;
           }
         }
@@ -867,50 +1119,36 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.7);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 1000;
-          backdrop-filter: blur(4px);
         }
         
         .modal-content {
-          background: #FFFFFF;
-          border-radius: 16px;
-          padding: 32px;
+          background: white;
+          border-radius: 12px;
+          padding: 40px;
           width: 90%;
           max-width: 400px;
           position: relative;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         
         .modal-close {
           position: absolute;
-          top: 16px;
-          right: 16px;
+          top: 20px;
+          right: 20px;
           background: none;
           border: none;
           font-size: 24px;
           cursor: pointer;
-          color: #64748B;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: all 0.2s;
-        }
-        
-        .modal-close:hover {
-          background: #F1F5F9;
-          color: #0F172A;
+          color: #475569;
         }
         
         h2 {
           font-family: 'Raleway', sans-serif;
-          font-size: 24px;
+          font-size: 28px;
           font-weight: 700;
           color: #0F172A;
           margin-bottom: 24px;
@@ -918,10 +1156,10 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         }
         
         .modal-error {
-          background: #FEE2E2;
-          color: #DC2626;
+          background: #FFE5E5;
+          color: #CC0000;
           padding: 12px;
-          border-radius: 8px;
+          border-radius: 6px;
           margin-bottom: 20px;
           font-family: 'WorkSans', sans-serif;
           font-size: 14px;
@@ -934,30 +1172,28 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         }
         
         input {
-          padding: 12px 16px;
-          border: 1px solid #E2E8F0;
-          border-radius: 8px;
+          padding: 14px;
+          border: 2px solid #E5E5E5;
+          border-radius: 6px;
           font-family: 'WorkSans', sans-serif;
           font-size: 14px;
-          transition: all 0.2s;
-          background: #F8FAFC;
+          transition: border-color 0.2s;
         }
         
         input:focus {
           outline: none;
           border-color: #3B82F6;
-          background: #FFFFFF;
         }
         
         button[type="submit"] {
           background: #3B82F6;
           color: white;
-          padding: 12px;
+          padding: 14px;
           border: none;
-          border-radius: 8px;
-          font-family: 'Raleway', sans-serif;
+          border-radius: 6px;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
           cursor: pointer;
@@ -978,7 +1214,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           margin-top: 20px;
           font-family: 'WorkSans', sans-serif;
           font-size: 14px;
-          color: #64748B;
+          color: #6B6B6B;
         }
         
         .modal-switch button {
@@ -988,10 +1224,6 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           cursor: pointer;
           margin-left: 4px;
           text-decoration: underline;
-        }
-        
-        .modal-switch button:hover {
-          color: #2563EB;
         }
       `}</style>
     </>
