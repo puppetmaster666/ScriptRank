@@ -8,6 +8,7 @@ import ArchiveSidebar from '@/components/ArchiveSidebar'
 
 interface Idea {
   id: string
+  rank?: number
   title: string
   type: string
   author: string
@@ -149,6 +150,25 @@ export default function HomePage() {
           background: #FFFFFF;
           color: #1a1a1a;
           line-height: 1.6;
+        }
+
+        /* Scrollbar styling for fresh look */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: #F1F5F9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #CBD5E1;
+          border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: #94A3B8;
         }
       `}</style>
 
