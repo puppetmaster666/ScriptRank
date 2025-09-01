@@ -33,6 +33,7 @@ export default function HomePage() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'business' | 'games' | 'movies' | 'tech'>('all')
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
@@ -40,50 +41,8 @@ export default function HomePage() {
     return () => unsubscribe()
   }, [])
 
-  useEffect(() => {
-    fetchIdeas()
-  }, [])
-
-  const fetchIdeas = async () => {
-    try {
-      const ideasQuery = query(
-        collection(db, 'ideas'),
-        orderBy('aiScores.overall', 'desc'),
-        limit(20)
-      )
-      
-      const snapshot = await getDocs(ideasQuery)
-      const fetchedIdeas = snapshot.docs.map((doc, index) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          rank: index + 1,
-          title: data.title,
-          type: data.type,
-          genre: data.genre || 'General',
-          author: data.username || 'Anonymous',
-          desc: data.content,
-          aiScore: Math.round((data.aiScores?.overall || Math.random() * 10) * 10),
-          marketScore: Math.round((data.aiScores?.market || Math.random() * 10) * 10),
-          innovationScore: Math.round((data.aiScores?.innovation || Math.random() * 10) * 10),
-          executionScore: Math.round((data.aiScores?.execution || Math.random() * 10) * 10),
-          publicScore: data.publicScore?.average || 0,
-          publicVotes: data.publicScore?.count || 0,
-          timestamp: data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '2024-01-15',
-          expanded: false
-        }
-      })
-      
-      setIdeas(fetchedIdeas.length > 0 ? fetchedIdeas : getMockIdeas())
-    } catch (error) {
-      setIdeas(getMockIdeas())
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const getMockIdeas = (): Idea[] => [
-    // Business Ideas (5+)
+    // Business Ideas (6)
     {
       id: '1', rank: 1, title: 'Neural Market Predictor', type: 'business', genre: 'Fintech', author: 'Dr. Sarah Chen',
       desc: 'AI-powered platform that analyzes 10,000+ market signals in real-time to predict price movements with 89% accuracy. Combines sentiment analysis, technical indicators, and macroeconomic data to generate actionable trading insights for institutional and retail investors.',
@@ -114,7 +73,7 @@ export default function HomePage() {
       desc: 'Next-generation banking security platform using quantum encryption and biometric authentication. Prevents 99.99% of fraud attempts while reducing authentication time to under 0.5 seconds.',
       aiScore: 73, marketScore: 88, innovationScore: 95, executionScore: 62, publicScore: 8.1, publicVotes: 298, timestamp: '2024-01-11', expanded: false
     },
-    // Games Ideas (5+)
+    // Games Ideas (6)
     {
       id: '2', rank: 2, title: 'Quantum Chess Arena', type: 'games', genre: 'Strategy', author: 'Marcus Webb',
       desc: 'Revolutionary chess variant where pieces exist in quantum superposition states until observed. Features simultaneous move possibilities, probability-based captures, and tournament modes with global leaderboards. Built with cutting-edge physics simulation.',
@@ -145,7 +104,7 @@ export default function HomePage() {
       desc: 'Competitive puzzle-battle game where players create spells by solving logic puzzles in real-time. Features ranked matchmaking, daily tournaments, and a unique spell-crafting system.',
       aiScore: 71, marketScore: 76, innovationScore: 79, executionScore: 74, publicScore: 7.6, publicVotes: 256, timestamp: '2024-01-10', expanded: false
     },
-    // Movies Ideas (5+)
+    // Movies Ideas (6)
     {
       id: '3', rank: 3, title: 'Memory Vault', type: 'movies', genre: 'Sci-Fi', author: 'Elena Rodriguez',
       desc: 'In 2090, memories are extracted and stored as digital assets. A black market memory dealer discovers someone is planting false memories in the global database, threatening the nature of human identity and truth itself.',
@@ -175,19 +134,14 @@ export default function HomePage() {
       id: '20', rank: 20, title: 'Digital Prophets', type: 'movies', genre: 'Documentary', author: 'Amanda Lee',
       desc: 'Documentary exploring the rise of AI-generated religions and digital cults in 2080s, following three followers as they navigate faith, technology, and the question of artificial consciousness.',
       aiScore: 70, marketScore: 73, innovationScore: 77, executionScore: 78, publicScore: 7.4, publicVotes: 189, timestamp: '2024-01-09', expanded: false
-    },
-    // Tech Ideas (for variety in "All" view)
-    {
-      id: '4', rank: 4, title: 'CodeMind AI', type: 'tech', genre: 'Dev Tools', author: 'Alex Kim',
-      desc: 'Advanced code completion and debugging assistant that understands context across entire codebases. Features automatic bug detection, performance optimization suggestions, and natural language to code translation with 95% accuracy.',
-      aiScore: 87, marketScore: 93, innovationScore: 82, executionScore: 86, publicScore: 8.5, publicVotes: 934, timestamp: '2024-01-25', expanded: false
-    },
-    {
-      id: '8', rank: 8, title: 'SmartFarm IoT', type: 'tech', genre: 'IoT', author: 'Maria Santos',
-      desc: 'Comprehensive agricultural IoT platform combining soil sensors, weather prediction, drone monitoring, and AI crop optimization. Increases yield by 35% while reducing water usage by 50% through precision farming.',
-      aiScore: 79, marketScore: 86, innovationScore: 74, executionScore: 77, publicScore: 7.9, publicVotes: 678, timestamp: '2024-01-21', expanded: false
     }
   ]
+
+  useEffect(() => {
+    // Load mock data immediately
+    setIdeas(getMockIdeas())
+    setLoading(false)
+  }, [])
 
   const toggleExpanded = (ideaId: string) => {
     setExpandedCards(prev => {
@@ -223,9 +177,9 @@ export default function HomePage() {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#10b981'
-    if (score >= 60) return '#f59e0b' 
-    return '#ef4444'
+    if (score >= 80) return 'text-green-500'
+    if (score >= 60) return 'text-yellow-500'
+    return 'text-red-500'
   }
 
   return (
@@ -245,7 +199,6 @@ export default function HomePage() {
             style={{
               filter: 'blur(3px)',
               animation: 'drift 45s ease-in-out infinite',
-              transformOrigin: 'center center'
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/92 to-white/95" />
@@ -282,7 +235,12 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-3">
-                    <button onClick={() => setShowLoginModal(true)} className="text-sm font-medium text-gray-600 hover:text-gray-900">Login</button>
+                    <button 
+                      onClick={() => setShowLoginModal(true)} 
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Login
+                    </button>
                     <Link href="/submit">
                       <a className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
                         Submit Idea
@@ -302,18 +260,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {mobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-4">
-              <nav className="flex flex-col space-y-3">
-                <Link href="/"><a className="text-sm font-medium text-gray-600">Home</a></Link>
-                <Link href="/explore"><a className="text-sm font-medium text-gray-600">Explore</a></Link>
-                <Link href="/leaderboard"><a className="text-sm font-medium text-gray-600">Leaderboard</a></Link>
-                <Link href="/analytics"><a className="text-sm font-medium text-gray-600">Analytics</a></Link>
-                <Link href="/about"><a className="text-sm font-medium text-gray-600">About</a></Link>
-              </nav>
-            </div>
-          )}
         </header>
 
         <div className="relative z-10 flex">
@@ -384,12 +330,6 @@ export default function HomePage() {
                           className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
                         >
                           Movies
-                        </button>
-                        <button 
-                          onClick={() => { setSelectedCategory('tech'); setCategoryDropdownOpen(false); }}
-                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
-                        >
-                          Tech
                         </button>
                       </div>
                     )}
@@ -481,10 +421,6 @@ export default function HomePage() {
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
                       <span className="text-xs text-gray-600">Memory Vault reached top 5</span>
                     </div>
-                    <div className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
-                      <span className="text-xs text-gray-600">New funding milestone: $12.4M</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -540,7 +476,7 @@ export default function HomePage() {
                 {/* Business Column */}
                 <div>
                   <div className="mb-4 pb-2 border-b-2 border-gray-900">
-                    <h3 className="text-lg font-bold uppercase tracking-wide">Business</h3>
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Business ({businessIdeas.length})</h3>
                   </div>
                   <div className="space-y-4">
                     {businessIdeas.slice(0, 5).map((idea) => (
@@ -554,22 +490,22 @@ export default function HomePage() {
                             <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
                           <div className="text-right ml-3">
-                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
+                            <div className={`text-2xl font-black ${getScoreColor(idea.aiScore)}`}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.marketScore)}`}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.innovationScore)}`}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.executionScore)}`}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
@@ -609,7 +545,7 @@ export default function HomePage() {
                 {/* Games Column */}
                 <div>
                   <div className="mb-4 pb-2 border-b-2 border-gray-900">
-                    <h3 className="text-lg font-bold uppercase tracking-wide">Games</h3>
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Games ({gamesIdeas.length})</h3>
                   </div>
                   <div className="space-y-4">
                     {gamesIdeas.slice(0, 5).map((idea) => (
@@ -623,22 +559,22 @@ export default function HomePage() {
                             <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
                           <div className="text-right ml-3">
-                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
+                            <div className={`text-2xl font-black ${getScoreColor(idea.aiScore)}`}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.marketScore)}`}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.innovationScore)}`}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.executionScore)}`}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
@@ -678,7 +614,7 @@ export default function HomePage() {
                 {/* Movies Column */}
                 <div>
                   <div className="mb-4 pb-2 border-b-2 border-gray-900">
-                    <h3 className="text-lg font-bold uppercase tracking-wide">Movies</h3>
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Movies ({moviesIdeas.length})</h3>
                   </div>
                   <div className="space-y-4">
                     {moviesIdeas.slice(0, 5).map((idea) => (
@@ -692,22 +628,22 @@ export default function HomePage() {
                             <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
                           <div className="text-right ml-3">
-                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
+                            <div className={`text-2xl font-black ${getScoreColor(idea.aiScore)}`}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.marketScore)}`}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.innovationScore)}`}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
+                            <div className={`text-sm font-bold ${getScoreColor(idea.executionScore)}`}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
@@ -774,7 +710,7 @@ export default function HomePage() {
             </section>
 
             {/* Platform Statistics */}
-            <section className="text-center">
+            <section className="text-center mb-16">
               <h2 className="text-2xl font-bold mb-8">Platform Impact</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
@@ -803,29 +739,12 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <footer className="relative z-10 bg-gray-900 text-white mt-20">
+        <footer className="relative z-10 bg-gray-900 text-white">
           <div className="max-w-7xl mx-auto px-6 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
                 <h3 className="text-2xl font-black mb-4">HYOKA</h3>
                 <p className="text-sm text-gray-400">Professional AI-powered idea evaluation platform for entrepreneurs and innovators.</p>
-                <div className="flex space-x-4 mt-4">
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                  </a>
-                </div>
               </div>
               
               <div>
@@ -834,7 +753,6 @@ export default function HomePage() {
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">How it Works</a></li>
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a></li>
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Success Stories</a></li>
-                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">API Access</a></li>
                 </ul>
               </div>
               
@@ -844,7 +762,6 @@ export default function HomePage() {
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Documentation</a></li>
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</a></li>
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Community</a></li>
-                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Support</a></li>
                 </ul>
               </div>
               
@@ -853,14 +770,13 @@ export default function HomePage() {
                 <ul className="space-y-2">
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">About Us</a></li>
                   <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Contact</a></li>
                 </ul>
               </div>
             </div>
             
             <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-              <p className="text-sm text-gray-400">© 2024 Hyoka. All rights reserved. Powered by advanced AI technology.</p>
+              <p className="text-sm text-gray-400">© 2024 Hyoka. All rights reserved.</p>
             </div>
           </div>
         </footer>
@@ -875,13 +791,13 @@ export default function HomePage() {
             transform: translateX(0) translateY(0) scale(1);
           }
           25% {
-            transform: translateX(-20px) translateY(-15px) scale(1.01);
+            transform: translateX(-20px) translateY(-15px) scale(1.02);
           }
           50% {
-            transform: translateX(15px) translateY(-25px) scale(1.02);
+            transform: translateX(15px) translateY(-25px) scale(1.03);
           }
           75% {
-            transform: translateX(-15px) translateY(10px) scale(1.01);
+            transform: translateX(-15px) translateY(10px) scale(1.02);
           }
         }
       `}</style>
