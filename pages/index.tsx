@@ -31,7 +31,8 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
-
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'business' | 'games' | 'movies' | 'tech'>('all')
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
@@ -200,9 +201,9 @@ export default function HomePage() {
     })
   }
 
-  const businessIdeas = ideas.filter(idea => idea.type === 'business').slice(0, 5)
-  const gamesIdeas = ideas.filter(idea => idea.type === 'games').slice(0, 5)
-  const moviesIdeas = ideas.filter(idea => idea.type === 'movies').slice(0, 5)
+  const businessIdeas = ideas.filter(idea => idea.type === 'business')
+  const gamesIdeas = ideas.filter(idea => idea.type === 'games')
+  const moviesIdeas = ideas.filter(idea => idea.type === 'movies')
 
   const handleVote = (ideaId: string) => {
     if (!user) {
@@ -348,23 +349,98 @@ export default function HomePage() {
 
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Categories</h3>
-                  <div className="space-y-1">
-                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
-                      <span className="font-medium">All Ideas</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{ideas.length}</span>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <span className="font-medium capitalize">{selectedCategory === 'all' ? 'All Categories' : selectedCategory}</span>
+                      <svg className={`w-4 h-4 transition-transform ${categoryDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     </button>
-                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
-                      <span className="font-medium">Business</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{businessIdeas.length}</span>
-                    </button>
-                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
-                      <span className="font-medium">Games</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{gamesIdeas.length}</span>
-                    </button>
-                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
-                      <span className="font-medium">Movies</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{moviesIdeas.length}</span>
-                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button 
+                          onClick={() => { setSelectedCategory('all'); setCategoryDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
+                        >
+                          All Categories
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCategory('business'); setCategoryDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
+                        >
+                          Business
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCategory('games'); setCategoryDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
+                        >
+                          Games
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCategory('movies'); setCategoryDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
+                        >
+                          Movies
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedCategory('tech'); setCategoryDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors"
+                        >
+                          Tech
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between px-3 py-1 text-sm">
+                      <span className="text-gray-600">Total Ideas</span>
+                      <span className="font-bold">{ideas.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-1 text-sm">
+                      <span className="text-gray-600">Business</span>
+                      <span className="font-bold">{businessIdeas.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-1 text-sm">
+                      <span className="text-gray-600">Games</span>
+                      <span className="font-bold">{gamesIdeas.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-1 text-sm">
+                      <span className="text-gray-600">Movies</span>
+                      <span className="font-bold">{moviesIdeas.length}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Previous Month Winners</h3>
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-lg">🏆</span>
+                        <span className="text-xs font-bold text-yellow-700">BUSINESS</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">AI Legal Assistant</p>
+                      <p className="text-xs text-gray-600 mt-1">Score: 96 • $2.3M raised</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-lg">🥈</span>
+                        <span className="text-xs font-bold text-gray-700">GAMES</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">MetaVerse Chess</p>
+                      <p className="text-xs text-gray-600 mt-1">Score: 93 • 50K downloads</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-lg">🥉</span>
+                        <span className="text-xs font-bold text-orange-700">MOVIES</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">The Last Algorithm</p>
+                      <p className="text-xs text-gray-600 mt-1">Score: 91 • Netflix deal</p>
+                    </div>
                   </div>
                 </div>
 
@@ -725,6 +801,69 @@ export default function HomePage() {
             </section>
           </main>
         </div>
+
+        {/* Footer */}
+        <footer className="relative z-10 bg-gray-900 text-white mt-20">
+          <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div>
+                <h3 className="text-2xl font-black mb-4">HYOKA</h3>
+                <p className="text-sm text-gray-400">Professional AI-powered idea evaluation platform for entrepreneurs and innovators.</p>
+                <div className="flex space-x-4 mt-4">
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                    </svg>
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-bold mb-4">Platform</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">How it Works</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Success Stories</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">API Access</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-bold mb-4">Resources</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Community</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Support</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-bold mb-4">Company</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
+                  <li><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+              <p className="text-sm text-gray-400">© 2024 Hyoka. All rights reserved. Powered by advanced AI technology.</p>
+            </div>
+          </div>
+        </footer>
 
         {/* Login Modal */}
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
