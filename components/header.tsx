@@ -92,20 +92,20 @@ export default function Header() {
           font-family: 'Vipnagorgialla', serif;
           font-size: 28px;
           font-weight: bold;
-          color: white;
+          color: black;
           text-decoration: none;
           transition: opacity 0.2s;
         }
 
         .header-logo:hover {
-          opacity: 0.9;
+          opacity: 0.8;
         }
         
         .nav-link {
           font-family: 'FoundersGrotesk', sans-serif;
           font-weight: 600;
           font-size: 14px;
-          color: white;
+          color: black;
           padding: 8px 16px;
           transition: all 0.2s;
           text-decoration: none;
@@ -115,7 +115,7 @@ export default function Header() {
         }
 
         .nav-link:hover {
-          color: #e5e5e5;
+          color: #4b5563;
         }
 
         .nav-button {
@@ -123,28 +123,28 @@ export default function Header() {
           font-weight: 600;
           font-size: 14px;
           padding: 10px 20px;
-          background: white;
-          color: #000000;
+          background: #000000;
+          color: white;
           border: none;
           transition: all 0.2s;
           cursor: pointer;
-          border-radius: 4px;
+          border-radius: 0;
         }
 
         .nav-button:hover {
-          background: #f0f0f0;
+          background: #1f1f1f;
           transform: translateY(-1px);
         }
 
         .nav-button.secondary {
           background: transparent;
-          color: white;
-          border: 1px solid white;
+          color: black;
+          border: 1px solid #d1d5db;
         }
 
         .nav-button.secondary:hover {
-          background: white;
-          color: #000000;
+          background: #f3f4f6;
+          color: black;
         }
 
         .mobile-nav-link {
@@ -153,16 +153,16 @@ export default function Header() {
           display: block;
           padding: 16px 24px;
           font-size: 14px;
-          color: white;
-          border-bottom: 1px solid #333333;
+          color: black;
+          border-bottom: 1px solid #e5e7eb;
           transition: all 0.2s;
-          background: #000000;
+          background: #f0f2f4;
           text-decoration: none;
         }
 
         .mobile-nav-link:hover {
-          background: #1a1a1a;
-          color: #e5e5e5;
+          background: #e5e7eb;
+          color: #374151;
           padding-left: 32px;
         }
 
@@ -172,26 +172,26 @@ export default function Header() {
           font-weight: 600;
           padding: 12px 24px;
           background: none;
-          border: 1px solid white;
-          color: white;
+          border: 1px solid #d1d5db;
+          color: black;
           cursor: pointer;
           transition: all 0.2s;
           margin-bottom: 8px;
         }
 
         .mobile-nav-button:hover {
-          background: white;
-          color: #000000;
+          background: #f3f4f6;
+          color: black;
         }
 
         .mobile-nav-button.primary {
-          background: white;
-          color: #000000;
+          background: #000000;
+          color: white;
           border: none;
         }
 
         .mobile-nav-button.primary:hover {
-          background: #f0f0f0;
+          background: #1f1f1f;
         }
       `}</style>
 
@@ -276,6 +276,12 @@ export default function Header() {
               <Link href="/how-it-works">
                 <a className="mobile-nav-link">How It Works</a>
               </Link>
+              <Link href="/why-us">
+                <a className="mobile-nav-link">Why Us</a>
+              </Link>
+              <Link href="/pricing">
+                <a className="mobile-nav-link">Pricing</a>
+              </Link>
 
               {user ? (
                 <>
@@ -317,14 +323,14 @@ export default function Header() {
 
       <style jsx>{`
         .header {
-          background: #000000;
-          color: white;
+          background: #f0f2f4;
+          color: black;
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
-          border-bottom: 1px solid #333333;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .header-container {
@@ -361,8 +367,8 @@ export default function Header() {
           top: 100%;
           left: 0;
           right: 0;
-          background: #000000;
-          border-top: 1px solid #333333;
+          background: #f0f2f4;
+          border-top: 1px solid #e5e7eb;
           max-height: calc(100vh - 64px);
           overflow-y: auto;
         }
@@ -374,7 +380,7 @@ export default function Header() {
 
         .mobile-actions {
           padding: 24px;
-          border-top: 1px solid #333333;
+          border-top: 1px solid #e5e7eb;
         }
 
         /* Responsive Design */
