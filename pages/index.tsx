@@ -1,14 +1,16 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { db } from '@/lib/firebase'
+import { db, auth } from '@/lib/firebase'
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore'
+import { onAuthStateChanged, User } from 'firebase/auth'
 
 interface Idea {
   id: string
   rank: number
   title: string
   type: string
+  genre?: string
   content: string
   username: string
   aiScores: {
@@ -25,11 +27,16 @@ interface Idea {
 }
 
 export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState<'movies' | 'business' | 'games'>('movies')
-  const [movieIdeas, setMovieIdeas] = useState<Idea[]>([])
-  const [businessIdeas, setBusinessIdeas] = useState<Idea[]>([])
-  const [gameIdeas, setGameIdeas] = useState<Idea[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [activeCategory, setActiveCategory] = useState<'all' | 'movies' | 'business' | 'games'>('all')
+  const [allIdeas, setAllIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, setUser)
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     fetchIdeas()
@@ -37,267 +44,152 @@ export default function HomePage() {
 
   const fetchIdeas = async () => {
     try {
-      // Fetch movies
-      const moviesQuery = query(
+      const ideasQuery = query(
         collection(db, 'ideas'),
-        where('type', '==', 'movie'),
         orderBy('aiScores.overall', 'desc'),
-        limit(5)
+        limit(30)
       )
-      const moviesSnapshot = await getDocs(moviesQuery)
-      const movies = moviesSnapshot.docs.map((doc, index) => ({
+      const snapshot = await getDocs(ideasQuery)
+      const ideas = snapshot.docs.map((doc, index) => ({
         id: doc.id,
         rank: index + 1,
         ...doc.data()
       })) as Idea[]
-      setMovieIdeas(movies)
-
-      // Fetch business ideas
-      const businessQuery = query(
-        collection(db, 'ideas'),
-        where('type', '==', 'business'),
-        orderBy('aiScores.overall', 'desc'),
-        limit(5)
-      )
-      const businessSnapshot = await getDocs(businessQuery)
-      const business = businessSnapshot.docs.map((doc, index) => ({
-        id: doc.id,
-        rank: index + 1,
-        ...doc.data()
-      })) as Idea[]
-      setBusinessIdeas(business)
-
-      // Fetch games
-      const gamesQuery = query(
-        collection(db, 'ideas'),
-        where('type', '==', 'game'),
-        orderBy('aiScores.overall', 'desc'),
-        limit(5)
-      )
-      const gamesSnapshot = await getDocs(gamesQuery)
-      const games = gamesSnapshot.docs.map((doc, index) => ({
-        id: doc.id,
-        rank: index + 1,
-        ...doc.data()
-      })) as Idea[]
-      setGameIdeas(games)
-
+      setAllIdeas(ideas.length > 0 ? ideas : getMockIdeas())
     } catch (error) {
       console.error('Error fetching ideas:', error)
-      // Use mock data if fetch fails
-      setMovieIdeas(getMockMovies())
-      setBusinessIdeas(getMockBusiness())
-      setGameIdeas(getMockGames())
+      setAllIdeas(getMockIdeas())
     } finally {
       setLoading(false)
     }
   }
 
-  const getMockMovies = (): Idea[] => [
+  const getMockIdeas = (): Idea[] => [
     {
       id: '1',
       rank: 1,
-      title: 'Echoes of Tomorrow',
+      title: 'The echoes of tomorrow',
       type: 'movie',
-      content: 'A time-loop thriller where a quantum physicist must prevent a catastrophic event by living the same day repeatedly, each iteration revealing deeper layers of conspiracy.',
-      username: 'Sarah Mitchell',
-      aiScores: { overall: 9.2, market: 8.7, innovation: 9.5, execution: 9.1 },
-      publicScore: { average: 8.9, count: 847 },
-      status: 'INVEST'
+      genre: 'Thriller',
+      content: 'A doctor goes missing in the forest and comes back looking like a homeless fugitive.',
+      username: 'Marco Rubio',
+      aiScores: { overall: 89, market: 87, innovation: 92, execution: 88 },
+      publicScore: { average: 85, count: 847 }
     },
     {
       id: '2',
       rank: 2,
-      title: 'The Last Archive',
-      type: 'movie',
-      content: 'In a world where all digital data has been erased, a librarian discovers the last physical archive containing humanity\'s deleted history.',
-      username: 'Michael Chen',
-      aiScores: { overall: 8.9, market: 9.1, innovation: 8.4, execution: 8.8 },
-      publicScore: { average: 8.5, count: 623 },
-      status: 'INVEST'
+      title: 'Quantum Chess Arena',
+      type: 'game',
+      genre: 'Strategy',
+      content: 'Multiplayer chess variant where pieces exist in quantum superposition until observed.',
+      username: 'Rachel Wei',
+      aiScores: { overall: 85, market: 83, innovation: 88, execution: 84 },
+      publicScore: { average: 82, count: 623 }
     },
     {
       id: '3',
       rank: 3,
-      title: 'Parallel Lives',
-      type: 'movie',
-      content: 'A psychological drama following five strangers who discover they\'re living the same life in parallel dimensions.',
-      username: 'Emma Rodriguez',
-      aiScores: { overall: 8.6, market: 8.2, innovation: 9.0, execution: 8.5 },
-      publicScore: { average: 8.3, count: 512 },
-      status: 'INVEST'
+      title: 'EcoChain Logistics',
+      type: 'business',
+      genre: 'SaaS',
+      content: 'Blockchain-powered supply chain platform that tracks carbon footprint in real-time.',
+      username: 'David Kumar',
+      aiScores: { overall: 82, market: 85, innovation: 79, execution: 81 },
+      publicScore: { average: 80, count: 512 }
     },
     {
       id: '4',
       rank: 4,
-      title: 'The Memory Thief',
+      title: 'Memory Thief',
       type: 'movie',
-      content: 'A noir mystery set in a future where memories can be extracted and sold, following a detective who must solve crimes by stealing memories.',
+      genre: 'Sci-Fi',
+      content: 'A noir mystery set in a future where memories can be extracted and sold.',
       username: 'James Wilson',
-      aiScores: { overall: 8.3, market: 8.5, innovation: 7.9, execution: 8.4 },
-      publicScore: { average: 8.1, count: 389 },
-      status: 'MAYBE'
+      aiScores: { overall: 78, market: 76, innovation: 81, execution: 77 },
+      publicScore: { average: 75, count: 389 }
     },
     {
       id: '5',
       rank: 5,
-      title: 'Fractured Light',
-      type: 'movie',
-      content: 'A visually stunning epic about a civilization that exists within light beams, threatened when Earth\'s sun begins to die.',
-      username: 'Olivia Park',
-      aiScores: { overall: 7.9, market: 7.3, innovation: 8.8, execution: 7.6 },
-      publicScore: { average: 7.5, count: 267 },
-      status: 'MAYBE'
-    }
-  ]
-
-  const getMockBusiness = (): Idea[] => [
+      title: 'Neural Nexus VR',
+      type: 'game',
+      genre: 'VR',
+      content: 'VR strategy game where players control armies through thought patterns using EEG sensors.',
+      username: 'Alex Thompson',
+      aiScores: { overall: 75, market: 73, innovation: 78, execution: 74 },
+      publicScore: { average: 72, count: 267 }
+    },
     {
       id: '6',
-      rank: 1,
-      title: 'EcoChain Logistics',
+      rank: 6,
+      title: 'LocalFarm Network',
       type: 'business',
-      content: 'Blockchain-powered supply chain platform that tracks carbon footprint in real-time, allowing companies to optimize routes and achieve net-zero shipping.',
-      username: 'David Kumar',
-      aiScores: { overall: 9.4, market: 9.6, innovation: 8.9, execution: 9.5 },
-      publicScore: { average: 9.1, count: 923 },
-      status: 'INVEST'
+      genre: 'Marketplace',
+      content: 'Subscription marketplace connecting urban consumers directly with local farms.',
+      username: 'Amanda Torres',
+      aiScores: { overall: 72, market: 74, innovation: 69, execution: 73 },
+      publicScore: { average: 70, count: 198 }
     },
     {
       id: '7',
-      rank: 2,
-      title: 'MediMatch AI',
-      type: 'business',
-      content: 'AI platform that matches patients with clinical trials based on genetic markers, medical history, and lifestyle factors.',
-      username: 'Dr. Lisa Chen',
-      aiScores: { overall: 9.1, market: 9.3, innovation: 8.7, execution: 9.2 },
-      publicScore: { average: 8.8, count: 756 },
-      status: 'INVEST'
+      rank: 7,
+      title: 'Parallel Lives',
+      type: 'movie',
+      genre: 'Drama',
+      content: 'Five strangers discover they are living the same life in parallel dimensions.',
+      username: 'Emma Rodriguez',
+      aiScores: { overall: 68, market: 66, innovation: 71, execution: 67 },
+      publicScore: { average: 65, count: 156 }
     },
     {
       id: '8',
-      rank: 3,
-      title: 'SkillBridge Pro',
-      type: 'business',
-      content: 'B2B platform connecting retiring professionals with companies for knowledge transfer programs.',
-      username: 'Marcus Johnson',
-      aiScores: { overall: 8.7, market: 9.0, innovation: 8.1, execution: 8.9 },
-      publicScore: { average: 8.4, count: 543 },
-      status: 'INVEST'
+      rank: 8,
+      title: 'Echo Worlds',
+      type: 'game',
+      genre: 'RPG',
+      content: 'Open-world RPG where player actions in the past dynamically reshape the present.',
+      username: 'Studio Nexus',
+      aiScores: { overall: 65, market: 63, innovation: 68, execution: 64 },
+      publicScore: { average: 62, count: 134 }
     },
     {
       id: '9',
-      rank: 4,
-      title: 'LocalFarm Network',
+      rank: 9,
+      title: 'MediMatch AI',
       type: 'business',
-      content: 'Subscription marketplace connecting urban consumers directly with local farms, offering customizable produce boxes.',
-      username: 'Amanda Torres',
-      aiScores: { overall: 8.2, market: 8.5, innovation: 7.6, execution: 8.4 },
-      publicScore: { average: 8.0, count: 412 },
-      status: 'MAYBE'
-    },
-    {
-      id: '10',
-      rank: 5,
-      title: 'RentReady AI',
-      type: 'business',
-      content: 'Automated property management platform using computer vision to conduct virtual inspections and predict maintenance needs.',
-      username: 'Kevin Park',
-      aiScores: { overall: 7.8, market: 8.2, innovation: 7.1, execution: 7.9 },
-      publicScore: { average: 7.5, count: 298 },
-      status: 'MAYBE'
+      genre: 'HealthTech',
+      content: 'AI platform that matches patients with clinical trials based on genetic markers.',
+      username: 'Dr. Lisa Chen',
+      aiScores: { overall: 62, market: 64, innovation: 59, execution: 63 },
+      publicScore: { average: 60, count: 112 }
     }
   ]
 
-  const getMockGames = (): Idea[] => [
-    {
-      id: '11',
-      rank: 1,
-      title: 'Neural Nexus VR',
-      type: 'game',
-      content: 'VR strategy game where players control armies through thought patterns, using real EEG sensors to translate brain activity into tactical commands.',
-      username: 'Alex Thompson',
-      aiScores: { overall: 9.3, market: 8.8, innovation: 9.7, execution: 9.2 },
-      publicScore: { average: 9.0, count: 1087 },
-      status: 'INVEST'
-    },
-    {
-      id: '12',
-      rank: 2,
-      title: 'Quantum Chess Arena',
-      type: 'game',
-      content: 'Multiplayer chess variant where pieces exist in quantum superposition until observed, adding probability mechanics to classic strategy.',
-      username: 'Dr. Rachel Wei',
-      aiScores: { overall: 8.8, market: 8.3, innovation: 9.4, execution: 8.5 },
-      publicScore: { average: 8.6, count: 892 },
-      status: 'INVEST'
-    },
-    {
-      id: '13',
-      rank: 3,
-      title: 'Echo Worlds',
-      type: 'game',
-      content: 'Open-world RPG where player actions in the past dynamically reshape the present, featuring a dual-timeline system.',
-      username: 'Studio Nexus Team',
-      aiScores: { overall: 8.5, market: 8.7, innovation: 8.2, execution: 8.4 },
-      publicScore: { average: 8.3, count: 678 },
-      status: 'INVEST'
-    },
-    {
-      id: '14',
-      rank: 4,
-      title: 'Mindscape Detective',
-      type: 'game',
-      content: 'Mystery adventure game where players solve crimes by entering suspects\' memories and navigating psychological landscapes.',
-      username: 'Jordan Blake',
-      aiScores: { overall: 8.1, market: 8.4, innovation: 7.8, execution: 8.2 },
-      publicScore: { average: 7.9, count: 521 },
-      status: 'MAYBE'
-    },
-    {
-      id: '15',
-      rank: 5,
-      title: 'Constellation Builders',
-      type: 'game',
-      content: 'Collaborative space simulation where players work together to build stellar megastructures across light-years.',
-      username: 'Maria Santos',
-      aiScores: { overall: 7.6, market: 7.9, innovation: 7.2, execution: 7.7 },
-      publicScore: { average: 7.4, count: 334 },
-      status: 'PASS'
-    }
-  ]
-
-  const getStatusBadgeClass = (status?: string) => {
-    switch (status) {
-      case 'INVEST': return 'status-invest'
-      case 'MAYBE': return 'status-maybe'
-      default: return 'status-pass'
+  const getScoreColor = (score: number): string => {
+    if (score >= 70) {
+      const greenIntensity = Math.min((score - 70) / 30, 1)
+      return `linear-gradient(135deg, rgba(105, 247, 77, ${0.6 + greenIntensity * 0.4}), #69f74d)`
+    } else if (score >= 40) {
+      return `linear-gradient(135deg, #f7d060, #f59e0b)`
+    } else {
+      return `linear-gradient(135deg, #ff6b6b, #dc2626)`
     }
   }
 
-  const getRankBadgeClass = (rank: number) => {
-    switch (rank) {
-      case 1: return 'rank-1'
-      case 2: return 'rank-2'
-      case 3: return 'rank-3'
-      default: return 'rank-default'
+  const toggleCard = (id: string) => {
+    const newExpanded = new Set(expandedCards)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
     }
+    setExpandedCards(newExpanded)
   }
 
-  const currentIdeas = activeCategory === 'movies' ? movieIdeas : 
-                       activeCategory === 'business' ? businessIdeas : gameIdeas
-
-  const categoryTitles = {
-    movies: 'Top Movie & TV Scripts',
-    business: 'Top Business Ideas',
-    games: 'Top Game Concepts'
-  }
-
-  const categorySubtitles = {
-    movies: 'This month\'s highest-rated entertainment concepts',
-    business: 'Innovative startups and business concepts',
-    games: 'Revolutionary gaming experiences and mechanics'
-  }
+  const filteredIdeas = activeCategory === 'all' 
+    ? allIdeas 
+    : allIdeas.filter(idea => idea.type === activeCategory.slice(0, -1))
 
   return (
     <>
@@ -306,458 +198,474 @@ export default function HomePage() {
         <meta name="description" content="Submit your movie script, game concept, or business idea. Get instant AI analysis and compete for prizes." />
       </Head>
 
-      <div className="page-wrapper">
-        <main className="main-content">
-          {/* Hero Section */}
-          <section className="hero">
-            <h1>Where Brilliant Ideas Meet AI Validation</h1>
-            <p>Submit your movie script, game concept, or business idea. Get instant AI analysis, compete on the leaderboard, and connect with investors.</p>
-            
-            <div className="hero-stats">
-              <div className="stat">
-                <span className="stat-number">2,847</span>
-                <span className="stat-label">Ideas Evaluated</span>
-              </div>
-              <div className="stat">
-                <span className="stat-number">$5M</span>
-                <span className="stat-label">In Prizes</span>
-              </div>
-              <div className="stat">
-                <span className="stat-number">94%</span>
-                <span className="stat-label">Success Rate</span>
-              </div>
-            </div>
-          </section>
+      <style jsx global>{`
+        @font-face {
+          font-family: 'TT0205M';
+          src: url('/fonts/tt0205m_.ttf') format('truetype');
+          font-weight: normal;
+          font-display: swap;
+        }
 
-          {/* Category Tabs */}
-          <div className="category-tabs">
+        @font-face {
+          font-family: 'TestSohneBreit';
+          src: url('/fonts/TestSohneBreit-Buch.otf') format('opentype');
+          font-weight: normal;
+          font-display: swap;
+        }
+
+        body {
+          margin: 0;
+          padding: 0;
+          background: #f5f5f0;
+          font-family: 'TestSohneBreit', -apple-system, sans-serif;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+      `}</style>
+
+      <div className="page-wrapper">
+        {/* Sidebar */}
+        <aside className="sidebar">
+          <div className="sidebar-section">
+            <h3>Quick Stats</h3>
+            <div className="stat-item">
+              <span className="stat-value">2,847</span>
+              <span className="stat-label">Ideas</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">$5M</span>
+              <span className="stat-label">Prizes</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">94%</span>
+              <span className="stat-label">Success</span>
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <h3>Categories</h3>
             <button 
-              className={`category-tab ${activeCategory === 'movies' ? 'active' : ''}`}
+              className={`category-btn ${activeCategory === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('all')}
+            >
+              All Ideas
+            </button>
+            <button 
+              className={`category-btn ${activeCategory === 'movies' ? 'active' : ''}`}
               onClick={() => setActiveCategory('movies')}
             >
-              Movies & TV
+              Movies
             </button>
             <button 
-              className={`category-tab ${activeCategory === 'business' ? 'active' : ''}`}
+              className={`category-btn ${activeCategory === 'business' ? 'active' : ''}`}
               onClick={() => setActiveCategory('business')}
             >
-              Business Ideas
+              Business
             </button>
             <button 
-              className={`category-tab ${activeCategory === 'games' ? 'active' : ''}`}
+              className={`category-btn ${activeCategory === 'games' ? 'active' : ''}`}
               onClick={() => setActiveCategory('games')}
             >
-              Game Concepts
+              Games
             </button>
           </div>
 
-          {/* Leaderboard Container */}
-          <div className="leaderboard-container">
-            <div className="category-header">
-              <h2 className="category-title">{categoryTitles[activeCategory]}</h2>
-              <p className="category-subtitle">{categorySubtitles[activeCategory]}</p>
-            </div>
-
-            {loading ? (
-              <div className="loading">Loading ideas...</div>
+          <div className="sidebar-section">
+            <h3>Actions</h3>
+            <Link href="/submit">
+              <a className="action-btn primary">Submit Idea</a>
+            </Link>
+            {user ? (
+              <Link href="/dashboard">
+                <a className="action-btn">Dashboard</a>
+              </Link>
             ) : (
-              <div className="ideas-grid">
-                {currentIdeas.map((idea) => (
-                  <Link key={idea.id} href={`/ideas/${idea.id}`}>
-                    <a className="idea-card">
-                      <div className="card-header">
-                        <div className={`rank-badge ${getRankBadgeClass(idea.rank)}`}>
-                          {idea.rank}
-                        </div>
-                        <div className="card-meta">
-                          <h3 className="idea-title">{idea.title}</h3>
-                          <p className="idea-author">{idea.username}</p>
-                        </div>
-                      </div>
-                      <p className="idea-description">{idea.content}</p>
-                      <div className="card-stats">
-                        <div className="stat-item">
-                          <span className="stat-value">{idea.aiScores.overall.toFixed(1)}</span>
-                          <span className="stat-label">AI Score</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-value">{idea.aiScores.market.toFixed(1)}</span>
-                          <span className="stat-label">Market</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-value">{idea.aiScores.innovation.toFixed(1)}</span>
-                          <span className="stat-label">Innovation</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-value">{idea.publicScore.count}</span>
-                          <span className="stat-label">Votes</span>
-                        </div>
-                      </div>
-                      <div className="card-footer">
-                        <span className={`status-badge ${getStatusBadgeClass(idea.status)}`}>
-                          {idea.status || 'PASS'}
-                        </span>
-                        <span className="view-details">View Details →</span>
-                      </div>
-                    </a>
-                  </Link>
-                ))}
-              </div>
+              <Link href="/login">
+                <a className="action-btn">Sign In</a>
+              </Link>
             )}
           </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="main-content">
+          <div className="content-header">
+            <h1>Leaderboard</h1>
+            <p>Top rated ideas competing for investment</p>
+          </div>
+
+          {loading ? (
+            <div className="loading">Loading ideas...</div>
+          ) : (
+            <div className="ideas-grid">
+              {filteredIdeas.map((idea) => (
+                <div key={idea.id} className="idea-wrapper">
+                  <div className="idea-header">
+                    <span className="idea-rank">#{idea.rank}</span>
+                    <span className="idea-title">{idea.title}</span>
+                  </div>
+                  <div 
+                    className={`idea-card ${expandedCards.has(idea.id) ? 'expanded' : ''}`}
+                    onClick={() => toggleCard(idea.id)}
+                  >
+                    <div className="genre-badge">{idea.genre || idea.type}</div>
+                    
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill"
+                        style={{
+                          width: `${idea.aiScores.overall}%`,
+                          background: getScoreColor(idea.aiScores.overall)
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="score-display">
+                      <span className="score-value">{idea.aiScores.overall}%</span>
+                    </div>
+
+                    <div className="card-content">
+                      <div className="author">{idea.username}</div>
+                      <p className="description">
+                        {idea.content}
+                        {expandedCards.has(idea.id) && (
+                          <>
+                            <br /><br />
+                            <strong>Market Score:</strong> {idea.aiScores.market}%<br />
+                            <strong>Innovation:</strong> {idea.aiScores.innovation}%<br />
+                            <strong>Execution:</strong> {idea.aiScores.execution}%<br />
+                            <strong>Public Score:</strong> {idea.publicScore.average}% ({idea.publicScore.count} votes)
+                          </>
+                        )}
+                      </p>
+                      <button className="read-more">
+                        {expandedCards.has(idea.id) ? 'read less' : 'read more'}
+                      </button>
+                    </div>
+
+                    <Link href={`/ideas/${idea.id}`}>
+                      <a className="vote-btn" onClick={(e) => e.stopPropagation()}>
+                        Vote
+                      </a>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
 
       <style jsx>{`
         .page-wrapper {
-          min-height: 100vh;
-          background: url('/bg11.png') center/cover no-repeat fixed;
-          position: relative;
-        }
-
-        .page-wrapper::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(180deg, 
-            rgba(26, 31, 46, 0.3) 0%, 
-            rgba(26, 31, 46, 0.5) 100%);
-          z-index: -1;
-        }
-
-        .main-content {
-          padding-top: 100px;
-          max-width: 1400px;
-          margin: 0 auto;
-          padding-left: 2rem;
-          padding-right: 2rem;
-          padding-bottom: 4rem;
-        }
-
-        .hero {
-          text-align: center;
-          padding: 4rem 0;
-          color: white;
-        }
-
-        .hero h1 {
-          font-size: 3.5rem;
-          font-weight: 800;
-          margin-bottom: 1.5rem;
-          letter-spacing: -1px;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .hero p {
-          font-size: 1.25rem;
-          color: rgba(255, 255, 255, 0.95);
-          max-width: 700px;
-          margin: 0 auto 2rem;
-          line-height: 1.6;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .hero-stats {
           display: flex;
-          justify-content: center;
-          gap: 4rem;
-          margin-top: 3rem;
+          min-height: 100vh;
+          padding-top: 80px;
         }
 
-        .stat {
-          text-align: center;
-        }
-
-        .stat-number {
-          font-size: 2.5rem;
-          font-weight: 800;
+        /* Sidebar */
+        .sidebar {
+          width: 250px;
+          background: #000;
           color: white;
-          display: block;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+          padding: 2rem 1.5rem;
+          position: fixed;
+          left: 0;
+          top: 80px;
+          bottom: 0;
+          overflow-y: auto;
+        }
+
+        .sidebar-section {
+          margin-bottom: 3rem;
+        }
+
+        .sidebar-section h3 {
+          font-family: 'TT0205M', sans-serif;
+          font-size: 1rem;
+          margin-bottom: 1.5rem;
+          opacity: 0.8;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .stat-item {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 1rem;
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+        }
+
+        .stat-value {
+          font-family: 'TT0205M', sans-serif;
+          font-size: 1.25rem;
+          font-weight: bold;
         }
 
         .stat-label {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 0.95rem;
-          margin-top: 0.5rem;
+          font-size: 0.9rem;
+          opacity: 0.7;
         }
 
-        .category-tabs {
-          display: flex;
-          justify-content: center;
-          gap: 1rem;
-          margin-bottom: 3rem;
-          flex-wrap: wrap;
-        }
-
-        .category-tab {
-          padding: 0.875rem 2rem;
-          background: rgba(255, 255, 255, 0.95);
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 1rem;
+        .category-btn {
+          display: block;
+          width: 100%;
+          padding: 0.75rem;
+          margin-bottom: 0.5rem;
+          background: transparent;
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          font-family: 'TestSohneBreit', sans-serif;
           cursor: pointer;
           transition: all 0.3s;
-          color: #4b5563;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .category-tab:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        .category-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
         }
 
-        .category-tab.active {
-          background: #2563eb;
-          color: white;
-          transform: scale(1.05);
+        .category-btn.active {
+          background: #4331f4;
+          border-color: #4331f4;
         }
 
-        .leaderboard-container {
-          margin-bottom: 4rem;
-        }
-
-        .category-header {
-          background: rgba(255, 255, 255, 0.95);
-          padding: 1.5rem 2rem;
-          border-radius: 16px 16px 0 0;
-          margin-bottom: 1.5rem;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-title {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #111827;
+        .action-btn {
+          display: block;
+          width: 100%;
+          padding: 0.75rem;
           margin-bottom: 0.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          text-align: center;
+          text-decoration: none;
+          font-family: 'TestSohneBreit', sans-serif;
+          transition: all 0.3s;
         }
 
-        .category-subtitle {
-          color: #4b5563;
-          font-size: 1rem;
+        .action-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.primary {
+          background: #69f74d;
+          color: black;
+          border-color: #69f74d;
+        }
+
+        .action-btn.primary:hover {
+          background: #5ee63f;
+        }
+
+        /* Main Content */
+        .main-content {
+          flex: 1;
+          margin-left: 250px;
+          padding: 2rem 3rem;
+        }
+
+        .content-header {
+          margin-bottom: 3rem;
+        }
+
+        .content-header h1 {
+          font-family: 'TT0205M', sans-serif;
+          font-size: 2.5rem;
+          margin-bottom: 0.5rem;
+          color: #1a1a1a;
+        }
+
+        .content-header p {
+          font-family: 'TestSohneBreit', sans-serif;
+          color: #666;
+          font-size: 1.1rem;
         }
 
         .loading {
           text-align: center;
-          color: white;
           font-size: 1.25rem;
+          color: #666;
           padding: 4rem;
         }
 
+        /* Ideas Grid */
         .ideas-grid {
           display: grid;
-          gap: 1.5rem;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
         }
 
-        .idea-card {
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 16px;
-          padding: 1.75rem;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-          transition: all 0.3s;
-          cursor: pointer;
-          position: relative;
-          overflow: hidden;
-          display: block;
-          text-decoration: none;
-        }
-
-        .idea-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 4px;
-          height: 100%;
-          background: #2563eb;
-          transform: scaleY(0);
-          transition: transform 0.3s;
-        }
-
-        .idea-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
-        }
-
-        .idea-card:hover::before {
-          transform: scaleY(1);
-        }
-
-        .card-header {
+        .idea-wrapper {
           display: flex;
-          justify-content: flex-start;
-          align-items: flex-start;
-          margin-bottom: 1rem;
-          gap: 1rem;
+          flex-direction: column;
         }
 
-        .rank-badge {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
+        .idea-header {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 1.1rem;
-          flex-shrink: 0;
+          align-items: baseline;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+          padding-left: 0.5rem;
         }
 
-        .rank-1 {
-          background: linear-gradient(135deg, #ffd700, #ffed4e);
-          color: #1a1f2e;
-        }
-
-        .rank-2 {
-          background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
-          color: #1a1f2e;
-        }
-
-        .rank-3 {
-          background: linear-gradient(135deg, #cd7f32, #e4a853);
-          color: white;
-        }
-
-        .rank-default {
-          background: #e5e7eb;
-          color: #4b5563;
-        }
-
-        .card-meta {
-          flex: 1;
+        .idea-rank {
+          font-family: 'TT0205M', sans-serif;
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #1a1a1a;
         }
 
         .idea-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #111827;
-          margin-bottom: 0.5rem;
-          line-height: 1.3;
+          font-family: 'TT0205M', sans-serif;
+          font-size: 1.1rem;
+          color: #1a1a1a;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
-        .idea-author {
-          color: #4b5563;
-          font-size: 0.9rem;
-          font-weight: 500;
+        .idea-card {
+          background: white;
+          border-radius: 34px;
+          padding: 1.75rem;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          position: relative;
+          cursor: pointer;
+          transition: all 0.3s;
         }
 
-        .idea-description {
-          color: #4b5563;
-          line-height: 1.6;
-          margin: 1rem 0;
-          font-size: 0.95rem;
+        .idea-card:hover {
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+          transform: translateY(-2px);
         }
 
-        .card-stats {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1rem;
-          padding: 1rem;
-          background: rgba(248, 250, 252, 0.8);
-          border-radius: 12px;
-          margin: 1rem 0;
+        .idea-card.expanded {
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
 
-        .stat-item {
-          text-align: center;
-        }
-
-        .stat-value {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #111827;
-          display: block;
-        }
-
-        .stat-label {
+        .genre-badge {
+          position: absolute;
+          top: 1.5rem;
+          right: 1.5rem;
+          background: #000;
+          color: white;
+          padding: 0.4rem 1rem;
+          border-radius: 6px;
           font-size: 0.75rem;
-          color: #6b7280;
+          font-family: 'TT0205M', sans-serif;
           text-transform: uppercase;
-          margin-top: 0.25rem;
-          letter-spacing: 0.5px;
         }
 
-        .card-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 1.5rem;
+        .progress-bar {
+          width: 100%;
+          height: 8px;
+          background: #f0f0f0;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-bottom: 1rem;
         }
 
-        .status-badge {
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-          font-weight: 600;
-          font-size: 0.85rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+        .progress-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.3s ease;
         }
 
-        .status-invest {
-          background: rgba(16, 185, 129, 0.1);
-          color: #10b981;
-          border: 1px solid #10b981;
+        .score-display {
+          text-align: left;
+          margin-bottom: 1rem;
         }
 
-        .status-maybe {
-          background: rgba(245, 158, 11, 0.1);
-          color: #f59e0b;
-          border: 1px solid #f59e0b;
+        .score-value {
+          font-family: 'TT0205M', sans-serif;
+          font-size: 2rem;
+          font-weight: bold;
+          color: #1a1a1a;
         }
 
-        .status-pass {
-          background: rgba(239, 68, 68, 0.1);
-          color: #ef4444;
-          border: 1px solid #ef4444;
+        .card-content {
+          margin-bottom: 1.5rem;
         }
 
-        .view-details {
-          color: #2563eb;
-          font-weight: 600;
+        .author {
+          font-family: 'TestSohneBreit', sans-serif;
+          color: #4331f4;
           font-size: 0.9rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: gap 0.3s;
+          margin-bottom: 0.75rem;
         }
 
-        .idea-card:hover .view-details {
-          gap: 0.75rem;
+        .description {
+          font-family: 'TestSohneBreit', sans-serif;
+          color: #666;
+          line-height: 1.6;
+          font-size: 0.95rem;
+          margin-bottom: 1rem;
+        }
+
+        .read-more {
+          background: none;
+          border: none;
+          color: #999;
+          font-size: 0.85rem;
+          cursor: pointer;
+          text-decoration: underline;
+          font-family: 'TestSohneBreit', sans-serif;
+        }
+
+        .vote-btn {
+          position: absolute;
+          bottom: 1.75rem;
+          right: 1.75rem;
+          background: #4331f4;
+          color: white;
+          padding: 0.6rem 2rem;
+          border-radius: 24px;
+          text-decoration: none;
+          font-family: 'TestSohneBreit', sans-serif;
+          font-size: 0.9rem;
+          transition: all 0.3s;
+        }
+
+        .vote-btn:hover {
+          background: #5a47f5;
+          transform: scale(1.05);
+        }
+
+        @media (max-width: 1400px) {
+          .ideas-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .sidebar {
+            width: 200px;
+          }
+          
+          .main-content {
+            margin-left: 200px;
+          }
+          
+          .ideas-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 768px) {
+          .sidebar {
+            display: none;
+          }
+          
           .main-content {
-            padding-left: 1rem;
-            padding-right: 1rem;
-          }
-
-          .hero h1 {
-            font-size: 2.5rem;
-          }
-
-          .hero p {
-            font-size: 1.1rem;
-          }
-
-          .hero-stats {
-            gap: 2rem;
-          }
-
-          .stat-number {
-            font-size: 2rem;
-          }
-
-          .card-stats {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-          .category-tab {
-            padding: 0.75rem 1.5rem;
-            font-size: 0.9rem;
+            margin-left: 0;
+            padding: 1rem;
           }
         }
       `}</style>
