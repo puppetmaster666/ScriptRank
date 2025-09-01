@@ -88,45 +88,83 @@ export default function HomePage() {
   }
 
   const getMockIdeas = (): Idea[] => [
+    // Movies
     {
-      id: '1', rank: 1, title: 'Neural Market Predictor', type: 'business', genre: 'Fintech', author: 'Dr. Sarah Chen',
-      desc: 'AI-powered platform that analyzes 10,000+ market signals in real-time to predict price movements with 89% accuracy. Combines sentiment analysis, technical indicators, and macroeconomic data to generate actionable trading insights for institutional and retail investors.',
-      aiScore: 94, marketScore: 96, innovationScore: 92, executionScore: 89, publicScore: 9.2, publicVotes: 847, timestamp: '2024-01-28', expanded: false
+      id: '1', rank: 1, title: 'Memory Vault', type: 'movie', genre: 'Sci-Fi', author: 'Elena Rodriguez',
+      desc: 'In 2090, memories are extracted and stored as digital assets. A black market memory dealer discovers someone is planting false memories in the global database, threatening the nature of human identity and truth itself.',
+      aiScore: 94, marketScore: 91, innovationScore: 96, executionScore: 90, publicScore: 9.2, publicVotes: 1203, timestamp: '2024-01-26', expanded: false
     },
     {
-      id: '2', rank: 2, title: 'Quantum Chess Arena', type: 'games', genre: 'Strategy', author: 'Marcus Webb',
-      desc: 'Revolutionary chess variant where pieces exist in quantum superposition states until observed. Features simultaneous move possibilities, probability-based captures, and tournament modes with global leaderboards. Built with cutting-edge physics simulation.',
+      id: '2', rank: 2, title: 'The Algorithm War', type: 'movie', genre: 'Thriller', author: 'David Zhang',
+      desc: 'Corporate espionage thriller where tech companies wage secret battles through AI algorithms. A data scientist discovers her recommendation engine is being weaponized to manipulate global elections and financial markets.',
+      aiScore: 89, marketScore: 84, innovationScore: 87, executionScore: 82, publicScore: 8.1, publicVotes: 892, timestamp: '2024-01-22', expanded: false
+    },
+    {
+      id: '3', rank: 3, title: 'Echoes of Tomorrow', type: 'movie', genre: 'Drama', author: 'Sarah Mitchell',
+      desc: 'A time-loop drama where a woman relives the last day with her daughter before a tragic accident. Each loop reveals hidden truths about their relationship and the choices that led them there.',
+      aiScore: 86, marketScore: 88, innovationScore: 82, executionScore: 85, publicScore: 8.7, publicVotes: 756, timestamp: '2024-01-25', expanded: false
+    },
+    {
+      id: '4', rank: 4, title: 'Neon Nights', type: 'movie', genre: 'Cyberpunk', author: 'Marcus Chen',
+      desc: 'Neo-Tokyo 2087: A detective with memory implants must solve murders that haven\'t happened yet while the city\'s AR layer bleeds into reality, questioning what is real.',
+      aiScore: 83, marketScore: 80, innovationScore: 89, executionScore: 79, publicScore: 8.3, publicVotes: 654, timestamp: '2024-01-24', expanded: false
+    },
+    {
+      id: '5', rank: 5, title: 'The Last Comedian', type: 'movie', genre: 'Comedy', author: 'Alex Turner',
+      desc: 'In a world where AI has replaced all entertainment, one comedian fights to prove humans are still funny. A dark comedy questioning what makes us uniquely human.',
+      aiScore: 78, marketScore: 75, innovationScore: 81, executionScore: 76, publicScore: 7.9, publicVotes: 543, timestamp: '2024-01-23', expanded: false
+    },
+    // Games
+    {
+      id: '6', rank: 1, title: 'Quantum Chess Arena', type: 'game', genre: 'Strategy', author: 'Marcus Webb',
+      desc: 'Revolutionary chess variant where pieces exist in quantum superposition states until observed. Features simultaneous move possibilities, probability-based captures, and tournament modes with global leaderboards.',
       aiScore: 91, marketScore: 85, innovationScore: 98, executionScore: 88, publicScore: 8.9, publicVotes: 623, timestamp: '2024-01-27', expanded: false
     },
     {
-      id: '3', rank: 3, title: 'Memory Vault', type: 'movies', genre: 'Sci-Fi', author: 'Elena Rodriguez',
-      desc: 'In 2090, memories are extracted and stored as digital assets. A black market memory dealer discovers someone is planting false memories in the global database, threatening the nature of human identity and truth itself.',
-      aiScore: 89, marketScore: 91, innovationScore: 86, executionScore: 90, publicScore: 8.7, publicVotes: 1203, timestamp: '2024-01-26', expanded: false
+      id: '7', rank: 2, title: 'Neural VR Therapy', type: 'game', genre: 'VR/AR', author: 'Dr. Lisa Park',
+      desc: 'Immersive VR platform for treating PTSD, anxiety, and phobias through controlled exposure therapy. Features biometric monitoring, AI-adapted scenarios, and clinical integration.',
+      aiScore: 87, marketScore: 79, innovationScore: 93, executionScore: 81, publicScore: 8.8, publicVotes: 567, timestamp: '2024-01-23', expanded: false
     },
     {
-      id: '4', rank: 4, title: 'CodeMind AI', type: 'tech', genre: 'Dev Tools', author: 'Alex Kim',
-      desc: 'Advanced code completion and debugging assistant that understands context across entire codebases. Features automatic bug detection, performance optimization suggestions, and natural language to code translation with 95% accuracy.',
-      aiScore: 87, marketScore: 93, innovationScore: 82, executionScore: 86, publicScore: 8.5, publicVotes: 934, timestamp: '2024-01-25', expanded: false
+      id: '8', rank: 3, title: 'Battle Royale Chess', type: 'game', genre: 'Multiplayer', author: 'James Foster',
+      desc: '100 players start on a massive chess board. Capture pieces to gain their powers. The board shrinks every 5 minutes. Last player standing wins the crown.',
+      aiScore: 84, marketScore: 88, innovationScore: 80, executionScore: 85, publicScore: 8.5, publicVotes: 892, timestamp: '2024-01-26', expanded: false
     },
     {
-      id: '5', rank: 5, title: 'EcoChain Network', type: 'business', genre: 'B2B Tools', author: 'James Foster',
-      desc: 'Blockchain-based carbon credit marketplace with IoT verification. Automated sensors validate environmental impact in real-time, creating transparent and fraud-proof carbon trading for businesses seeking net-zero compliance.',
-      aiScore: 85, marketScore: 88, innovationScore: 84, executionScore: 83, publicScore: 8.3, publicVotes: 756, timestamp: '2024-01-24', expanded: false
+      id: '9', rank: 4, title: 'Memory Lane VR', type: 'game', genre: 'Puzzle', author: 'Sophie Chen',
+      desc: 'Walk through your memories in VR and change small details to alter your present. Each change creates ripple effects through time in this emotional puzzle adventure.',
+      aiScore: 81, marketScore: 77, innovationScore: 86, executionScore: 78, publicScore: 8.2, publicVotes: 445, timestamp: '2024-01-25', expanded: false
     },
     {
-      id: '6', rank: 6, title: 'Neural VR Therapy', type: 'games', genre: 'VR/AR', author: 'Dr. Lisa Park',
-      desc: 'Immersive VR platform for treating PTSD, anxiety, and phobias through controlled exposure therapy. Features biometric monitoring, AI-adapted scenarios, and clinical integration for mental health professionals.',
-      aiScore: 83, marketScore: 79, innovationScore: 89, executionScore: 81, publicScore: 8.8, publicVotes: 567, timestamp: '2024-01-23', expanded: false
+      id: '10', rank: 5, title: 'Pixel Dungeons', type: 'game', genre: 'Roguelike', author: 'Tom Anderson',
+      desc: 'Roguelike mobile game with time-loop mechanics. Every death teaches you something new about the dungeon. Procedurally generated with persistent story elements.',
+      aiScore: 76, marketScore: 82, innovationScore: 72, executionScore: 79, publicScore: 7.8, publicVotes: 334, timestamp: '2024-01-24', expanded: false
+    },
+    // Business
+    {
+      id: '11', rank: 1, title: 'Neural Market Predictor', type: 'business', genre: 'Fintech', author: 'Dr. Sarah Chen',
+      desc: 'AI-powered platform that analyzes 10,000+ market signals in real-time to predict price movements with 89% accuracy. Combines sentiment analysis, technical indicators, and macroeconomic data.',
+      aiScore: 94, marketScore: 96, innovationScore: 92, executionScore: 89, publicScore: 9.2, publicVotes: 847, timestamp: '2024-01-28', expanded: false
     },
     {
-      id: '7', rank: 7, title: 'The Algorithm War', type: 'movies', genre: 'Thriller', author: 'David Zhang',
-      desc: 'Corporate espionage thriller where tech companies wage secret battles through AI algorithms. A data scientist discovers her recommendation engine is being weaponized to manipulate global elections and financial markets.',
-      aiScore: 81, marketScore: 84, innovationScore: 78, executionScore: 82, publicScore: 8.1, publicVotes: 892, timestamp: '2024-01-22', expanded: false
+      id: '12', rank: 2, title: 'GreenEats', type: 'business', genre: 'Sustainability', author: 'Emma Wilson',
+      desc: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Return containers get you discounts. Partners with local restaurants for sustainable dining.',
+      aiScore: 88, marketScore: 85, innovationScore: 87, executionScore: 83, publicScore: 8.6, publicVotes: 756, timestamp: '2024-01-24', expanded: false
     },
     {
-      id: '8', rank: 8, title: 'SmartFarm IoT', type: 'tech', genre: 'IoT', author: 'Maria Santos',
-      desc: 'Comprehensive agricultural IoT platform combining soil sensors, weather prediction, drone monitoring, and AI crop optimization. Increases yield by 35% while reducing water usage by 50% through precision farming.',
-      aiScore: 79, marketScore: 86, innovationScore: 74, executionScore: 77, publicScore: 7.9, publicVotes: 678, timestamp: '2024-01-21', expanded: false
+      id: '13', rank: 3, title: 'AI Resume Coach', type: 'business', genre: 'SaaS', author: 'Michael Brown',
+      desc: 'SaaS that analyzes job postings and automatically tailors your resume to match keywords and requirements. Uses GPT to rewrite descriptions for maximum impact.',
+      aiScore: 85, marketScore: 89, innovationScore: 78, executionScore: 86, publicScore: 8.4, publicVotes: 623, timestamp: '2024-01-25', expanded: false
+    },
+    {
+      id: '14', rank: 4, title: 'RentMyGarage', type: 'business', genre: 'Marketplace', author: 'Jake Martinez',
+      desc: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included. Smart locks provide secure 24/7 access for renters.',
+      aiScore: 82, marketScore: 86, innovationScore: 76, executionScore: 84, publicScore: 8.1, publicVotes: 512, timestamp: '2024-01-26', expanded: false
+    },
+    {
+      id: '15', rank: 5, title: 'EcoChain Network', type: 'business', genre: 'B2B', author: 'James Foster',
+      desc: 'Blockchain-based carbon credit marketplace with IoT verification. Automated sensors validate environmental impact in real-time, creating transparent carbon trading.',
+      aiScore: 79, marketScore: 77, innovationScore: 84, executionScore: 75, publicScore: 7.7, publicVotes: 445, timestamp: '2024-01-24', expanded: false
     }
   ]
 
@@ -170,15 +208,15 @@ export default function HomePage() {
     }
   }
 
-  // Separate ideas by type
-  const movieIdeas = ideas.filter(idea => idea.type === 'movies')
-  const gameIdeas = ideas.filter(idea => idea.type === 'games')
-  const businessIdeas = ideas.filter(idea => idea.type === 'business' || idea.type === 'tech')
+  // Separate ideas by type - fixed to use singular forms
+  const movieIdeas = ideas.filter(idea => idea.type === 'movie').slice(0, 5)
+  const gameIdeas = ideas.filter(idea => idea.type === 'game').slice(0, 5)
+  const businessIdeas = ideas.filter(idea => idea.type === 'business' || idea.type === 'tech').slice(0, 5)
 
   return (
     <>
       <Head>
-        <title>ScriptRank - Make Me Famous | AI Idea Evaluation Platform</title>
+        <title>FlashRank - Make Me Famous | AI Idea Evaluation Platform</title>
         <meta name="description" content="Where brilliant ideas meet rigorous AI analysis. Professional evaluation platform for entrepreneurs, creators, and innovators." />
       </Head>
 
@@ -198,6 +236,14 @@ export default function HomePage() {
           font-display: swap;
         }
         
+        @font-face {
+          font-family: 'HeroFont';
+          src: url('/fonts/ArgentumSans-BlackItalic.ttf') format('truetype');
+          font-weight: 900;
+          font-style: italic;
+          font-display: swap;
+        }
+        
         * {
           margin: 0;
           padding: 0;
@@ -206,7 +252,7 @@ export default function HomePage() {
         
         body {
           font-family: 'ContentFont', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #f5f5f5;
+          background: #f0f0f0;
           color: #0d1117;
           line-height: 1.6;
           overflow-x: hidden;
@@ -223,7 +269,7 @@ export default function HomePage() {
         <div className="header-container">
           <div className="header-left">
             <Link href="/">
-              <a className="logo">ScriptRank</a>
+              <a className="logo">FlashRank</a>
             </Link>
             <nav className="main-nav">
               <Link href="/"><a className="nav-item">Home</a></Link>
@@ -290,22 +336,45 @@ export default function HomePage() {
             <div className="sidebar-section">
               <h3 className="sidebar-title">Categories</h3>
               <div className="category-filters">
-                <button
-                  className={`filter-btn ${activeCategory === 'all' ? 'active' : ''}`}
-                  onClick={() => setActiveCategory('all')}
-                >
-                  All Ideas <span className="count">{ideas.length}</span>
-                </button>
-                {Object.entries(categories).map(([category]) => (
-                  <button
-                    key={category}
-                    className={`filter-btn ${activeCategory === category ? 'active' : ''}`}
-                    onClick={() => setActiveCategory(category as any)}
-                  >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                    <span className="count">{ideas.filter(i => i.type === category).length}</span>
+                <div className="category-item">
+                  <button className="filter-btn">
+                    Movies <span className="count">{movieIdeas.length}</span>
                   </button>
-                ))}
+                  <div className="genre-dropdown">
+                    <a href="#">Sci-Fi</a>
+                    <a href="#">Drama</a>
+                    <a href="#">Thriller</a>
+                    <a href="#">Comedy</a>
+                    <a href="#">Horror</a>
+                    <a href="#">Documentary</a>
+                  </div>
+                </div>
+                <div className="category-item">
+                  <button className="filter-btn">
+                    Games <span className="count">{gameIdeas.length}</span>
+                  </button>
+                  <div className="genre-dropdown">
+                    <a href="#">Strategy</a>
+                    <a href="#">VR/AR</a>
+                    <a href="#">Multiplayer</a>
+                    <a href="#">Puzzle</a>
+                    <a href="#">Roguelike</a>
+                    <a href="#">Mobile</a>
+                  </div>
+                </div>
+                <div className="category-item">
+                  <button className="filter-btn">
+                    Business <span className="count">{businessIdeas.length}</span>
+                  </button>
+                  <div className="genre-dropdown">
+                    <a href="#">Fintech</a>
+                    <a href="#">SaaS</a>
+                    <a href="#">Marketplace</a>
+                    <a href="#">B2B</a>
+                    <a href="#">Sustainability</a>
+                    <a href="#">AI/ML</a>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -353,6 +422,32 @@ export default function HomePage() {
 
         {/* Main Content */}
         <main className="main-content">
+          {/* Hero Section */}
+          <section className="hero-section">
+            <h1 className="hero-title">
+              Get Your Ideas <span className="hero-highlight">Ranked by AI</span>
+            </h1>
+            <p className="hero-description">
+              Submit your movie script, game concept, or business idea and let our advanced AI evaluate its potential. 
+              Get instant scores on market viability, innovation, and execution complexity. 
+              Join thousands of creators getting their ideas validated.
+            </p>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <span className="stat-number">47K+</span>
+                <span className="stat-label">Ideas Ranked</span>
+              </div>
+              <div className="hero-stat">
+                <span className="stat-number">94%</span>
+                <span className="stat-label">Accuracy</span>
+              </div>
+              <div className="hero-stat">
+                <span className="stat-number">$12M</span>
+                <span className="stat-label">Funded</span>
+              </div>
+            </div>
+          </section>
+
           {/* Featured Section with 3 Columns */}
           <section className="featured-section">
             <div className="section-header">
@@ -381,7 +476,7 @@ export default function HomePage() {
                   <h3 className="column-title">Movies</h3>
                 </div>
                 {movieIdeas.map((idea, index) => (
-                  <div key={idea.id} className="idea-wrapper">
+                                      <div key={idea.id} className="idea-wrapper">
                     <div className="idea-header-outside">
                       <span className="idea-rank">#{index + 1}</span>
                       <span className="idea-title-outside">{idea.title}</span>
@@ -416,7 +511,7 @@ export default function HomePage() {
                         </div>
                         
                         <p className="idea-description">
-                          {idea.expanded ? idea.desc : `${idea.desc.substring(0, 120)}...`}
+                          {idea.expanded ? idea.desc : `${idea.desc.substring(0, 100)}...`}
                         </p>
                         
                         <div className="card-actions">
@@ -1146,6 +1241,44 @@ export default function HomePage() {
           background: #f6f8fa;
         }
 
+        /* Category Items with Dropdown */
+        .category-item {
+          position: relative;
+        }
+
+        .category-item:hover .genre-dropdown {
+          display: block;
+        }
+
+        .genre-dropdown {
+          display: none;
+          position: absolute;
+          left: 100%;
+          top: 0;
+          background: white;
+          border: 1px solid #e1e5e9;
+          border-radius: 6px;
+          min-width: 150px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          z-index: 100;
+          margin-left: 8px;
+        }
+
+        .genre-dropdown a {
+          display: block;
+          padding: 8px 16px;
+          color: #656d76;
+          text-decoration: none;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 13px;
+          transition: all 0.2s;
+        }
+
+        .genre-dropdown a:hover {
+          background: #f6f8fa;
+          color: #4331f4;
+        }
+
         .category-filters {
           display: flex;
           flex-direction: column;
@@ -1254,6 +1387,65 @@ export default function HomePage() {
           padding: 40px;
         }
 
+        /* Hero Section */
+        .hero-section {
+          margin-bottom: 48px;
+          padding: 40px;
+          background: linear-gradient(135deg, #4331f4 0%, #69f74d 100%);
+          border-radius: 20px;
+          color: white;
+          text-align: center;
+        }
+
+        .hero-title {
+          font-family: 'HeroFont', sans-serif;
+          font-size: 48px;
+          font-weight: 900;
+          font-style: italic;
+          margin-bottom: 20px;
+          line-height: 1.2;
+        }
+
+        .hero-highlight {
+          display: inline-block;
+          background: rgba(255, 255, 255, 0.2);
+          padding: 0 12px;
+          border-radius: 8px;
+        }
+
+        .hero-description {
+          font-family: 'ContentFont', sans-serif;
+          font-size: 18px;
+          max-width: 700px;
+          margin: 0 auto 32px;
+          line-height: 1.6;
+          opacity: 0.95;
+        }
+
+        .hero-stats {
+          display: flex;
+          justify-content: center;
+          gap: 48px;
+        }
+
+        .hero-stat {
+          text-align: center;
+        }
+
+        .hero-stat .stat-number {
+          display: block;
+          font-family: 'TitleFont', sans-serif;
+          font-size: 32px;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+
+        .hero-stat .stat-label {
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          opacity: 0.9;
+        }
+
         /* Featured Section */
         .featured-section {
           margin-bottom: 64px;
@@ -1329,27 +1521,28 @@ export default function HomePage() {
         }
 
         .idea-wrapper {
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .idea-header-outside {
           display: flex;
           align-items: baseline;
-          gap: 12px;
-          margin-bottom: 8px;
+          gap: 10px;
+          margin-bottom: 6px;
           padding-left: 4px;
         }
 
         .idea-rank {
           font-family: 'TitleFont', sans-serif;
-          font-size: 32px;
+          font-size: 24px;
           font-weight: bold;
           color: #0d1117;
         }
 
         .idea-title-outside {
           font-family: 'TitleFont', sans-serif;
-          font-size: 18px;
+          font-size: 24px;
+          font-weight: bold;
           color: #0d1117;
           flex: 1;
           overflow: hidden;
@@ -1361,58 +1554,59 @@ export default function HomePage() {
           background: white;
           border: 1px solid #e1e5e9;
           border-radius: 34px;
-          padding: 24px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+          padding: 20px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
           overflow: hidden;
           transition: all 0.3s;
           position: relative;
+          min-height: 180px;
         }
 
         .idea-card:hover {
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
           transform: translateY(-2px);
         }
 
         .card-genre-badge {
           position: absolute;
-          top: 20px;
-          right: 20px;
+          top: 16px;
+          left: 16px;
           background: #000000;
           color: white;
-          padding: 6px 14px;
-          border-radius: 20px;
+          padding: 4px 10px;
+          border-radius: 16px;
           font-family: 'ContentFont', sans-serif;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .card-content {
-          padding-top: 20px;
+          padding-top: 30px;
         }
 
         .author-info {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .author-name {
           font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
+          font-size: 12px;
           color: #656d76;
           font-weight: 500;
         }
 
         .publish-date {
           font-family: 'ContentFont', sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           color: #8b949e;
         }
 
         .score-overview {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .score-bar-container {
@@ -1423,12 +1617,12 @@ export default function HomePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .score-bar-label span:first-child {
           font-family: 'ContentFont', sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           color: #656d76;
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -1436,13 +1630,13 @@ export default function HomePage() {
 
         .score-percentage {
           font-family: 'TitleFont', sans-serif;
-          font-size: 24px;
+          font-size: 20px;
           font-weight: bold;
         }
 
         .score-bar {
           width: 100%;
-          height: 12px;
+          height: 10px;
           background: #f0f0f0;
           border-radius: 100px;
           overflow: hidden;
@@ -1456,10 +1650,10 @@ export default function HomePage() {
 
         .idea-description {
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
+          font-size: 15px;
           color: #656d76;
-          line-height: 1.6;
-          margin-bottom: 16px;
+          line-height: 1.5;
+          margin-bottom: 12px;
         }
 
         .card-actions {
