@@ -1,14 +1,12 @@
-// components/header.tsx - Updated black header with Hyoka branding
+// components/header.tsx - Clean header matching main page design
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged, signOut, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/router'
-import { createUserProfile } from '@/lib/firebase-collections'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
-  const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const router = useRouter()
@@ -17,16 +15,7 @@ export default function Header() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
     })
-
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => {
-      unsubscribe()
-      window.removeEventListener('scroll', handleScroll)
-    }
+    return () => unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -52,158 +41,17 @@ export default function Header() {
           font-weight: bold;
           font-display: swap;
         }
-        
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Medium.otf') format('opentype');
-          font-weight: 500;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Semibold.otf') format('opentype');
-          font-weight: 600;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Bold.otf') format('opentype');
-          font-weight: 700;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'Sohne';
-          src: url('/fonts/TestSohneBreit-Buch.otf') format('opentype');
-          font-weight: 400;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'Sohne';
-          src: url('/fonts/TestSohneBreit-Kraftig.otf') format('opentype');
-          font-weight: 500;
-          font-display: swap;
-        }
-        
-        .header-logo {
-          font-family: 'Vipnagorgialla', serif;
-          font-size: 28px;
-          font-weight: bold;
-          color: black;
-          text-decoration: none;
-          transition: opacity 0.2s;
-        }
-
-        .header-logo:hover {
-          opacity: 0.8;
-        }
-        
-        .nav-link {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-weight: 600;
-          font-size: 14px;
-          color: black;
-          padding: 8px 16px;
-          transition: all 0.2s;
-          text-decoration: none;
-          border: none;
-          background: none;
-          cursor: pointer;
-        }
-
-        .nav-link:hover {
-          color: #4b5563;
-        }
-
-        .nav-button {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-weight: 600;
-          font-size: 14px;
-          padding: 10px 20px;
-          background: #000000;
-          color: white;
-          border: none;
-          transition: all 0.2s;
-          cursor: pointer;
-          border-radius: 0;
-        }
-
-        .nav-button:hover {
-          background: #1f1f1f;
-          transform: translateY(-1px);
-        }
-
-        .nav-button.secondary {
-          background: transparent;
-          color: black;
-          border: 1px solid #d1d5db;
-        }
-
-        .nav-button.secondary:hover {
-          background: #f3f4f6;
-          color: black;
-        }
-
-        .mobile-nav-link {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-weight: 600;
-          display: block;
-          padding: 16px 24px;
-          font-size: 14px;
-          color: black;
-          border-bottom: 1px solid #e5e7eb;
-          transition: all 0.2s;
-          background: #f0f2f4;
-          text-decoration: none;
-        }
-
-        .mobile-nav-link:hover {
-          background: #e5e7eb;
-          color: #374151;
-          padding-left: 32px;
-        }
-
-        .mobile-nav-button {
-          width: 100%;
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-weight: 600;
-          padding: 12px 24px;
-          background: none;
-          border: 1px solid #d1d5db;
-          color: black;
-          cursor: pointer;
-          transition: all 0.2s;
-          margin-bottom: 8px;
-        }
-
-        .mobile-nav-button:hover {
-          background: #f3f4f6;
-          color: black;
-        }
-
-        .mobile-nav-button.primary {
-          background: #000000;
-          color: white;
-          border: none;
-        }
-
-        .mobile-nav-button.primary:hover {
-          background: #1f1f1f;
-        }
       `}</style>
 
       <header className="header">
-        <div className="header-container">
+        <div className="container">
           {/* Logo */}
           <Link href="/">
-            <a className="header-logo">Hyoka</a>
+            <a className="logo">Hyoka</a>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav">
+          <nav className="nav">
             <Link href="/">
               <a className="nav-link">Home</a>
             </Link>
@@ -213,47 +61,23 @@ export default function Header() {
             <Link href="/how-it-works">
               <a className="nav-link">How It Works</a>
             </Link>
-
-            {user ? (
-              <>
-                <Link href="/dashboard">
-                  <a className="nav-link">Dashboard</a>
-                </Link>
-                <button 
-                  onClick={handleSignOut}
-                  className="nav-button secondary"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <button 
-                  onClick={() => setShowLoginModal(true)} 
-                  className="nav-link"
-                >
-                  Login
-                </button>
-                <Link href="/submit">
-                  <a className="nav-button">Submit Idea</a>
-                </Link>
-              </>
+            <Link href="/pricing">
+              <a className="nav-link">Pricing</a>
+            </Link>
+            {user && (
+              <Link href="/dashboard">
+                <a className="nav-link">Dashboard</a>
+              </Link>
             )}
           </nav>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="mobile-menu-button"
+            className="mobile-menu-btn"
             aria-label="Toggle menu"
           >
-            <svg
-              className="menu-icon"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
               {mobileMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -268,51 +92,45 @@ export default function Header() {
           <div className="mobile-menu">
             <nav className="mobile-nav">
               <Link href="/">
-                <a className="mobile-nav-link">Home</a>
+                <a className="mobile-link">Home</a>
               </Link>
               <Link href="/leaderboard">
-                <a className="mobile-nav-link">Leaderboard</a>
+                <a className="mobile-link">Leaderboard</a>
               </Link>
               <Link href="/how-it-works">
-                <a className="mobile-nav-link">How It Works</a>
-              </Link>
-              <Link href="/why-us">
-                <a className="mobile-nav-link">Why Us</a>
+                <a className="mobile-link">How It Works</a>
               </Link>
               <Link href="/pricing">
-                <a className="mobile-nav-link">Pricing</a>
+                <a className="mobile-link">Pricing</a>
               </Link>
-
-              {user ? (
-                <>
-                  <Link href="/dashboard">
-                    <a className="mobile-nav-link">Dashboard</a>
-                  </Link>
-                  <div className="mobile-actions">
-                    <button
-                      onClick={handleSignOut}
-                      className="mobile-nav-button"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="mobile-actions">
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      setShowLoginModal(true)
-                    }}
-                    className="mobile-nav-button"
-                  >
-                    Login
-                  </button>
-                  <Link href="/submit">
-                    <a className="mobile-nav-button primary">Submit Idea</a>
-                  </Link>
-                </div>
+              {user && (
+                <Link href="/dashboard">
+                  <a className="mobile-link">Dashboard</a>
+                </Link>
               )}
+              
+              <div className="mobile-actions">
+                {user ? (
+                  <button onClick={handleSignOut} className="mobile-btn">
+                    Sign Out
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        setShowLoginModal(true)
+                      }}
+                      className="mobile-btn secondary"
+                    >
+                      Login
+                    </button>
+                    <Link href="/submit">
+                      <a className="mobile-btn primary">Submit Idea</a>
+                    </Link>
+                  </>
+                )}
+              </div>
             </nav>
           </div>
         )}
@@ -323,43 +141,64 @@ export default function Header() {
 
       <style jsx>{`
         .header {
-          background: #f0f2f4;
-          color: black;
+          background: #f5f5f5;
+          border-bottom: 1px solid #ddd;
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
-          border-bottom: 1px solid #e5e7eb;
+          height: 60px;
+          display: flex;
+          align-items: center;
         }
 
-        .header-container {
-          max-width: 1400px;
+        .container {
+          max-width: 1200px;
           margin: 0 auto;
-          padding: 0 24px;
-          height: 64px;
+          padding: 0 20px;
           display: flex;
-          align-items: center;
           justify-content: space-between;
-        }
-
-        .desktop-nav {
-          display: flex;
           align-items: center;
-          gap: 8px;
+          width: 100%;
         }
 
-        .mobile-menu-button {
+        .logo {
+          font-family: 'Vipnagorgialla', serif;
+          font-size: 24px;
+          font-weight: bold;
+          color: #000;
+          text-decoration: none;
+        }
+
+        .logo:hover {
+          opacity: 0.8;
+        }
+
+        .nav {
+          display: flex;
+          gap: 24px;
+        }
+
+        .nav-link {
+          color: #333;
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 14px;
+          transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+          color: #000;
+        }
+
+        .mobile-menu-btn {
           display: none;
           background: none;
           border: none;
           cursor: pointer;
-          padding: 8px;
-        }
-
-        .menu-icon {
-          width: 24px;
-          height: 24px;
+          padding: 4px;
+          color: #333;
         }
 
         .mobile-menu {
@@ -367,44 +206,76 @@ export default function Header() {
           top: 100%;
           left: 0;
           right: 0;
-          background: #f0f2f4;
-          border-top: 1px solid #e5e7eb;
-          max-height: calc(100vh - 64px);
-          overflow-y: auto;
+          background: #f5f5f5;
+          border-top: 1px solid #ddd;
+          border-bottom: 1px solid #ddd;
         }
 
         .mobile-nav {
-          display: flex;
-          flex-direction: column;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+
+        .mobile-link {
+          display: block;
+          padding: 12px 0;
+          color: #333;
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 16px;
+          border-bottom: 1px solid #eee;
+          transition: color 0.2s;
+        }
+
+        .mobile-link:hover {
+          color: #000;
         }
 
         .mobile-actions {
-          padding: 24px;
-          border-top: 1px solid #e5e7eb;
+          padding-top: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
-        /* Responsive Design */
+        .mobile-btn {
+          padding: 12px;
+          border: none;
+          font-weight: 500;
+          cursor: pointer;
+          text-decoration: none;
+          text-align: center;
+          display: block;
+          transition: all 0.2s;
+        }
+
+        .mobile-btn.primary {
+          background: #000;
+          color: #fff;
+        }
+
+        .mobile-btn.primary:hover {
+          background: #333;
+        }
+
+        .mobile-btn.secondary {
+          background: transparent;
+          color: #333;
+          border: 1px solid #ddd;
+        }
+
+        .mobile-btn.secondary:hover {
+          background: #eee;
+        }
+
         @media (max-width: 768px) {
-          .desktop-nav {
+          .nav {
             display: none;
           }
           
-          .mobile-menu-button {
+          .mobile-menu-btn {
             display: block;
-          }
-
-          .header-container {
-            padding: 0 20px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .header-container {
-            padding: 0 16px;
-          }
-
-          .header-logo {
-            font-size: 24px;
           }
         }
       `}</style>
@@ -416,7 +287,6 @@ export default function Header() {
 function LoginModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -429,26 +299,12 @@ function LoginModal({ onClose }: { onClose: () => void }) {
     
     try {
       if (isSignUp) {
-        // Sign up
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-        
-        // Create user profile
-        const username = email.split('@')[0].toLowerCase()
-        await createUserProfile(userCredential.user.uid, {
-          username: username,
-          displayName: fullName || username,
-          email: email,
-          photoURL: undefined
-        })
-        
-        onClose()
-        router.push('/dashboard')
+        await createUserWithEmailAndPassword(auth, email, password)
       } else {
-        // Sign in
         await signInWithEmailAndPassword(auth, email, password)
-        onClose()
-        router.push('/dashboard')
       }
+      onClose()
+      router.push('/dashboard')
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Email is already registered')
@@ -473,20 +329,11 @@ function LoginModal({ onClose }: { onClose: () => void }) {
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <button className="modal-close" onClick={onClose}>×</button>
-          <h2>{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
+          <h2>{isSignUp ? 'Create Account' : 'Sign In'}</h2>
           
           {error && <div className="modal-error">{error}</div>}
           
           <form onSubmit={handleSubmit}>
-            {isSignUp && (
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            )}
             <input
               type="email"
               placeholder="Email"
@@ -514,7 +361,6 @@ function LoginModal({ onClose }: { onClose: () => void }) {
               setError('')
               setEmail('')
               setPassword('')
-              setFullName('')
             }}>
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
@@ -534,156 +380,94 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           align-items: center;
           justify-content: center;
           z-index: 1001;
-          animation: fadeIn 0.2s ease-out;
-          backdrop-filter: blur(4px);
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
         }
         
         .modal-content {
-          background: #FFFFFF;
-          border-radius: 12px;
-          padding: 32px;
+          background: white;
+          padding: 30px;
           width: 90%;
-          max-width: 400px;
+          max-width: 380px;
           position: relative;
-          animation: slideUp 0.3s ease-out;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0);
-          }
         }
         
         .modal-close {
           position: absolute;
-          top: 16px;
-          right: 16px;
+          top: 15px;
+          right: 15px;
           background: none;
           border: none;
           font-size: 24px;
           cursor: pointer;
-          color: #6b7280;
-          transition: all 0.2s;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-        }
-        
-        .modal-close:hover {
-          background: #f3f4f6;
-          color: #374151;
+          color: #666;
         }
         
         h2 {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #111827;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
           margin-bottom: 20px;
           text-align: center;
         }
         
         .modal-error {
-          background: #fef2f2;
-          color: #dc2626;
-          padding: 12px;
-          border-radius: 8px;
-          margin-bottom: 16px;
-          font-family: 'Sohne', sans-serif;
-          font-size: 14px;
-          text-align: center;
-          border: 1px solid #fecaca;
+          background: #fee;
+          color: #c00;
+          padding: 10px;
+          margin-bottom: 15px;
+          font-size: 13px;
+          border-left: 3px solid #c00;
         }
         
         form {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
         }
         
         input {
-          padding: 12px 16px;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          font-family: 'Sohne', sans-serif;
+          padding: 10px;
+          border: 1px solid #ddd;
           font-size: 14px;
-          transition: all 0.2s;
-          background: #f9fafb;
         }
         
         input:focus {
           outline: none;
-          border-color: #000000;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        input::placeholder {
-          color: #9ca3af;
+          border-color: #007acc;
         }
         
         button[type="submit"] {
-          background: #000000;
-          color: #ffffff;
-          padding: 12px;
+          background: #000;
+          color: white;
+          padding: 10px;
           border: none;
-          border-radius: 8px;
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
-          margin-top: 4px;
+          transition: background 0.2s;
         }
         
         button[type="submit"]:hover:not(:disabled) {
-          background: #1f1f1f;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          background: #333;
         }
         
         button[type="submit"]:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
-          transform: none;
         }
         
         .modal-switch {
           text-align: center;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #e5e7eb;
-          font-family: 'Sohne', sans-serif;
-          font-size: 14px;
-          color: #6b7280;
+          margin-top: 15px;
+          font-size: 13px;
+          color: #666;
         }
         
         .modal-switch button {
           background: none;
           border: none;
-          color: #000000;
+          color: #007acc;
           cursor: pointer;
           margin-left: 4px;
-          font-weight: 500;
-          transition: color 0.2s;
-        }
-        
-        .modal-switch button:hover {
-          color: #374151;
           text-decoration: underline;
         }
       `}</style>
