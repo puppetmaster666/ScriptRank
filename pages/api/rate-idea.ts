@@ -1,5 +1,5 @@
 // pages/api/rate-idea.ts
-// Harsh objective critic with simpler vocabulary
+// Realistic business advisor with context-aware analysis
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -7,208 +7,245 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
 
-// Harsh but clear critic prompt
-function getCriticPrompt(type: string, content: string): string {
-  return `You are a brutally honest ${type} critic known for harsh objectivity. You don't sugarcoat anything but you use clear, simple language that anyone can understand. No fancy business jargon or pretentious vocabulary.
+// Business type specific context
+const businessContext = {
+ 'business': {
+   criteria: 'Consider local regulations, competition, capital requirements, permits, location factors, and operational complexity',
+   marketFocus: 'Local market size, customer demand, competition density, location advantages',
+   innovationFocus: 'Differentiation from existing businesses, unique value proposition, service innovations',
+   executionFocus: 'Startup capital, licensing complexity, operational challenges, time to profitability'
+ },
+ 'movie': {
+   criteria: 'Analyze entertainment industry factors including production costs, distribution, audience appeal, and market trends',
+   marketFocus: 'Target audience size, genre popularity, comparable film performance, distribution potential',
+   innovationFocus: 'Story originality, unique elements vs existing films, creative differentiation',
+   executionFocus: 'Production complexity, budget requirements, talent needs, distribution strategy'
+ },
+ 'game': {
+   criteria: 'Evaluate gaming industry dynamics including platform requirements, development complexity, and market competition',
+   marketFocus: 'Genre market size, platform audience, monetization potential, competitive landscape',
+   innovationFocus: 'Gameplay mechanics originality, art style uniqueness, player engagement differentiation',
+   executionFocus: 'Development complexity, team requirements, budget estimates, technical feasibility'
+ }
+};
+
+// Get business type specific prompt
+function getAdvisorPrompt(type: string, content: string): string {
+ const context = businessContext[type as keyof typeof businessContext] || businessContext.business;
+ 
+ return `You are a realistic business advisor who gives honest, straightforward feedback without sugarcoating problems. You use clear, simple language that anyone can understand. Your goal is to help entrepreneurs improve their ideas, not crush their dreams.
+
+BUSINESS TYPE: ${type.toUpperCase()}
+CONTEXT: ${context.criteria}
 
 IDEA: "${content}"
 
-Provide harsh but clear analysis with EXACTLY this JSON format (use precise decimals like 4.73):
+Provide honest but constructive analysis with EXACTLY this JSON format (use precise decimals like 6.73):
 
 {
-  "scores": {
-    "market": [0.00-10.00],
-    "innovation": [0.00-10.00], 
-    "execution": [0.00-10.00]
-  },
-  "feedback": {
-    "market": "[1-2 sentences about market demand in simple terms - be harsh about reality]",
-    "innovation": "[1-2 sentences about originality - call out if it's been done before]",
-    "execution": "[1-2 sentences about technical difficulty - be realistic about challenges]"
-  },
-  "verdict": "[2-3 sentences of brutal honesty using simple, clear language. No sugarcoating but no fancy words either]",
-  "investmentStatus": "[INVEST/PASS/MAYBE]"
+ "scores": {
+   "market": [0.00-10.00],
+   "innovation": [0.00-10.00], 
+   "execution": [0.00-10.00]
+ },
+ "feedback": {
+   "market": "[2-3 sentences about ${context.marketFocus}. Be realistic but suggest improvements if needed]",
+   "innovation": "[2-3 sentences about ${context.innovationFocus}. Point out similar existing solutions but highlight potential differentiators]",
+   "execution": "[2-3 sentences about ${context.executionFocus}. Be honest about challenges but suggest how to overcome them]"
+ },
+ "verdict": "[3-4 sentences of honest assessment. What works, what needs fixing, and specific next steps to improve the idea]",
+ "nextSteps": "[2-3 specific, actionable recommendations to strengthen this idea]"
 }
 
-Scoring Guidelines (BE HARSH):
-- Market (0-10): 0-3 = Nobody wants this, 4-6 = Some people might care, 7-8 = Good demand, 9-10 = Everyone needs this
-- Innovation (0-10): 0-3 = Total copy, 4-6 = Small twist, 7-8 = Fresh approach, 9-10 = Never seen before
-- Execution (0-10): 0-3 = Nearly impossible, 4-6 = Very difficult, 7-8 = Doable with work, 9-10 = Easy to build
+Scoring Guidelines (BE REALISTIC):
+- Market (0-10): 0-3 = Very limited demand, 4-6 = Moderate demand, 7-8 = Strong demand, 9-10 = Massive demand
+- Innovation (0-10): 0-3 = Direct copy, 4-6 = Minor improvements, 7-8 = Significant differentiation, 9-10 = Breakthrough innovation
+- Execution (0-10): 0-3 = Extremely difficult, 4-6 = Challenging but doable, 7-8 = Manageable complexity, 9-10 = Straightforward
 
 Remember: 
-- Most ideas deserve 3-6. Scores above 7 are RARE.
-- Use simple, clear language. No MBA buzzwords or Silicon Valley slang.
-- Be specific about problems. Say exactly what's wrong.
-- If it exists already, name it. If it won't work, explain why.
-- Would YOU actually use or invest in this? Be honest.`;
+- Most viable ideas score 4-7. Scores above 8 are exceptional.
+- Be honest about problems but always suggest solutions.
+- If similar businesses exist, explain how to differentiate.
+- Focus on what the entrepreneur needs to validate or improve.
+- Consider real-world constraints like regulations, capital, and competition.`;
 }
 
 // Calculate weighted overall score
 function calculateOverallScore(market: number, innovation: number, execution: number): number {
-  // Market matters most (40%), Innovation and Execution (30% each)
-  const overall = (market * 0.40) + (innovation * 0.30) + (execution * 0.30);
-  return Math.round(overall * 100) / 100;
+ // Market matters most (50%), Innovation (25%), Execution (25%)
+ const overall = (market * 0.50) + (innovation * 0.25) + (execution * 0.25);
+ return Math.round(overall * 100) / 100;
 }
 
 // Validate word count
 function validateWordCount(content: string): { valid: boolean; wordCount: number; error?: string } {
-  const words = content.trim().split(/\s+/).filter(word => word.length > 0);
-  const wordCount = words.length;
-  
-  if (wordCount < 30) {
-    return {
-      valid: false,
-      wordCount,
-      error: `Too short. Need at least 30 words (you have ${wordCount}). Give us real details.`
-    };
-  }
-  
-  if (wordCount > 500) {
-    return {
-      valid: false,
-      wordCount,
-      error: `Too long. Maximum 500 words (you have ${wordCount}). Get to the point.`
-    };
-  }
-  
-  return { valid: true, wordCount };
+ const words = content.trim().split(/\s+/).filter(word => word.length > 0);
+ const wordCount = words.length;
+ 
+ if (wordCount < 30) {
+   return {
+     valid: false,
+     wordCount,
+     error: `Need more details. At least 30 words required (you have ${wordCount}). Describe your idea, target customers, and what makes it different.`
+   };
+ }
+ 
+ if (wordCount > 500) {
+   return {
+     valid: false,
+     wordCount,
+     error: `Too detailed. Maximum 500 words (you have ${wordCount}). Focus on the core concept and key differentiators.`
+   };
+ }
+ 
+ return { valid: true, wordCount };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Only accept POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+ // Only accept POST
+ if (req.method !== 'POST') {
+   return res.status(405).json({ error: 'Method not allowed' });
+ }
 
-  const { type, content, title } = req.body;
+ const { type, content, title } = req.body;
 
-  // Validate input
-  if (!type || !content) {
-    return res.status(400).json({ 
-      error: 'Missing required fields',
-      details: 'Both type and content are required'
-    });
-  }
+ // Validate input
+ if (!type || !content) {
+   return res.status(400).json({ 
+     error: 'Missing required fields',
+     details: 'Both type and content are required'
+   });
+ }
 
-  // Validate word count
-  const validation = validateWordCount(content);
-  if (!validation.valid) {
-    return res.status(400).json({ error: validation.error });
-  }
+ // Validate business type
+ const validTypes = ['business', 'movie', 'game'];
+ if (!validTypes.includes(type)) {
+   return res.status(400).json({ 
+     error: 'Invalid business type',
+     details: `Type must be one of: ${validTypes.join(', ')}`
+   });
+ }
 
-  try {
-    // Use Gemini 2.0 Flash
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-exp",
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 800,
-        topP: 0.95,
-      }
-    });
+ // Validate word count
+ const validation = validateWordCount(content);
+ if (!validation.valid) {
+   return res.status(400).json({ error: validation.error });
+ }
 
-    const prompt = getCriticPrompt(type, content);
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Parse the JSON response
-    let parsedResponse;
-    try {
-      // Extract JSON from the response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      parsedResponse = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('Failed to parse response:', text);
-      // Fallback response
-      parsedResponse = {
-        scores: {
-          market: 3.42,
-          innovation: 4.18,
-          execution: 5.23
-        },
-        feedback: {
-          market: "No clear evidence anyone wants this. You haven't shown real demand.",
-          innovation: "This already exists in multiple forms. Nothing new here.",
-          execution: "Technically possible but way harder than you think."
-        },
-        verdict: "This idea needs serious work. You're solving a problem that doesn't really exist. Come back after talking to real customers.",
-        investmentStatus: "PASS"
-      };
-    }
+ try {
+   // Use Gemini 2.0 Flash
+   const model = genAI.getGenerativeModel({ 
+     model: "gemini-2.0-flash-exp",
+     generationConfig: {
+       temperature: 0.6, // Slightly more consistent
+       maxOutputTokens: 1000, // More room for detailed feedback
+       topP: 0.9,
+     }
+   });
 
-    // Ensure scores are numbers and within range
-    const scores = {
-      market: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.market) || 3.00)),
-      innovation: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.innovation) || 3.00)),
-      execution: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.execution) || 3.00))
-    };
+   const prompt = getAdvisorPrompt(type, content);
+   const result = await model.generateContent(prompt);
+   const response = await result.response;
+   const text = response.text();
+   
+   // Parse the JSON response
+   let parsedResponse;
+   try {
+     // Extract JSON from the response
+     const jsonMatch = text.match(/\{[\s\S]*\}/);
+     if (!jsonMatch) {
+       throw new Error('No JSON found in response');
+     }
+     parsedResponse = JSON.parse(jsonMatch[0]);
+   } catch (parseError) {
+     console.error('Failed to parse response:', text);
+     // Fallback response with more constructive tone
+     parsedResponse = {
+       scores: {
+         market: 4.50,
+         innovation: 5.00,
+         execution: 4.75
+       },
+       feedback: {
+         market: "Market demand is unclear from the description. Research your target customers and validate they actually want this solution.",
+         innovation: "The concept has potential but needs clearer differentiation. Study existing solutions and identify your unique advantages.",
+         execution: "Execution seems challenging but achievable with proper planning. Focus on the most critical requirements first."
+       },
+       verdict: "This idea has potential but needs more development. The core concept is interesting, but you need to validate market demand and clarify your differentiation. Start by talking to potential customers to understand their real needs.",
+       nextSteps: ["Interview 10-20 potential customers about this problem", "Research existing competitors and their weaknesses", "Create a simple prototype or mockup to test your concept"]
+     };
+   }
 
-    // Round to 2 decimal places
-    scores.market = Math.round(scores.market * 100) / 100;
-    scores.innovation = Math.round(scores.innovation * 100) / 100;
-    scores.execution = Math.round(scores.execution * 100) / 100;
+   // Ensure scores are numbers and within range
+   const scores = {
+     market: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.market) || 4.50)),
+     innovation: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.innovation) || 5.00)),
+     execution: Math.min(10, Math.max(0, parseFloat(parsedResponse.scores.execution) || 4.75))
+   };
 
-    // Calculate overall score
-    const overallScore = calculateOverallScore(scores.market, scores.innovation, scores.execution);
+   // Round to 2 decimal places
+   scores.market = Math.round(scores.market * 100) / 100;
+   scores.innovation = Math.round(scores.innovation * 100) / 100;
+   scores.execution = Math.round(scores.execution * 100) / 100;
 
-    // Prepare final response
-    const finalResponse = {
-      success: true,
-      wordCount: validation.wordCount,
-      score: overallScore,
-      comment: parsedResponse.verdict || "Not ready yet.",
-      aiScores: {
-        market: scores.market,
-        innovation: scores.innovation,
-        execution: scores.execution,
-        overall: overallScore,
-        marketFeedback: parsedResponse.feedback?.market || "No clear market identified.",
-        innovationFeedback: parsedResponse.feedback?.innovation || "Nothing new here.",
-        executionFeedback: parsedResponse.feedback?.execution || "Harder than you think.",
-        verdict: parsedResponse.verdict || "Not ready yet.",
-        investmentStatus: parsedResponse.investmentStatus || "PASS"
-      },
-      model: "Gemini 2.0 Flash",
-      timestamp: new Date().toISOString()
-    };
+   // Calculate overall score (market weighted more heavily)
+   const overallScore = calculateOverallScore(scores.market, scores.innovation, scores.execution);
 
-    return res.status(200).json(finalResponse);
+   // Prepare final response
+   const finalResponse = {
+     success: true,
+     wordCount: validation.wordCount,
+     score: overallScore,
+     comment: parsedResponse.verdict || "Interesting concept that needs more development.",
+     aiScores: {
+       market: scores.market,
+       innovation: scores.innovation,
+       execution: scores.execution,
+       overall: overallScore,
+       marketFeedback: parsedResponse.feedback?.market || "Market potential needs validation.",
+       innovationFeedback: parsedResponse.feedback?.innovation || "Innovation level requires clarification.",
+       executionFeedback: parsedResponse.feedback?.execution || "Execution complexity needs assessment.",
+       verdict: parsedResponse.verdict || "Interesting concept that needs more development.",
+       nextSteps: parsedResponse.nextSteps || ["Validate market demand", "Research competitors", "Create basic prototype"]
+     },
+     businessType: type,
+     model: "Gemini 2.0 Flash",
+     timestamp: new Date().toISOString()
+   };
 
-  } catch (error: any) {
-    console.error('API error:', error);
-    
-    // Check if it's a quota error
-    if (error.message?.includes('quota') || error.message?.includes('limit')) {
-      return res.status(429).json({
-        error: 'Rate limit reached',
-        details: 'Too many requests. Try again in a minute.',
-        retryAfter: 60
-      });
-    }
+   return res.status(200).json(finalResponse);
 
-    // Generic error response
-    return res.status(500).json({
-      error: 'Failed to analyze idea',
-      details: error.message || 'Internal server error',
-      fallback: {
-        score: 3.05,
-        comment: "Analysis failed. Try again with a clearer description.",
-        aiScores: {
-          market: 2.50,
-          innovation: 3.00,
-          execution: 4.00,
-          overall: 3.05,
-          marketFeedback: "Unable to assess market.",
-          innovationFeedback: "Innovation level unclear.",
-          executionFeedback: "Execution complexity unknown.",
-          verdict: "Analysis failed. Try again with a clearer description.",
-          investmentStatus: "PASS"
-        }
-      }
-    });
-  }
+ } catch (error: any) {
+   console.error('API error:', error);
+   
+   // Check if it's a quota error
+   if (error.message?.includes('quota') || error.message?.includes('limit')) {
+     return res.status(429).json({
+       error: 'Rate limit reached',
+       details: 'Too many requests. Try again in a minute.',
+       retryAfter: 60
+     });
+   }
+
+   // Generic error response with constructive fallback
+   return res.status(500).json({
+     error: 'Analysis temporarily unavailable',
+     details: error.message || 'Please try again in a moment',
+     fallback: {
+       score: 4.85,
+       comment: "Unable to complete analysis right now. Your idea shows promise - try submitting again with more specific details about your target customers and what makes your solution unique.",
+       aiScores: {
+         market: 4.50,
+         innovation: 5.00,
+         execution: 5.00,
+         overall: 4.85,
+         marketFeedback: "Market analysis unavailable. Focus on validating customer demand.",
+         innovationFeedback: "Innovation assessment unavailable. Research existing solutions.",
+         executionFeedback: "Execution analysis unavailable. Break down into smaller steps.",
+         verdict: "Analysis failed, but don't give up. Refine your description and try again.",
+         nextSteps: ["Add more details about target customers", "Clarify your unique value proposition", "Specify implementation challenges"]
+       }
+     }
+   });
+ }
 }

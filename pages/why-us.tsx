@@ -16,8 +16,29 @@ export default function WhyUsPage() {
         <meta name="description" content="Proof of ownership, fair revenue sharing, and AI validation for your ideas" />
       </Head>
 
-      <div className="min-h-screen bg-white">
-        {/* Hero Section */}
+      <style jsx global>{`
+        @font-face {
+          font-family: 'ArgentumSans';
+          src: url('/fonts/ArgentumSans-BlackItalic.ttf') format('truetype');
+          font-weight: 900;
+          font-style: italic;
+          font-display: swap;
+        }
+        
+        @font-face {
+          font-family: 'WorkSans';
+          src: url('/fonts/WorkSans-Regular.ttf') format('truetype');
+          font-weight: 400;
+          font-display: swap;
+        }
+        
+        body {
+          background: #FAF7F0;
+        }
+      `}</style>
+
+      <div className="min-h-screen">
+        {/* Hero Section - Stays Black */}
         <section className="hero">
           <div className="container">
             <h1>
@@ -238,30 +259,30 @@ export default function WhyUsPage() {
           padding: 0 20px;
         }
 
-        /* Hero */
+        /* Hero - Stays Black */
         .hero {
-          background: linear-gradient(to right, #0A0A1A, #1E3A8A);
+          background: black;
           color: white;
           padding: 100px 0;
           text-align: center;
         }
 
         .hero h1 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: clamp(36px, 5vw, 64px);
           font-weight: 900;
           font-style: italic;
-          line-height: 0.95;
+          line-height: 1;
           letter-spacing: -0.02em;
           margin-bottom: 30px;
         }
 
         .highlight {
-          color: #FACC15;
+          color: #D4A574;
         }
 
         .subtitle {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 18px;
           line-height: 1.6;
           opacity: 0.9;
@@ -272,7 +293,7 @@ export default function WhyUsPage() {
         /* Value Props */
         .value-props {
           padding: 80px 0;
-          background: #F9FAFB;
+          background: #FAF7F0;
         }
 
         .value-grid {
@@ -284,7 +305,7 @@ export default function WhyUsPage() {
         .value-card {
           text-align: center;
           padding: 30px;
-          background: white;
+          background: #FDFCF8;
           border-radius: 12px;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
@@ -295,33 +316,35 @@ export default function WhyUsPage() {
         }
 
         .value-title {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 24px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 15px;
-          color: #1E3A8A;
+          color: #2C2C2C;
         }
 
         .value-desc {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 16px;
           line-height: 1.6;
-          color: #4B5563;
+          color: #4A4A4A;
         }
 
         /* Process */
         .process {
           padding: 80px 0;
-          background: white;
+          background: #FDFCF8;
         }
 
         .process h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 36px;
           font-weight: 900;
+          font-style: italic;
           text-align: center;
           margin-bottom: 60px;
-          color: #111827;
+          color: #2C2C2C;
         }
 
         .process-steps {
@@ -341,37 +364,39 @@ export default function WhyUsPage() {
           width: 60px;
           height: 60px;
           border-radius: 50%;
-          background: #FACC15;
-          color: black;
+          background: #D4A574;
+          color: #2C2C2C;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 24px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 20px;
         }
 
         .step-content h3 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 20px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 10px;
-          color: #1E3A8A;
+          color: #2C2C2C;
         }
 
         .step-content p {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
-          color: #4B5563;
+          color: #4A4A4A;
           line-height: 1.6;
         }
 
         /* Revenue Model */
         .revenue-model {
           padding: 80px 0;
-          background: #1E3A8A;
-          color: white;
+          background: #2C2C2C;
+          color: #FAF7F0;
         }
 
         .revenue-content {
@@ -382,14 +407,15 @@ export default function WhyUsPage() {
         }
 
         .revenue-text h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 36px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 20px;
         }
 
         .revenue-text > p {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 18px;
           margin-bottom: 40px;
           opacity: 0.9;
@@ -406,15 +432,16 @@ export default function WhyUsPage() {
         }
 
         .revenue-percent {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 32px;
           font-weight: 900;
-          color: #FACC15;
+          font-style: italic;
+          color: #D4A574;
           margin-bottom: 10px;
         }
 
         .revenue-desc {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
           opacity: 0.9;
         }
@@ -439,7 +466,7 @@ export default function WhyUsPage() {
         }
 
         .bar-label {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 12px;
           margin-bottom: 10px;
           text-align: center;
@@ -456,22 +483,23 @@ export default function WhyUsPage() {
         }
 
         .our-share .bar-fill {
-          background: #FACC15;
+          background: #D4A574;
         }
 
         /* Benefits */
         .benefits {
           padding: 80px 0;
-          background: #F9FAFB;
+          background: #FAF7F0;
         }
 
         .benefits h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 36px;
           font-weight: 900;
+          font-style: italic;
           text-align: center;
           margin-bottom: 60px;
-          color: #111827;
+          color: #2C2C2C;
         }
 
         .benefits-grid {
@@ -482,39 +510,41 @@ export default function WhyUsPage() {
 
         .benefit-card {
           padding: 30px;
-          background: white;
+          background: #FDFCF8;
           border-radius: 12px;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .benefit-card h3 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 20px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 15px;
-          color: #1E3A8A;
+          color: #2C2C2C;
         }
 
         .benefit-card p {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
-          color: #4B5563;
+          color: #4A4A4A;
           line-height: 1.6;
         }
 
         /* FAQ */
         .faq {
           padding: 80px 0;
-          background: white;
+          background: #FDFCF8;
         }
 
         .faq h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 36px;
           font-weight: 900;
+          font-style: italic;
           text-align: center;
           margin-bottom: 60px;
-          color: #111827;
+          color: #2C2C2C;
         }
 
         .faq-list {
@@ -524,7 +554,7 @@ export default function WhyUsPage() {
 
         .faq-item {
           margin-bottom: 20px;
-          border: 2px solid #E5E7EB;
+          border: 2px solid #E5E5E5;
           border-radius: 8px;
           overflow: hidden;
         }
@@ -532,13 +562,14 @@ export default function WhyUsPage() {
         .faq-question {
           width: 100%;
           padding: 20px;
-          background: #F9FAFB;
+          background: #FAF7F0;
           border: none;
           text-align: left;
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 18px;
           font-weight: 900;
-          color: #1E3A8A;
+          font-style: italic;
+          color: #2C2C2C;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
@@ -548,34 +579,36 @@ export default function WhyUsPage() {
         .faq-icon {
           font-size: 24px;
           font-weight: bold;
+          color: #D4A574;
         }
 
         .faq-answer {
           padding: 20px;
-          background: white;
-          font-family: 'Courier New', monospace;
+          background: #FDFCF8;
+          font-family: 'WorkSans', sans-serif;
           font-size: 16px;
-          color: #4B5563;
+          color: #4A4A4A;
           line-height: 1.6;
         }
 
         /* CTA */
         .cta-section {
           padding: 80px 0;
-          background: linear-gradient(to right, #1e3a8a, #1e40af);
-          color: white;
+          background: #D4A574;
+          color: #2C2C2C;
           text-align: center;
         }
 
         .cta-section h2 {
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 36px;
           font-weight: 900;
+          font-style: italic;
           margin-bottom: 20px;
         }
 
         .cta-section p {
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 18px;
           margin-bottom: 40px;
           opacity: 0.9;
@@ -590,39 +623,41 @@ export default function WhyUsPage() {
 
         .cta-button {
           display: inline-block;
-          background: #FACC15;
-          color: black;
+          background: #2C2C2C;
+          color: #FAF7F0;
           padding: 16px 32px;
-          font-family: 'DrukWide', Impact, sans-serif;
+          font-family: 'ArgentumSans', serif;
           font-size: 18px;
           font-weight: 900;
+          font-style: italic;
           text-decoration: none;
           border-radius: 6px;
           transition: all 0.3s;
         }
 
         .cta-button:hover {
-          background: #FDE047;
+          background: #FAF7F0;
+          color: #2C2C2C;
           transform: translateY(-2px);
         }
 
         .cta-button.secondary {
           background: transparent;
-          color: white;
-          border: 2px solid white;
+          color: #2C2C2C;
+          border: 2px solid #2C2C2C;
         }
 
         .cta-button.secondary:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(44, 44, 44, 0.1);
         }
 
         /* Footer */
         footer {
-          background: black;
-          color: white;
+          background: #2C2C2C;
+          color: #FAF7F0;
           padding: 40px 0;
           text-align: center;
-          font-family: 'Courier New', monospace;
+          font-family: 'WorkSans', sans-serif;
           font-size: 14px;
         }
 
