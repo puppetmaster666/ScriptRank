@@ -244,7 +244,7 @@ export default function HomePage() {
         
         body {
           font-family: 'Sohne', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #f8f9fa;
+          background: #f0f2f4;
           color: #1a1a1a;
           line-height: 1.6;
         }
@@ -272,25 +272,10 @@ export default function HomePage() {
             <Link href="/pricing">
               <a className="nav-link">Pricing</a>
             </Link>
-            {user ? (
-              <>
-                <Link href="/dashboard">
-                  <a className="nav-link">Dashboard</a>
-                </Link>
-                <button className="nav-button secondary">Sign Out</button>
-              </>
-            ) : (
-              <>
-                <button 
-                  onClick={() => setShowLoginModal(true)} 
-                  className="nav-link"
-                >
-                  Login
-                </button>
-                <Link href="/submit">
-                  <a className="nav-button">Submit My Idea</a>
-                </Link>
-              </>
+            {user && (
+              <Link href="/dashboard">
+                <a className="nav-link">Dashboard</a>
+              </Link>
             )}
           </nav>
         </div>
@@ -299,6 +284,21 @@ export default function HomePage() {
       <div className="app-layout">
         {/* Left Sidebar */}
         <aside className="sidebar">
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Actions</h3>
+            <div className="action-buttons">
+              <Link href="/submit">
+                <a className="sidebar-button primary">Submit My Idea</a>
+              </Link>
+              <button 
+                onClick={() => setShowLoginModal(true)} 
+                className="sidebar-button secondary"
+              >
+                Login / Sign Up
+              </button>
+            </div>
+          </div>
+
           <div className="sidebar-section">
             <h3 className="sidebar-title">Categories</h3>
             <div className="nav-category">
@@ -385,18 +385,11 @@ export default function HomePage() {
         <main className="main-content">
           {/* Hero Section */}
           <section className="hero-section">
-            <h1 className="hero-title">AI Ranks Ideas, Not Marketing Budgets</h1>
+            <h1 className="hero-title">Get Discovered by Merit, Not Money</h1>
             <p className="hero-subtitle">
-              Turn great ideas into fame without spending. Submit your ideas for unbiased AI scoring, 
-              or discover tomorrow's breakthroughs before they go viral. Join 15,847 entrepreneurs 
-              who've gotten honest, data-driven feedback.
+              Advanced AI algorithms analyze market potential, innovation level, and execution feasibility. 
+              Join 15,847 entrepreneurs who've gotten honest, data-driven feedback without spending on marketing.
             </p>
-            <div className="hero-actions">
-              <Link href="/submit">
-                <a className="primary-cta">Submit My Idea</a>
-              </Link>
-              <button className="secondary-cta">Browse Top Ideas</button>
-            </div>
             <div className="hero-proof">
               <span className="proof-text">127 ideas submitted this week</span>
               <span className="proof-divider">•</span>
@@ -469,15 +462,48 @@ export default function HomePage() {
                       <div className="detailed-scores">
                         <div className="score-row">
                           <span className="score-metric">Market Potential</span>
-                          <span className="score-number">{Math.round(idea.marketScore)}</span>
+                          <div className="metric-bar">
+                            <div 
+                              className="metric-fill" 
+                              style={{ 
+                                width: `${idea.marketScore}%`,
+                                backgroundColor: idea.marketScore >= 75 ? '#10b981' : idea.marketScore >= 50 ? '#f59e0b' : '#ef4444'
+                              }}
+                            />
+                            <span className="metric-number" style={{ color: idea.marketScore >= 75 ? '#10b981' : idea.marketScore >= 50 ? '#f59e0b' : '#ef4444' }}>
+                              {Math.round(idea.marketScore)}
+                            </span>
+                          </div>
                         </div>
                         <div className="score-row">
                           <span className="score-metric">Innovation Level</span>
-                          <span className="score-number">{Math.round(idea.innovationScore)}</span>
+                          <div className="metric-bar">
+                            <div 
+                              className="metric-fill" 
+                              style={{ 
+                                width: `${idea.innovationScore}%`,
+                                backgroundColor: idea.innovationScore >= 75 ? '#10b981' : idea.innovationScore >= 50 ? '#f59e0b' : '#ef4444'
+                              }}
+                            />
+                            <span className="metric-number" style={{ color: idea.innovationScore >= 75 ? '#10b981' : idea.innovationScore >= 50 ? '#f59e0b' : '#ef4444' }}>
+                              {Math.round(idea.innovationScore)}
+                            </span>
+                          </div>
                         </div>
                         <div className="score-row">
                           <span className="score-metric">Execution Difficulty</span>
-                          <span className="score-number">{Math.round(idea.executionScore)}</span>
+                          <div className="metric-bar">
+                            <div 
+                              className="metric-fill" 
+                              style={{ 
+                                width: `${idea.executionScore}%`,
+                                backgroundColor: idea.executionScore >= 75 ? '#ef4444' : idea.executionScore >= 50 ? '#f59e0b' : '#10b981'
+                              }}
+                            />
+                            <span className="metric-number" style={{ color: idea.executionScore >= 75 ? '#ef4444' : idea.executionScore >= 50 ? '#f59e0b' : '#10b981' }}>
+                              {Math.round(idea.executionScore)}
+                            </span>
+                          </div>
                         </div>
                         <div className="vote-section">
                           <button 
@@ -536,14 +562,15 @@ export default function HomePage() {
       <style jsx>{`
         /* Header Styles */
         .header {
-          background: #000000;
-          color: white;
+          background: #f0f2f4;
+          color: black;
           padding: 16px 0;
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .header-content {
@@ -559,7 +586,7 @@ export default function HomePage() {
           font-family: 'Vipnagorgialla', serif;
           font-size: 24px;
           font-weight: bold;
-          color: white;
+          color: black;
           text-decoration: none;
         }
 
@@ -573,7 +600,7 @@ export default function HomePage() {
           font-family: 'FoundersGrotesk', sans-serif;
           font-size: 14px;
           font-weight: 600;
-          color: white;
+          color: black;
           text-decoration: none;
           padding: 8px 0;
           transition: all 0.2s;
@@ -583,7 +610,7 @@ export default function HomePage() {
         }
 
         .nav-link:hover {
-          color: #e5e5e5;
+          color: #4b5563;
         }
 
         .nav-button {
@@ -637,7 +664,49 @@ export default function HomePage() {
 
         .sidebar-section {
           padding: 24px 20px;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .action-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .sidebar-button {
+          width: 100%;
+          padding: 12px 16px;
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          border: none;
+          border-radius: 0;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-block;
+          text-align: center;
+        }
+
+        .sidebar-button.primary {
+          background: #000000;
+          color: white;
+        }
+
+        .sidebar-button.primary:hover {
+          background: #1f1f1f;
+        }
+
+        .sidebar-button.secondary {
+          background: transparent;
+          color: #4b5563;
+          border: 1px solid #d1d5db;
+        }
+
+        .sidebar-button.secondary:hover {
+          border-color: #9ca3af;
+          color: #374151;
         }
 
         .sidebar-title {
@@ -759,12 +828,12 @@ export default function HomePage() {
         .main-content {
           flex: 1;
           margin-left: 280px;
-          background: #f8f9fa;
+          background: #f0f2f4;
         }
 
         /* Hero Section */
         .hero-section {
-          background: #f8f9fa;
+          background: #f0f2f4;
           padding: 60px 40px;
           text-align: center;
           border-bottom: 1px solid #e5e7eb;
@@ -896,18 +965,19 @@ export default function HomePage() {
         /* Ideas Grid */
         .ideas-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 24px;
         }
 
         .idea-card {
           background: white;
-          border-radius: 8px;
+          border-radius: 0;
           overflow: hidden;
           box-shadow: 0 2px 8px rgba(0,0,0,0.08);
           transition: all 0.3s;
           position: relative;
-          height: fit-content;
+          height: 200px;
+          border: 1px solid #e5e7eb;
         }
 
         .idea-card:hover {
@@ -922,17 +992,16 @@ export default function HomePage() {
           position: absolute;
           left: 0;
           top: 0;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          padding-top: 12px;
         }
 
         .rank-number {
-          background: white;
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          background: #ef4444;
           color: #000000;
-          padding: 4px 6px;
-          border-radius: 0 4px 4px 0;
+          padding: 4px 8px;
+          border-radius: 0;
           font-family: 'FoundersGrotesk', sans-serif;
           font-size: 12px;
           font-weight: 700;
@@ -1059,20 +1128,38 @@ export default function HomePage() {
         .score-row {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 8px;
+          align-items: center;
+          margin-bottom: 12px;
         }
 
         .score-metric {
           font-family: 'Sohne', sans-serif;
           font-size: 13px;
           color: #6b7280;
+          width: 120px;
         }
 
-        .score-number {
+        .metric-bar {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .metric-fill {
+          flex: 1;
+          height: 20px;
+          border: 2px solid #000000;
+          position: relative;
+          background: #f3f4f6;
+        }
+
+        .metric-number {
           font-family: 'FoundersGrotesk', sans-serif;
           font-size: 13px;
-          font-weight: 600;
-          color: #1f2937;
+          font-weight: 700;
+          min-width: 30px;
+          text-align: right;
         }
 
         .vote-section {
