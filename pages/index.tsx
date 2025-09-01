@@ -30,6 +30,11 @@ export default function HomePage() {
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState<{[key: string]: boolean}>({
+    business: true,
+    games: true,
+    movies: true
+  })
 
   const categories = {
     business: [
@@ -80,7 +85,7 @@ export default function HomePage() {
           genre: data.genre || 'General',
           author: data.username || data.userName || 'Anonymous',
           desc: data.content,
-          aiScore: aiScore * 10, // Convert to 0-100 scale
+          aiScore: aiScore * 10,
           marketScore: (data.aiScores?.market || Math.random() * 10) * 10,
           innovationScore: (data.aiScores?.innovation || Math.random() * 10) * 10,
           executionScore: (data.aiScores?.execution || Math.random() * 10) * 10,
@@ -140,8 +145,25 @@ export default function HomePage() {
       id: '8', rank: 8, title: 'Temporal Heist', type: 'games', genre: 'Strategy', author: 'Maya Thompson',
       desc: 'Complex turn-based strategy game where players plan elaborate heists across multiple time periods. Actions in past directly affect present outcomes, creating intricate cause-and-effect scenarios. Features single-player campaigns, competitive multiplayer modes, and time paradox puzzle mechanics.',
       aiScore: 81, marketScore: 76, innovationScore: 88, executionScore: 79, publicScore: 8.3, publicVotes: 134, timestamp: '2024-01-15', expanded: false
+    },
+    {
+      id: '9', rank: 9, title: 'CodeMentor AI', type: 'business', genre: 'EdTech', author: 'Alex Johnson',
+      desc: 'Personalized AI coding tutor that adapts to individual learning styles and provides real-time feedback on programming projects. Features interactive debugging sessions, code review assistance, career guidance, and integration with popular development environments.',
+      aiScore: 79, marketScore: 85, innovationScore: 74, executionScore: 78, publicScore: 7.8, publicVotes: 167, timestamp: '2024-01-14', expanded: false
+    },
+    {
+      id: '10', rank: 10, title: 'Shadow Protocol', type: 'movies', genre: 'Action', author: 'Rachel Torres',
+      desc: 'Elite cyber-warfare specialist discovers government conspiracy involving AI manipulation of global markets. Must expose the truth while being hunted by both foreign agents and domestic authorities. High-tech thriller combining practical stunts with cutting-edge digital effects.',
+      aiScore: 78, marketScore: 82, innovationScore: 73, executionScore: 80, publicScore: 8.1, publicVotes: 128, timestamp: '2024-01-13', expanded: false
     }
   ]
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
 
   const toggleExpanded = (ideaId: string) => {
     setIdeas(prev => prev.map(idea => 
@@ -156,11 +178,6 @@ export default function HomePage() {
     return idea.genre === activeGenre
   })
 
-  const getScoreColor = (score: number) => {
-    if (score >= 75) return '#059669' // Dark green
-    return '#000000' // Black for lower scores
-  }
-
   const handleVote = (ideaId: string) => {
     if (!user) {
       setShowLoginModal(true)
@@ -172,8 +189,8 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>Hyoka - AI Idea Evaluation Platform</title>
-        <meta name="description" content="Professional AI-powered idea evaluation platform. Get your ideas ranked, analyzed, and validated by advanced AI algorithms." />
+        <title>Hyoka - AI Ranks Ideas, Not Marketing Budgets</title>
+        <meta name="description" content="Get your ideas ranked by merit, not money. Advanced AI evaluation platform for entrepreneurs, creators, and innovators." />
       </Head>
 
       <style jsx global>{`
@@ -236,10 +253,45 @@ export default function HomePage() {
       {/* Header */}
       <header className="header">
         <div className="header-content">
-          <h1 className="header-logo">Hyoka</h1>
+          <Link href="/">
+            <a className="header-logo">Hyoka</a>
+          </Link>
           <nav className="header-nav">
-            <button className="nav-button">Submit Idea</button>
-            <button className="nav-button">Login</button>
+            <Link href="/">
+              <a className="nav-link">Home</a>
+            </Link>
+            <Link href="/leaderboard">
+              <a className="nav-link">Leaderboard</a>
+            </Link>
+            <Link href="/how-it-works">
+              <a className="nav-link">How It Works</a>
+            </Link>
+            <Link href="/why-us">
+              <a className="nav-link">Why Us</a>
+            </Link>
+            <Link href="/pricing">
+              <a className="nav-link">Pricing</a>
+            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard">
+                  <a className="nav-link">Dashboard</a>
+                </Link>
+                <button className="nav-button secondary">Sign Out</button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={() => setShowLoginModal(true)} 
+                  className="nav-link"
+                >
+                  Login
+                </button>
+                <Link href="/submit">
+                  <a className="nav-button">Submit My Idea</a>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -247,93 +299,84 @@ export default function HomePage() {
       <div className="app-layout">
         {/* Left Sidebar */}
         <aside className="sidebar">
-          <div className="sidebar-block">
-            <button
-              className={`sidebar-item ${activeCategory === 'all' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory('all')
-                setActiveGenre('all')
-              }}
-            >
-              All Ideas
-            </button>
-          </div>
-
-          <div className="sidebar-block">
-            <button
-              className={`sidebar-item ${activeCategory === 'business' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory('business')
-                setActiveGenre('all')
-              }}
-            >
-              Business
-            </button>
-            <div className="genre-list">
-              {categories.business.map(genre => (
-                <button
-                  key={genre}
-                  className={`genre-item ${activeGenre === genre ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveCategory('business')
-                    setActiveGenre(genre)
-                  }}
-                >
-                  {genre}
-                </button>
-              ))}
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Categories</h3>
+            <div className="nav-category">
+              <button
+                className={`nav-item ${activeCategory === 'all' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveCategory('all')
+                  setActiveGenre('all')
+                }}
+              >
+                <span className="nav-text">All Ideas</span>
+                <span className="nav-count">{ideas.length}</span>
+              </button>
             </div>
-          </div>
 
-          <div className="sidebar-block">
-            <button
-              className={`sidebar-item ${activeCategory === 'games' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory('games')
-                setActiveGenre('all')
-              }}
-            >
-              Games
-            </button>
-            <div className="genre-list">
-              {categories.games.map(genre => (
+            {Object.entries(categories).map(([category, genres]) => (
+              <div key={category} className="nav-category">
                 <button
-                  key={genre}
-                  className={`genre-item ${activeGenre === genre ? 'active' : ''}`}
+                  className={`nav-item ${activeCategory === category ? 'active' : ''}`}
                   onClick={() => {
-                    setActiveCategory('games')
-                    setActiveGenre(genre)
+                    setActiveCategory(category as any)
+                    setActiveGenre('all')
+                    toggleCategory(category)
                   }}
                 >
-                  {genre}
+                  <span className="nav-text">
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </span>
+                  <span className="nav-count">
+                    {ideas.filter(i => i.type === category).length}
+                  </span>
+                  <span className="expand-icon">
+                    {expandedCategories[category] ? '−' : '+'}
+                  </span>
                 </button>
-              ))}
-            </div>
+                
+                {expandedCategories[category] && (
+                  <div className="genre-list">
+                    <button
+                      className={`genre-item ${activeGenre === 'all' ? 'active' : ''}`}
+                      onClick={() => setActiveGenre('all')}
+                    >
+                      All {category}
+                    </button>
+                    {genres.map(genre => (
+                      <button
+                        key={genre}
+                        className={`genre-item ${activeGenre === genre ? 'active' : ''}`}
+                        onClick={() => setActiveGenre(genre)}
+                      >
+                        {genre}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="sidebar-block">
-            <button
-              className={`sidebar-item ${activeCategory === 'movies' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory('movies')
-                setActiveGenre('all')
-              }}
-            >
-              Movies
-            </button>
-            <div className="genre-list">
-              {categories.movies.map(genre => (
-                <button
-                  key={genre}
-                  className={`genre-item ${activeGenre === genre ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveCategory('movies')
-                    setActiveGenre(genre)
-                  }}
-                >
-                  {genre}
-                </button>
-              ))}
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Platform Stats</h3>
+            <div className="stats-list">
+              <div className="stat-item">
+                <span className="stat-label">Total Ideas</span>
+                <span className="stat-value">15,847</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">AI Evaluations</span>
+                <span className="stat-value">23,901</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Active Users</span>
+                <span className="stat-value">4,567</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">This Week</span>
+                <span className="stat-value">127 new</span>
+              </div>
             </div>
           </div>
         </aside>
@@ -342,27 +385,24 @@ export default function HomePage() {
         <main className="main-content">
           {/* Hero Section */}
           <section className="hero-section">
-            <h1 className="hero-title">
-              Where Ideas Get Brutally Evaluated by AI
-            </h1>
+            <h1 className="hero-title">AI Ranks Ideas, Not Marketing Budgets</h1>
             <p className="hero-subtitle">
-              Skip the marketing budget. Skip the pitch meetings. Submit your idea and get instant evaluation 
-              from advanced AI algorithms that analyze market potential, innovation level, and execution feasibility. 
-              Join thousands of entrepreneurs who trust our platform for honest, data-driven feedback.
+              Turn great ideas into fame without spending. Submit your ideas for unbiased AI scoring, 
+              or discover tomorrow's breakthroughs before they go viral. Join 15,847 entrepreneurs 
+              who've gotten honest, data-driven feedback.
             </p>
-            <div className="hero-stats">
-              <div className="stat">
-                <div className="stat-number">15,847</div>
-                <div className="stat-label">Ideas Evaluated</div>
-              </div>
-              <div className="stat">
-                <div className="stat-number">$2.3M</div>
-                <div className="stat-label">Funding Raised</div>
-              </div>
-              <div className="stat">
-                <div className="stat-number">89%</div>
-                <div className="stat-label">Accuracy Rate</div>
-              </div>
+            <div className="hero-actions">
+              <Link href="/submit">
+                <a className="primary-cta">Submit My Idea</a>
+              </Link>
+              <button className="secondary-cta">Browse Top Ideas</button>
+            </div>
+            <div className="hero-proof">
+              <span className="proof-text">127 ideas submitted this week</span>
+              <span className="proof-divider">•</span>
+              <span className="proof-text">$2.3M in funding raised by top ideas</span>
+              <span className="proof-divider">•</span>
+              <span className="proof-text">89% accuracy rate</span>
             </div>
           </section>
 
@@ -377,14 +417,19 @@ export default function HomePage() {
               </h2>
               <div className="section-meta">
                 <span className="result-count">{filteredIdeas.length} results</span>
+                <select className="sort-select">
+                  <option>Sort by AI Score</option>
+                  <option>Sort by Public Score</option>
+                  <option>Sort by Recent</option>
+                </select>
               </div>
             </div>
 
             <div className="ideas-grid">
               {filteredIdeas.map((idea) => (
                 <div key={idea.id} className="idea-card">
-                  <div className="card-rank-bar" style={{ backgroundColor: getScoreColor(idea.aiScore) }}>
-                    <span className="rank-number">#{idea.rank}</span>
+                  <div className="card-rank-bar">
+                    <span className="rank-number">{idea.rank}</span>
                   </div>
                   
                   <div className="card-content">
@@ -393,13 +438,12 @@ export default function HomePage() {
                       <div className="card-meta">
                         <span className="card-author">by {idea.author}</span>
                         <span className="card-genre">{idea.genre}</span>
+                        <span className="card-date">{idea.timestamp}</span>
                       </div>
                     </div>
                     
                     <div className="card-score-main">
-                      <span className="main-score" style={{ color: getScoreColor(idea.aiScore) }}>
-                        {Math.round(idea.aiScore)}
-                      </span>
+                      <span className="main-score">{Math.round(idea.aiScore)}</span>
                       <span className="score-label-main">AI Score</span>
                     </div>
                     
@@ -407,36 +451,40 @@ export default function HomePage() {
                       {idea.expanded ? idea.desc : `${idea.desc.substring(0, 120)}...`}
                     </p>
                     
-                    <button 
-                      className="expand-button"
-                      onClick={() => toggleExpanded(idea.id)}
-                    >
-                      {idea.expanded ? 'Show Less' : 'Read More'}
-                    </button>
+                    <div className="card-actions">
+                      <button 
+                        className="expand-button"
+                        onClick={() => toggleExpanded(idea.id)}
+                      >
+                        {idea.expanded ? 'Show Less' : 'Read More'}
+                      </button>
+                      
+                      <div className="public-score">
+                        <span className="public-value">{idea.publicScore.toFixed(1)}</span>
+                        <span className="public-label">({idea.publicVotes} votes)</span>
+                      </div>
+                    </div>
                     
                     {idea.expanded && (
                       <div className="detailed-scores">
                         <div className="score-row">
-                          <span className="score-metric">Market Potential:</span>
+                          <span className="score-metric">Market Potential</span>
                           <span className="score-number">{Math.round(idea.marketScore)}</span>
                         </div>
                         <div className="score-row">
-                          <span className="score-metric">Innovation Level:</span>
+                          <span className="score-metric">Innovation Level</span>
                           <span className="score-number">{Math.round(idea.innovationScore)}</span>
                         </div>
                         <div className="score-row">
-                          <span className="score-metric">Execution Difficulty:</span>
+                          <span className="score-metric">Execution Difficulty</span>
                           <span className="score-number">{Math.round(idea.executionScore)}</span>
                         </div>
-                        <div className="public-voting">
-                          <div className="public-score">
-                            Public: {idea.publicScore.toFixed(1)} ({idea.publicVotes} votes)
-                          </div>
+                        <div className="vote-section">
                           <button 
                             className="vote-button"
                             onClick={() => handleVote(idea.id)}
                           >
-                            Vote
+                            Vote on This Idea
                           </button>
                         </div>
                       </div>
@@ -447,25 +495,16 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* How It Works Section */}
+          {/* Explanation Section */}
           <section className="explanation-section">
-            <h2 className="section-title">How Our AI Evaluation Works</h2>
+            <h2 className="section-title">Advanced Neural Network Analysis</h2>
             <div className="explanation-content">
               <div className="explanation-block">
-                <h3 className="explanation-title">Advanced Neural Network Analysis</h3>
+                <h3 className="explanation-title">Three-Dimensional Scoring System</h3>
                 <p className="explanation-text">
-                  Our proprietary AI system analyzes your idea using deep learning models trained on over 50,000 successful 
-                  and failed ventures. The system evaluates market timing, competitive landscape, technical feasibility, 
-                  and revenue potential using real-world business data and market intelligence.
-                </p>
-              </div>
-              
-              <div className="explanation-block">
-                <h3 className="explanation-title">Three-Dimensional Scoring</h3>
-                <p className="explanation-text">
-                  Every idea receives comprehensive evaluation across three critical dimensions: Market Potential analyzes 
-                  addressable market size and demand validation. Innovation Level measures uniqueness and technological 
-                  advancement. Execution Difficulty assesses resource requirements and implementation complexity.
+                  Our proprietary AI analyzes your idea using deep learning models trained on over 50,000 successful 
+                  and failed ventures. Every submission receives comprehensive evaluation across Market Potential, 
+                  Innovation Level, and Execution Difficulty using real-world business data and market intelligence.
                 </p>
               </div>
               
@@ -473,17 +512,17 @@ export default function HomePage() {
                 <h3 className="explanation-title">Real-Time Market Validation</h3>
                 <p className="explanation-text">
                   Beyond AI analysis, ideas undergo community validation from verified entrepreneurs, investors, and 
-                  industry experts. This dual-layer approach ensures comprehensive evaluation that combines algorithmic 
-                  precision with human insight and market experience.
+                  industry experts. This dual-layer approach combines algorithmic precision with human insight, 
+                  ensuring comprehensive evaluation that mirrors real market conditions.
                 </p>
               </div>
               
               <div className="explanation-block">
-                <h3 className="explanation-title">Actionable Intelligence Reports</h3>
+                <h3 className="explanation-title">Transparent Merit-Based Ranking</h3>
                 <p className="explanation-text">
-                  High-scoring ideas receive detailed reports including competitive analysis, go-to-market strategies, 
-                  potential funding sources, and step-by-step implementation roadmaps. Our platform has helped launch 
-                  over 200 successful startups with combined valuations exceeding $500 million.
+                  No marketing budgets required. No connections needed. No pitch decks necessary. Ideas rise purely 
+                  on merit through our transparent scoring system. The platform has helped launch over 200 successful 
+                  startups with combined valuations exceeding $500 million.
                 </p>
               </div>
             </div>
@@ -521,118 +560,221 @@ export default function HomePage() {
           font-size: 24px;
           font-weight: bold;
           color: white;
+          text-decoration: none;
         }
 
         .header-nav {
           display: flex;
-          gap: 16px;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .nav-link {
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          color: white;
+          text-decoration: none;
+          padding: 8px 0;
+          transition: all 0.2s;
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+
+        .nav-link:hover {
+          color: #e5e5e5;
         }
 
         .nav-button {
-          background: none;
-          border: 1px solid white;
-          color: white;
-          padding: 8px 16px;
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
+          padding: 10px 20px;
+          background: white;
+          color: #000000;
+          border: none;
+          border-radius: 4px;
           cursor: pointer;
           transition: all 0.2s;
+          text-decoration: none;
+          display: inline-block;
         }
 
         .nav-button:hover {
+          background: #f0f0f0;
+          transform: translateY(-1px);
+        }
+
+        .nav-button.secondary {
+          background: transparent;
+          color: white;
+          border: 1px solid white;
+        }
+
+        .nav-button.secondary:hover {
           background: white;
-          color: black;
+          color: #000000;
         }
 
         .app-layout {
           display: flex;
-          margin-top: 60px; /* Account for fixed header */
-          min-height: calc(100vh - 60px);
+          margin-top: 64px;
+          min-height: calc(100vh - 64px);
         }
 
         /* Sidebar Styles */
         .sidebar {
           width: 280px;
-          background: #f8f9fa;
-          padding: 20px;
+          background: white;
+          border-right: 1px solid #e5e7eb;
           display: flex;
           flex-direction: column;
-          gap: 4px;
           position: fixed;
-          height: calc(100vh - 60px);
+          height: calc(100vh - 64px);
           overflow-y: auto;
         }
 
-        .sidebar-block {
-          background: #000000;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 8px;
+        .sidebar-section {
+          padding: 24px 20px;
+          border-bottom: 1px solid #f3f4f6;
         }
 
-        .sidebar-item {
-          width: 100%;
-          background: none;
-          border: none;
-          color: white;
+        .sidebar-title {
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 16px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #374151;
+          margin-bottom: 16px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .nav-category {
+          margin-bottom: 4px;
+        }
+
+        .nav-item {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          border: none;
+          background: none;
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 14px;
           font-weight: 600;
-          text-align: left;
-          padding: 8px 0;
+          color: #4b5563;
           cursor: pointer;
           transition: all 0.2s;
+          text-align: left;
+          border-radius: 6px;
         }
 
-        .sidebar-item:hover,
-        .sidebar-item.active {
-          color: #f0f0f0;
+        .nav-item:hover,
+        .nav-item.active {
+          background: #f3f4f6;
+          color: #1f2937;
+        }
+
+        .nav-text {
+          flex: 1;
+        }
+
+        .nav-count {
+          background: #e5e7eb;
+          color: #6b7280;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          margin-right: 8px;
+        }
+
+        .nav-item.active .nav-count {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .expand-icon {
+          font-size: 14px;
+          font-weight: 700;
+          color: #9ca3af;
         }
 
         .genre-list {
-          margin-top: 12px;
-          padding-left: 16px;
+          margin-left: 16px;
+          margin-top: 8px;
         }
 
         .genre-item {
           width: 100%;
+          padding: 8px 16px;
           background: none;
           border: none;
-          color: #cccccc;
           font-family: 'Sohne', sans-serif;
           font-size: 13px;
-          text-align: left;
-          padding: 4px 0;
+          color: #6b7280;
           cursor: pointer;
-          display: block;
+          text-align: left;
           transition: all 0.2s;
+          border-radius: 4px;
+          display: block;
+          margin-bottom: 2px;
         }
 
         .genre-item:hover,
         .genre-item.active {
-          color: white;
+          color: #3b82f6;
+          background: #eff6ff;
+        }
+
+        .stats-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .stat-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .stat-label {
+          font-family: 'Sohne', sans-serif;
+          font-size: 13px;
+          color: #6b7280;
+        }
+
+        .stat-value {
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          color: #1f2937;
         }
 
         /* Main Content Styles */
         .main-content {
           flex: 1;
           margin-left: 280px;
-          background: white;
+          background: #f8f9fa;
         }
 
         /* Hero Section */
         .hero-section {
-          background: white;
+          background: #f8f9fa;
           padding: 60px 40px;
           text-align: center;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .hero-title {
           font-family: 'Vipnagorgialla', serif;
           font-size: 48px;
           font-weight: bold;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
           line-height: 1.2;
           color: #1a1a1a;
         }
@@ -641,40 +783,78 @@ export default function HomePage() {
           font-family: 'Sohne', sans-serif;
           font-size: 18px;
           color: #4b5563;
-          max-width: 800px;
-          margin: 0 auto 40px;
+          max-width: 700px;
+          margin: 0 auto 32px;
           line-height: 1.6;
         }
 
-        .hero-stats {
+        .hero-actions {
           display: flex;
           justify-content: center;
-          gap: 60px;
-          margin-top: 40px;
+          gap: 16px;
+          margin-bottom: 32px;
         }
 
-        .stat {
-          text-align: center;
-        }
-
-        .stat-number {
+        .primary-cta {
+          background: #000000;
+          color: white;
+          padding: 16px 32px;
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 32px;
+          font-size: 16px;
           font-weight: 700;
-          color: #1a1a1a;
-          margin-bottom: 8px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-block;
         }
 
-        .stat-label {
+        .primary-cta:hover {
+          background: #1f1f1f;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .secondary-cta {
+          background: transparent;
+          color: #4b5563;
+          padding: 16px 32px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .secondary-cta:hover {
+          border-color: #9ca3af;
+          color: #374151;
+        }
+
+        .hero-proof {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
           font-family: 'Sohne', sans-serif;
           font-size: 14px;
           color: #6b7280;
         }
 
+        .proof-text {
+          font-weight: 500;
+        }
+
+        .proof-divider {
+          color: #d1d5db;
+        }
+
         /* Ideas Section */
         .ideas-section {
           padding: 40px;
-          background: #f8f9fa;
         }
 
         .section-header {
@@ -694,6 +874,7 @@ export default function HomePage() {
         .section-meta {
           display: flex;
           align-items: center;
+          gap: 16px;
         }
 
         .result-count {
@@ -702,10 +883,20 @@ export default function HomePage() {
           color: #6b7280;
         }
 
+        .sort-select {
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-family: 'Sohne', sans-serif;
+          font-size: 13px;
+          background: white;
+          color: #374151;
+        }
+
         /* Ideas Grid */
         .ideas-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 20px;
         }
 
@@ -713,7 +904,7 @@ export default function HomePage() {
           background: white;
           border-radius: 8px;
           overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
           transition: all 0.3s;
           position: relative;
           height: fit-content;
@@ -721,28 +912,32 @@ export default function HomePage() {
 
         .idea-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
         }
 
         .card-rank-bar {
           width: 8px;
           height: 100%;
+          background: #000000;
           position: absolute;
           left: 0;
           top: 0;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding-top: 12px;
         }
 
         .rank-number {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          background: rgba(0,0,0,0.8);
-          color: white;
-          padding: 4px 8px;
-          border-radius: 4px;
+          background: white;
+          color: #000000;
+          padding: 4px 6px;
+          border-radius: 0 4px 4px 0;
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 700;
+          min-width: 24px;
+          text-align: center;
         }
 
         .card-content {
@@ -770,12 +965,21 @@ export default function HomePage() {
           color: #6b7280;
         }
 
+        .card-author {
+          font-weight: 500;
+        }
+
         .card-genre {
-          background: #e5e7eb;
+          background: #f3f4f6;
+          color: #4b5563;
           padding: 2px 6px;
           border-radius: 3px;
           font-size: 10px;
           font-weight: 500;
+        }
+
+        .card-date {
+          color: #9ca3af;
         }
 
         .card-score-main {
@@ -787,8 +991,9 @@ export default function HomePage() {
 
         .main-score {
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 24px;
+          font-size: 32px;
           font-weight: 700;
+          color: #1f2937;
         }
 
         .score-label-main {
@@ -799,10 +1004,17 @@ export default function HomePage() {
 
         .card-description {
           font-family: 'Sohne', sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           color: #4b5563;
           line-height: 1.5;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
+        }
+
+        .card-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
         }
 
         .expand-button {
@@ -810,18 +1022,36 @@ export default function HomePage() {
           border: none;
           color: #3b82f6;
           font-family: 'Sohne', sans-serif;
-          font-size: 12px;
+          font-size: 13px;
           cursor: pointer;
           padding: 0;
-          margin-bottom: 16px;
         }
 
         .expand-button:hover {
           text-decoration: underline;
         }
 
+        .public-score {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+        }
+
+        .public-value {
+          font-family: 'FoundersGrotesk', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .public-label {
+          font-family: 'Sohne', sans-serif;
+          font-size: 11px;
+          color: #6b7280;
+        }
+
         .detailed-scores {
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid #f3f4f6;
           padding-top: 16px;
           margin-top: 16px;
         }
@@ -834,40 +1064,32 @@ export default function HomePage() {
 
         .score-metric {
           font-family: 'Sohne', sans-serif;
-          font-size: 12px;
+          font-size: 13px;
           color: #6b7280;
         }
 
         .score-number {
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 600;
           color: #1f2937;
         }
 
-        .public-voting {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 12px;
+        .vote-section {
+          margin-top: 16px;
           padding-top: 12px;
           border-top: 1px solid #f3f4f6;
         }
 
-        .public-score {
-          font-family: 'Sohne', sans-serif;
-          font-size: 12px;
-          color: #6b7280;
-        }
-
         .vote-button {
+          width: 100%;
           background: #3b82f6;
           color: white;
-          padding: 6px 12px;
+          padding: 10px;
           border: none;
-          border-radius: 4px;
+          border-radius: 6px;
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
@@ -881,30 +1103,34 @@ export default function HomePage() {
         .explanation-section {
           padding: 60px 40px;
           background: white;
+          border-top: 1px solid #e5e7eb;
         }
 
         .explanation-content {
           max-width: 1000px;
-          margin: 40px auto 0;
+          margin: 32px auto 0;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 40px;
         }
 
         .explanation-block {
-          margin-bottom: 40px;
+          text-align: left;
         }
 
         .explanation-title {
           font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 700;
           color: #1f2937;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .explanation-text {
           font-family: 'Sohne', sans-serif;
-          font-size: 15px;
+          font-size: 14px;
           color: #4b5563;
-          line-height: 1.7;
+          line-height: 1.6;
         }
 
         /* Responsive Design */
@@ -923,9 +1149,12 @@ export default function HomePage() {
         }
 
         @media (max-width: 768px) {
+          .header-nav {
+            display: none;
+          }
+          
           .sidebar {
             transform: translateX(-100%);
-            transition: transform 0.3s;
           }
           
           .main-content {
@@ -940,9 +1169,14 @@ export default function HomePage() {
             font-size: 36px;
           }
           
-          .hero-stats {
+          .hero-actions {
             flex-direction: column;
-            gap: 24px;
+            align-items: center;
+          }
+          
+          .hero-proof {
+            flex-direction: column;
+            gap: 8px;
           }
           
           .ideas-section,
@@ -952,6 +1186,11 @@ export default function HomePage() {
           
           .ideas-grid {
             grid-template-columns: 1fr;
+          }
+          
+          .explanation-content {
+            grid-template-columns: 1fr;
+            gap: 24px;
           }
         }
       `}</style>
@@ -1037,7 +1276,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1000;
+          z-index: 1001;
         }
         
         .modal-content {
