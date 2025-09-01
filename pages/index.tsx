@@ -28,6 +28,8 @@ export default function HomePage() {
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function HomePage() {
       const ideasQuery = query(
         collection(db, 'ideas'),
         orderBy('aiScores.overall', 'desc'),
-        limit(15)
+        limit(20)
       )
       
       const snapshot = await getDocs(ideasQuery)
@@ -80,7 +82,7 @@ export default function HomePage() {
   }
 
   const getMockIdeas = (): Idea[] => [
-    // Business Ideas
+    // Business Ideas (5+)
     {
       id: '1', rank: 1, title: 'Neural Market Predictor', type: 'business', genre: 'Fintech', author: 'Dr. Sarah Chen',
       desc: 'AI-powered platform that analyzes 10,000+ market signals in real-time to predict price movements with 89% accuracy. Combines sentiment analysis, technical indicators, and macroeconomic data to generate actionable trading insights for institutional and retail investors.',
@@ -106,7 +108,12 @@ export default function HomePage() {
       desc: 'Predictive supply chain management system that anticipates disruptions 3-6 months in advance using satellite imagery, weather patterns, and geopolitical analysis, saving Fortune 500 companies millions in logistics costs.',
       aiScore: 76, marketScore: 82, innovationScore: 74, executionScore: 77, publicScore: 7.5, publicVotes: 389, timestamp: '2024-01-18', expanded: false
     },
-    // Games Ideas
+    {
+      id: '18', rank: 18, title: 'QuantumSecure Banking', type: 'business', genre: 'Fintech', author: 'Dr. Robert Chen',
+      desc: 'Next-generation banking security platform using quantum encryption and biometric authentication. Prevents 99.99% of fraud attempts while reducing authentication time to under 0.5 seconds.',
+      aiScore: 73, marketScore: 88, innovationScore: 95, executionScore: 62, publicScore: 8.1, publicVotes: 298, timestamp: '2024-01-11', expanded: false
+    },
+    // Games Ideas (5+)
     {
       id: '2', rank: 2, title: 'Quantum Chess Arena', type: 'games', genre: 'Strategy', author: 'Marcus Webb',
       desc: 'Revolutionary chess variant where pieces exist in quantum superposition states until observed. Features simultaneous move possibilities, probability-based captures, and tournament modes with global leaderboards. Built with cutting-edge physics simulation.',
@@ -132,7 +139,12 @@ export default function HomePage() {
       desc: 'Grand strategy game spanning 10,000 years of alternative history where player decisions create branching timelines. Features complex diplomatic AI and emergent storytelling through procedural historical events.',
       aiScore: 75, marketScore: 78, innovationScore: 82, executionScore: 73, publicScore: 7.8, publicVotes: 334, timestamp: '2024-01-15', expanded: false
     },
-    // Movies Ideas
+    {
+      id: '19', rank: 19, title: 'Mindforge Arena', type: 'games', genre: 'Mobile', author: 'Jake Martinez',
+      desc: 'Competitive puzzle-battle game where players create spells by solving logic puzzles in real-time. Features ranked matchmaking, daily tournaments, and a unique spell-crafting system.',
+      aiScore: 71, marketScore: 76, innovationScore: 79, executionScore: 74, publicScore: 7.6, publicVotes: 256, timestamp: '2024-01-10', expanded: false
+    },
+    // Movies Ideas (5+)
     {
       id: '3', rank: 3, title: 'Memory Vault', type: 'movies', genre: 'Sci-Fi', author: 'Elena Rodriguez',
       desc: 'In 2090, memories are extracted and stored as digital assets. A black market memory dealer discovers someone is planting false memories in the global database, threatening the nature of human identity and truth itself.',
@@ -157,6 +169,22 @@ export default function HomePage() {
       id: '17', rank: 17, title: 'Echoes of Tomorrow', type: 'movies', genre: 'Animation', author: 'Jun Takahashi',
       desc: 'Animated epic where a young musician discovers she can alter the future by composing songs that resonate with specific timeline frequencies, but each change erases someone from existence.',
       aiScore: 72, marketScore: 75, innovationScore: 85, executionScore: 68, publicScore: 8.2, publicVotes: 523, timestamp: '2024-01-12', expanded: false
+    },
+    {
+      id: '20', rank: 20, title: 'Digital Prophets', type: 'movies', genre: 'Documentary', author: 'Amanda Lee',
+      desc: 'Documentary exploring the rise of AI-generated religions and digital cults in 2080s, following three followers as they navigate faith, technology, and the question of artificial consciousness.',
+      aiScore: 70, marketScore: 73, innovationScore: 77, executionScore: 78, publicScore: 7.4, publicVotes: 189, timestamp: '2024-01-09', expanded: false
+    },
+    // Tech Ideas (for variety in "All" view)
+    {
+      id: '4', rank: 4, title: 'CodeMind AI', type: 'tech', genre: 'Dev Tools', author: 'Alex Kim',
+      desc: 'Advanced code completion and debugging assistant that understands context across entire codebases. Features automatic bug detection, performance optimization suggestions, and natural language to code translation with 95% accuracy.',
+      aiScore: 87, marketScore: 93, innovationScore: 82, executionScore: 86, publicScore: 8.5, publicVotes: 934, timestamp: '2024-01-25', expanded: false
+    },
+    {
+      id: '8', rank: 8, title: 'SmartFarm IoT', type: 'tech', genre: 'IoT', author: 'Maria Santos',
+      desc: 'Comprehensive agricultural IoT platform combining soil sensors, weather prediction, drone monitoring, and AI crop optimization. Increases yield by 35% while reducing water usage by 50% through precision farming.',
+      aiScore: 79, marketScore: 86, innovationScore: 74, executionScore: 77, publicScore: 7.9, publicVotes: 678, timestamp: '2024-01-21', expanded: false
     }
   ]
 
@@ -176,169 +204,326 @@ export default function HomePage() {
   const gamesIdeas = ideas.filter(idea => idea.type === 'games').slice(0, 5)
   const moviesIdeas = ideas.filter(idea => idea.type === 'movies').slice(0, 5)
 
+  const handleVote = (ideaId: string) => {
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
+    console.log('Voting for idea:', ideaId)
+  }
+
   const handleSignOut = async () => {
     try {
       await signOut(auth)
+      setMobileMenuOpen(false)
     } catch (error) {
       console.error('Error signing out:', error)
     }
   }
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#10b981'
+    if (score >= 60) return '#f59e0b' 
+    return '#ef4444'
+  }
+
   return (
     <>
       <Head>
-        <title>Hyoka - AI-Powered Idea Evaluation Platform</title>
-        <meta name="description" content="Professional AI evaluation platform for entrepreneurs, creators, and innovators." />
+        <title>Hyoka - Professional AI Idea Evaluation Platform</title>
+        <meta name="description" content="Where brilliant ideas meet rigorous AI analysis. Professional evaluation platform for entrepreneurs, creators, and innovators." />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      <div className="min-h-screen bg-gray-50 relative">
         {/* Animated Background */}
         <div className="fixed inset-0 z-0">
           <div 
-            className="absolute inset-0 opacity-30"
+            className="absolute inset-0 opacity-20"
             style={{
-              backgroundImage: 'url(/bg1.png)',
+              backgroundImage: 'url(/bg11.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              filter: 'blur(8px)',
-              animation: 'drift 60s ease-in-out infinite',
+              filter: 'blur(3px)',
+              animation: 'drift 45s ease-in-out infinite',
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/85 to-white/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/92 to-white/95" />
         </div>
 
         {/* Header */}
-        <header className="relative z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 h-16">
-            <div className="flex items-center justify-between h-full">
-              <div className="flex items-center space-x-8">
+        <header className="relative z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200 sticky top-0">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-10">
                 <Link href="/">
-                  <a className="text-2xl font-black tracking-tight text-gray-900">HYOKA</a>
+                  <a className="text-2xl font-black tracking-tight">HYOKA</a>
                 </Link>
-                <nav className="hidden md:flex space-x-6">
+                <nav className="hidden md:flex space-x-8">
+                  <Link href="/"><a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Home</a></Link>
                   <Link href="/explore"><a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Explore</a></Link>
                   <Link href="/leaderboard"><a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Leaderboard</a></Link>
                   <Link href="/analytics"><a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Analytics</a></Link>
+                  <Link href="/about"><a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">About</a></Link>
                 </nav>
               </div>
               
               <div className="flex items-center space-x-4">
+                <input 
+                  type="search" 
+                  placeholder="Search ideas..." 
+                  className="hidden lg:block w-64 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                />
+                
                 {user ? (
-                  <>
-                    <Link href="/dashboard">
-                      <a className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Dashboard</a>
-                    </Link>
-                    <button 
-                      onClick={handleSignOut}
-                      className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      Sign Out
-                    </button>
-                  </>
+                  <div className="flex items-center space-x-4">
+                    <Link href="/dashboard"><a className="text-sm font-medium text-gray-600 hover:text-gray-900">Dashboard</a></Link>
+                    <button onClick={handleSignOut} className="text-sm font-medium text-gray-600 hover:text-gray-900">Sign Out</button>
+                  </div>
                 ) : (
-                  <>
-                    <button 
-                      onClick={() => setShowLoginModal(true)}
-                      className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      Login
-                    </button>
+                  <div className="flex items-center space-x-3">
+                    <button onClick={() => setShowLoginModal(true)} className="text-sm font-medium text-gray-600 hover:text-gray-900">Login</button>
                     <Link href="/submit">
-                      <a className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+                      <a className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
                         Submit Idea
                       </a>
                     </Link>
-                  </>
+                  </div>
                 )}
+                
+                <button 
+                  className="md:hidden p-2"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <div className="w-5 h-0.5 bg-gray-900 mb-1"></div>
+                  <div className="w-5 h-0.5 bg-gray-900 mb-1"></div>
+                  <div className="w-5 h-0.5 bg-gray-900"></div>
+                </button>
               </div>
             </div>
           </div>
+
+          {mobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-4">
+              <nav className="flex flex-col space-y-3">
+                <Link href="/"><a className="text-sm font-medium text-gray-600">Home</a></Link>
+                <Link href="/explore"><a className="text-sm font-medium text-gray-600">Explore</a></Link>
+                <Link href="/leaderboard"><a className="text-sm font-medium text-gray-600">Leaderboard</a></Link>
+                <Link href="/analytics"><a className="text-sm font-medium text-gray-600">Analytics</a></Link>
+                <Link href="/about"><a className="text-sm font-medium text-gray-600">About</a></Link>
+              </nav>
+            </div>
+          )}
         </header>
 
-        {/* Main Content */}
-        <main className="relative z-10">
-          {/* Hero Section */}
-          <section className="pt-24 pb-12 px-6">
-            <div className="max-w-7xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-black tracking-tight text-gray-900 mb-6">
-                AI-POWERED IDEA EVALUATION
-              </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
-                Professional-grade analysis platform trusted by entrepreneurs and innovators worldwide.
-              </p>
-              
-              <div className="flex justify-center space-x-12 mb-16">
-                <div className="text-center">
-                  <div className="text-3xl font-black text-gray-900">47K+</div>
-                  <div className="text-sm text-gray-500 mt-1">Ideas Analyzed</div>
+        <div className="relative z-10 flex">
+          {/* Sidebar */}
+          <aside className={`${sidebarExpanded ? 'w-80' : 'w-16'} bg-white/90 backdrop-blur-sm border-r border-gray-200 min-h-screen sticky top-16 transition-all duration-300 hidden lg:block`}>
+            <button 
+              className="absolute -right-3 top-6 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-xs hover:bg-gray-50"
+              onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            >
+              {sidebarExpanded ? '←' : '→'}
+            </button>
+            
+            {sidebarExpanded && (
+              <div className="p-6 space-y-8">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Quick Actions</h3>
+                  <div className="space-y-2">
+                    <Link href="/submit">
+                      <a className="block w-full px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors text-center">
+                        Submit New Idea
+                      </a>
+                    </Link>
+                    {!user && (
+                      <button 
+                        onClick={() => setShowLoginModal(true)}
+                        className="w-full px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Join Platform
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-black text-gray-900">94.2%</div>
-                  <div className="text-sm text-gray-500 mt-1">Accuracy Rate</div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Categories</h3>
+                  <div className="space-y-1">
+                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="font-medium">All Ideas</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{ideas.length}</span>
+                    </button>
+                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="font-medium">Business</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{businessIdeas.length}</span>
+                    </button>
+                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="font-medium">Games</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{gamesIdeas.length}</span>
+                    </button>
+                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="font-medium">Movies</span>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{moviesIdeas.length}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-black text-gray-900">$12.4M</div>
-                  <div className="text-sm text-gray-500 mt-1">Funding Raised</div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Platform Metrics</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold">47,329</div>
+                      <div className="text-xs text-gray-500">Ideas Evaluated</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold">$12.4M</div>
+                      <div className="text-xs text-gray-500">Funding Raised</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold">2,847</div>
+                      <div className="text-xs text-gray-500">This Month</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold">94.2%</div>
+                      <div className="text-xs text-gray-500">Accuracy Rate</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Live Activity</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
+                      <span className="text-xs text-gray-600">Neural Trading Bot submitted 2m ago</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
+                      <span className="text-xs text-gray-600">VR Therapy voted by 12 users</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
+                      <span className="text-xs text-gray-600">Memory Vault reached top 5</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
+                      <span className="text-xs text-gray-600">New funding milestone: $12.4M</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            )}
+          </aside>
 
-          {/* Three Column Layout */}
-          <section className="px-6 pb-24">
-            <div className="max-w-7xl mx-auto">
+          {/* Main Content */}
+          <main className="flex-1 px-6 py-8">
+            {/* Hero Section */}
+            <section className="text-center mb-12">
+              <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4">
+                WHERE BRILLIANT IDEAS
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  MEET AI ANALYSIS
+                </span>
+              </h1>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                Professional-grade evaluation platform trusted by entrepreneurs, VCs, and innovators worldwide. 
+                Get comprehensive AI analysis of market potential, innovation level, and execution complexity.
+              </p>
+              
+              <div className="flex justify-center space-x-8 mb-8">
+                <div className="text-center">
+                  <div className="text-3xl font-black">47K+</div>
+                  <div className="text-sm text-gray-500">Ideas Analyzed</div>
+                </div>
+                <div className="w-px bg-gray-300"></div>
+                <div className="text-center">
+                  <div className="text-3xl font-black">$12.4M</div>
+                  <div className="text-sm text-gray-500">Capital Raised</div>
+                </div>
+                <div className="w-px bg-gray-300"></div>
+                <div className="text-center">
+                  <div className="text-3xl font-black">94.2%</div>
+                  <div className="text-sm text-gray-500">Prediction Accuracy</div>
+                </div>
+              </div>
+            </section>
+
+            {/* Three Column Layout */}
+            <section className="mb-16">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold">Top Ranked Ideas</h2>
+                <select className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400">
+                  <option>Sort by AI Score</option>
+                  <option>Sort by Public Score</option>
+                  <option>Sort by Recent</option>
+                  <option>Sort by Funding Potential</option>
+                </select>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
                 {/* Business Column */}
                 <div>
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Business</h2>
-                    <div className="mt-2 h-1 w-12 bg-gray-900"></div>
+                  <div className="mb-4 pb-2 border-b-2 border-gray-900">
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Business</h3>
                   </div>
                   <div className="space-y-4">
                     {businessIdeas.map((idea) => (
-                      <div key={idea.id} className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300">
+                      <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-bold text-gray-900 text-base">{idea.title}</h3>
-                            <p className="text-xs text-gray-500 mt-1">{idea.author} • {idea.genre}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-bold text-red-600">#{idea.rank}</span>
+                              <h4 className="font-bold text-base">{idea.title}</h4>
+                            </div>
+                            <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-black text-gray-900">{idea.aiScore}</div>
+                          <div className="text-right ml-3">
+                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.marketScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.innovationScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.executionScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
                         
                         {expandedCards.has(idea.id) && (
                           <div className="pt-3 border-t border-gray-100">
-                            <p className="text-sm text-gray-600 leading-relaxed">{idea.desc}</p>
-                            <div className="mt-3 flex items-center justify-between">
+                            <p className="text-sm text-gray-600 leading-relaxed mb-3">{idea.desc}</p>
+                            <div className="flex items-center justify-between mb-3">
                               <span className="text-xs text-gray-500">{idea.publicVotes} votes</span>
-                              <span className="text-xs font-medium text-gray-700">Rating: {idea.publicScore.toFixed(1)}/10</span>
+                              <span className="text-xs font-medium text-gray-700">Public Rating: {idea.publicScore.toFixed(1)}/10</span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleVote(idea.id)}
+                                className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded hover:bg-green-600 transition-colors"
+                              >
+                                Support
+                              </button>
+                              <button className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 transition-colors">
+                                Share
+                              </button>
                             </div>
                           </div>
                         )}
                         
                         <button 
                           onClick={() => toggleExpanded(idea.id)}
-                          className="mt-3 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                          className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                         >
-                          {expandedCards.has(idea.id) ? 'Show Less' : 'View Details'}
+                          {expandedCards.has(idea.id) ? '← Show Less' : 'View Details →'}
                         </button>
                       </div>
                     ))}
@@ -347,54 +532,67 @@ export default function HomePage() {
 
                 {/* Games Column */}
                 <div>
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Games</h2>
-                    <div className="mt-2 h-1 w-12 bg-gray-900"></div>
+                  <div className="mb-4 pb-2 border-b-2 border-gray-900">
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Games</h3>
                   </div>
                   <div className="space-y-4">
                     {gamesIdeas.map((idea) => (
-                      <div key={idea.id} className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300">
+                      <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-bold text-gray-900 text-base">{idea.title}</h3>
-                            <p className="text-xs text-gray-500 mt-1">{idea.author} • {idea.genre}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-bold text-red-600">#{idea.rank}</span>
+                              <h4 className="font-bold text-base">{idea.title}</h4>
+                            </div>
+                            <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-black text-gray-900">{idea.aiScore}</div>
+                          <div className="text-right ml-3">
+                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.marketScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.innovationScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.executionScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
                         
                         {expandedCards.has(idea.id) && (
                           <div className="pt-3 border-t border-gray-100">
-                            <p className="text-sm text-gray-600 leading-relaxed">{idea.desc}</p>
-                            <div className="mt-3 flex items-center justify-between">
+                            <p className="text-sm text-gray-600 leading-relaxed mb-3">{idea.desc}</p>
+                            <div className="flex items-center justify-between mb-3">
                               <span className="text-xs text-gray-500">{idea.publicVotes} votes</span>
-                              <span className="text-xs font-medium text-gray-700">Rating: {idea.publicScore.toFixed(1)}/10</span>
+                              <span className="text-xs font-medium text-gray-700">Public Rating: {idea.publicScore.toFixed(1)}/10</span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleVote(idea.id)}
+                                className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded hover:bg-green-600 transition-colors"
+                              >
+                                Support
+                              </button>
+                              <button className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 transition-colors">
+                                Share
+                              </button>
                             </div>
                           </div>
                         )}
                         
                         <button 
                           onClick={() => toggleExpanded(idea.id)}
-                          className="mt-3 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                          className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                         >
-                          {expandedCards.has(idea.id) ? 'Show Less' : 'View Details'}
+                          {expandedCards.has(idea.id) ? '← Show Less' : 'View Details →'}
                         </button>
                       </div>
                     ))}
@@ -403,64 +601,130 @@ export default function HomePage() {
 
                 {/* Movies Column */}
                 <div>
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Movies</h2>
-                    <div className="mt-2 h-1 w-12 bg-gray-900"></div>
+                  <div className="mb-4 pb-2 border-b-2 border-gray-900">
+                    <h3 className="text-lg font-bold uppercase tracking-wide">Movies</h3>
                   </div>
                   <div className="space-y-4">
                     {moviesIdeas.map((idea) => (
-                      <div key={idea.id} className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300">
+                      <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-bold text-gray-900 text-base">{idea.title}</h3>
-                            <p className="text-xs text-gray-500 mt-1">{idea.author} • {idea.genre}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-bold text-red-600">#{idea.rank}</span>
+                              <h4 className="font-bold text-base">{idea.title}</h4>
+                            </div>
+                            <p className="text-xs text-gray-500">{idea.author} • {idea.genre}</p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-black text-gray-900">{idea.aiScore}</div>
+                          <div className="text-right ml-3">
+                            <div className="text-2xl font-black" style={{ color: getScoreColor(idea.aiScore) }}>{idea.aiScore}</div>
                             <div className="text-xs text-gray-500">AI Score</div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.marketScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.marketScore) }}>{idea.marketScore}</div>
                             <div className="text-xs text-gray-500">Market</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.innovationScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.innovationScore) }}>{idea.innovationScore}</div>
                             <div className="text-xs text-gray-500">Innovation</div>
                           </div>
                           <div className="text-center py-2 bg-gray-50 rounded">
-                            <div className="text-sm font-bold text-gray-700">{idea.executionScore}</div>
+                            <div className="text-sm font-bold" style={{ color: getScoreColor(idea.executionScore) }}>{idea.executionScore}</div>
                             <div className="text-xs text-gray-500">Execution</div>
                           </div>
                         </div>
                         
                         {expandedCards.has(idea.id) && (
                           <div className="pt-3 border-t border-gray-100">
-                            <p className="text-sm text-gray-600 leading-relaxed">{idea.desc}</p>
-                            <div className="mt-3 flex items-center justify-between">
+                            <p className="text-sm text-gray-600 leading-relaxed mb-3">{idea.desc}</p>
+                            <div className="flex items-center justify-between mb-3">
                               <span className="text-xs text-gray-500">{idea.publicVotes} votes</span>
-                              <span className="text-xs font-medium text-gray-700">Rating: {idea.publicScore.toFixed(1)}/10</span>
+                              <span className="text-xs font-medium text-gray-700">Public Rating: {idea.publicScore.toFixed(1)}/10</span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleVote(idea.id)}
+                                className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded hover:bg-green-600 transition-colors"
+                              >
+                                Support
+                              </button>
+                              <button className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 transition-colors">
+                                Share
+                              </button>
                             </div>
                           </div>
                         )}
                         
                         <button 
                           onClick={() => toggleExpanded(idea.id)}
-                          className="mt-3 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                          className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                         >
-                          {expandedCards.has(idea.id) ? 'Show Less' : 'View Details'}
+                          {expandedCards.has(idea.id) ? '← Show Less' : 'View Details →'}
                         </button>
                       </div>
                     ))}
                   </div>
                 </div>
-
               </div>
-            </div>
-          </section>
-        </main>
+            </section>
+
+            {/* How It Works */}
+            <section className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-8 mb-12">
+              <h2 className="text-2xl font-bold mb-8 text-center">Advanced AI Evaluation Process</h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">01</div>
+                  <h3 className="font-bold mb-2">Idea Submission</h3>
+                  <p className="text-sm text-gray-600">Submit your concept through our streamlined interface with detailed descriptions and market context.</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">02</div>
+                  <h3 className="font-bold mb-2">Multi-Model Analysis</h3>
+                  <p className="text-sm text-gray-600">Advanced neural networks analyze market signals, innovation patterns, and execution complexity.</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">03</div>
+                  <h3 className="font-bold mb-2">Community Validation</h3>
+                  <p className="text-sm text-gray-600">Expert community provides additional validation through structured feedback and peer review.</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">04</div>
+                  <h3 className="font-bold mb-2">Comprehensive Report</h3>
+                  <p className="text-sm text-gray-600">Receive detailed analysis including opportunities, competitive landscape, and actionable next steps.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Platform Statistics */}
+            <section className="text-center">
+              <h2 className="text-2xl font-bold mb-8">Platform Impact</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
+                  <div className="text-3xl font-black mb-1">47,329</div>
+                  <div className="text-sm text-gray-600 mb-1">Ideas Evaluated</div>
+                  <div className="text-xs text-green-600 font-medium">↑ 23% this month</div>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
+                  <div className="text-3xl font-black mb-1">$12.4M</div>
+                  <div className="text-sm text-gray-600 mb-1">Total Funding Raised</div>
+                  <div className="text-xs text-green-600 font-medium">↑ 156% this quarter</div>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
+                  <div className="text-3xl font-black mb-1">94.2%</div>
+                  <div className="text-sm text-gray-600 mb-1">Prediction Accuracy</div>
+                  <div className="text-xs text-green-600 font-medium">Industry leading</div>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
+                  <div className="text-3xl font-black mb-1">18,500</div>
+                  <div className="text-sm text-gray-600 mb-1">Active Users</div>
+                  <div className="text-xs text-green-600 font-medium">↑ 34% this month</div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
 
         {/* Login Modal */}
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
@@ -472,13 +736,13 @@ export default function HomePage() {
             transform: translateX(0) translateY(0) scale(1);
           }
           25% {
-            transform: translateX(-30px) translateY(-20px) scale(1.02);
+            transform: translateX(-20px) translateY(-15px) scale(1.01);
           }
           50% {
-            transform: translateX(20px) translateY(-40px) scale(1.04);
+            transform: translateX(15px) translateY(-25px) scale(1.02);
           }
           75% {
-            transform: translateX(-20px) translateY(10px) scale(1.02);
+            transform: translateX(-15px) translateY(10px) scale(1.01);
           }
         }
       `}</style>
@@ -494,7 +758,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
     setLoading(true)
     setError('')
