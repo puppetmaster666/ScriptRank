@@ -31,9 +31,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<{[key: string]: boolean}>({
-    business: true,
-    games: true,
-    movies: true
+    business: false,
+    games: false,
+    movies: false
   })
 
   const categories = {
@@ -85,10 +85,10 @@ export default function HomePage() {
           genre: data.genre || 'General',
           author: data.username || data.userName || 'Anonymous',
           desc: data.content,
-          aiScore: aiScore * 10,
-          marketScore: (data.aiScores?.market || Math.random() * 10) * 10,
-          innovationScore: (data.aiScores?.innovation || Math.random() * 10) * 10,
-          executionScore: (data.aiScores?.execution || Math.random() * 10) * 10,
+          aiScore: Math.round(aiScore * 10),
+          marketScore: Math.round((data.aiScores?.market || Math.random() * 10) * 10),
+          innovationScore: Math.round((data.aiScores?.innovation || Math.random() * 10) * 10),
+          executionScore: Math.round((data.aiScores?.execution || Math.random() * 10) * 10),
           publicScore: publicScore,
           publicVotes: publicVotes,
           timestamp: data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '2024-01-15',
@@ -108,52 +108,52 @@ export default function HomePage() {
   const getMockIdeas = (): Idea[] => [
     {
       id: '1', rank: 1, title: 'Neural Trading Assistant', type: 'business', genre: 'Fintech', author: 'Marcus Chen',
-      desc: 'AI-powered trading platform that analyzes market sentiment, news, and technical indicators in real-time. Uses deep learning to predict price movements and automatically executes trades based on risk tolerance. Platform includes comprehensive risk management, backtesting capabilities, and social trading features where users can copy strategies from top performers.',
+      desc: 'AI-powered trading platform that analyzes market sentiment, news, and technical indicators in real-time. Uses deep learning to predict price movements and automatically executes trades based on risk tolerance.',
       aiScore: 92, marketScore: 95, innovationScore: 88, executionScore: 93, publicScore: 8.7, publicVotes: 234, timestamp: '2024-01-22', expanded: false
     },
     {
       id: '2', rank: 2, title: 'Quantum Chess VR', type: 'games', genre: 'VR/AR', author: 'Sarah Kim',
-      desc: 'Revolutionary VR chess where pieces exist in quantum superposition until observed. Players can make probabilistic moves, creating multiple potential board states simultaneously. Features tournament mode, AI training partners with adjustable difficulty, physics-based piece interactions, and stunning photorealistic 3D environments.',
+      desc: 'Revolutionary VR chess where pieces exist in quantum superposition until observed. Players can make probabilistic moves, creating multiple potential board states simultaneously.',
       aiScore: 89, marketScore: 82, innovationScore: 97, executionScore: 88, publicScore: 9.1, publicVotes: 189, timestamp: '2024-01-21', expanded: false
     },
     {
       id: '3', rank: 3, title: 'The Memory Thief', type: 'movies', genre: 'Sci-Fi', author: 'David Rodriguez',
-      desc: 'In 2087, memories are currency traded on black markets. A memory dealer discovers they can steal and implant experiences, but when they accidentally absorb memories of a murder victim, they become the target. Neo-noir thriller exploring identity, consciousness, and what makes us human in an age where memories can be manufactured.',
+      desc: 'In 2087, memories are currency traded on black markets. A memory dealer discovers they can steal and implant experiences, but when they absorb memories of a murder victim, they become the target.',
       aiScore: 87, marketScore: 89, innovationScore: 83, executionScore: 89, publicScore: 8.4, publicVotes: 156, timestamp: '2024-01-20', expanded: false
     },
     {
       id: '4', rank: 4, title: 'EcoChain Marketplace', type: 'business', genre: 'CleanTech', author: 'Anna Foster',
-      desc: 'Blockchain-based carbon credit trading platform for individuals and small businesses. Users earn verified tokens for eco-friendly actions, trade credits globally, and offset carbon footprints. Includes IoT sensors for automatic verification, gamification elements, and corporate partnership programs.',
+      desc: 'Blockchain-based carbon credit trading platform for individuals and small businesses. Users earn verified tokens for eco-friendly actions and trade credits globally.',
       aiScore: 86, marketScore: 91, innovationScore: 84, executionScore: 83, publicScore: 7.9, publicVotes: 203, timestamp: '2024-01-19', expanded: false
     },
     {
       id: '5', rank: 5, title: 'Mind Palace Builder', type: 'games', genre: 'Mobile Games', author: 'James Park',
-      desc: 'Memory training game based on ancient method of loci technique. Players build virtual palaces and systematically place information in rooms to enhance memory retention. Features multiplayer memory competitions, daily brain training challenges, educational content integration, and progress tracking.',
+      desc: 'Memory training game based on ancient method of loci technique. Players build virtual palaces and systematically place information in rooms to enhance memory retention.',
       aiScore: 84, marketScore: 78, innovationScore: 87, executionScore: 87, publicScore: 8.2, publicVotes: 167, timestamp: '2024-01-18', expanded: false
     },
     {
       id: '6', rank: 6, title: 'Fractured Reality', type: 'movies', genre: 'Thriller', author: 'Elena Vasquez',
-      desc: 'Quantum physicist discovers parallel universes bleeding into ours after failed experiment. As reality fractures, she must navigate multiple versions of herself to prevent collapse of all dimensions. High-concept sci-fi thriller with practical effects, exploring themes of choice, consequence, and infinite possibility.',
+      desc: 'Quantum physicist discovers parallel universes bleeding into ours after failed experiment. As reality fractures, she must navigate multiple versions of herself to prevent collapse.',
       aiScore: 83, marketScore: 81, innovationScore: 89, executionScore: 79, publicScore: 8.6, publicVotes: 142, timestamp: '2024-01-17', expanded: false
     },
     {
       id: '7', rank: 7, title: 'AgriAI Optimizer', type: 'business', genre: 'AI/ML', author: 'Robert Singh',
-      desc: 'Comprehensive AI-powered farm management system using satellite imagery, weather data, soil sensors, and IoT devices to optimize crop yields. Predicts pest outbreaks, recommends precise fertilizer schedules, monitors soil health, and provides real-time market pricing for optimal harvest timing decisions.',
+      desc: 'AI-powered farm management system using satellite imagery, weather data, and IoT sensors to optimize crop yields. Predicts pest outbreaks and recommends fertilizer schedules.',
       aiScore: 82, marketScore: 87, innovationScore: 79, executionScore: 80, publicScore: 7.5, publicVotes: 198, timestamp: '2024-01-16', expanded: false
     },
     {
       id: '8', rank: 8, title: 'Temporal Heist', type: 'games', genre: 'Strategy', author: 'Maya Thompson',
-      desc: 'Complex turn-based strategy game where players plan elaborate heists across multiple time periods. Actions in past directly affect present outcomes, creating intricate cause-and-effect scenarios. Features single-player campaigns, competitive multiplayer modes, and time paradox puzzle mechanics.',
+      desc: 'Turn-based strategy game where players plan elaborate heists across multiple time periods. Actions in past directly affect present outcomes, creating complex scenarios.',
       aiScore: 81, marketScore: 76, innovationScore: 88, executionScore: 79, publicScore: 8.3, publicVotes: 134, timestamp: '2024-01-15', expanded: false
     },
     {
       id: '9', rank: 9, title: 'CodeMentor AI', type: 'business', genre: 'EdTech', author: 'Alex Johnson',
-      desc: 'Personalized AI coding tutor that adapts to individual learning styles and provides real-time feedback on programming projects. Features interactive debugging sessions, code review assistance, career guidance, and integration with popular development environments.',
+      desc: 'Personalized AI coding tutor that adapts to individual learning styles and provides real-time feedback on programming projects with interactive debugging sessions.',
       aiScore: 79, marketScore: 85, innovationScore: 74, executionScore: 78, publicScore: 7.8, publicVotes: 167, timestamp: '2024-01-14', expanded: false
     },
     {
       id: '10', rank: 10, title: 'Shadow Protocol', type: 'movies', genre: 'Action', author: 'Rachel Torres',
-      desc: 'Elite cyber-warfare specialist discovers government conspiracy involving AI manipulation of global markets. Must expose the truth while being hunted by both foreign agents and domestic authorities. High-tech thriller combining practical stunts with cutting-edge digital effects.',
+      desc: 'Elite cyber-warfare specialist discovers government conspiracy involving AI manipulation of global markets. Must expose the truth while being hunted by authorities.',
       aiScore: 78, marketScore: 82, innovationScore: 73, executionScore: 80, publicScore: 8.1, publicVotes: 128, timestamp: '2024-01-13', expanded: false
     }
   ]
@@ -186,11 +186,17 @@ export default function HomePage() {
     console.log('Voting for idea:', ideaId)
   }
 
+  const getScoreColor = (score: number) => {
+    if (score >= 75) return '#10b981'
+    if (score >= 50) return '#f59e0b' 
+    return '#ef4444'
+  }
+
   return (
     <>
       <Head>
-        <title>Hyoka - AI Ranks Ideas, Not Marketing Budgets</title>
-        <meta name="description" content="Get your ideas ranked by merit, not money. Advanced AI evaluation platform for entrepreneurs, creators, and innovators." />
+        <title>Hyoka - Get Discovered by Merit, Not Money</title>
+        <meta name="description" content="AI-powered idea evaluation platform. Professional analysis without marketing budgets." />
       </Head>
 
       <style jsx global>{`
@@ -201,41 +207,6 @@ export default function HomePage() {
           font-display: swap;
         }
         
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Medium.otf') format('opentype');
-          font-weight: 500;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Semibold.otf') format('opentype');
-          font-weight: 600;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'FoundersGrotesk';
-          src: url('/fonts/FoundersGrotesk-Bold.otf') format('opentype');
-          font-weight: 700;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'Sohne';
-          src: url('/fonts/TestSohneBreit-Buch.otf') format('opentype');
-          font-weight: 400;
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'Sohne';
-          src: url('/fonts/TestSohneBreit-Kraftig.otf') format('opentype');
-          font-weight: 500;
-          font-display: swap;
-        }
-        
         * {
           margin: 0;
           padding: 0;
@@ -243,111 +214,84 @@ export default function HomePage() {
         }
         
         body {
-          font-family: 'Sohne', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #f0f2f4;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+          background: #f5f5f5;
           color: #1a1a1a;
-          line-height: 1.6;
+          line-height: 1.5;
         }
       `}</style>
 
       {/* Header */}
       <header className="header">
-        <div className="header-content">
+        <div className="container">
           <Link href="/">
-            <a className="header-logo">Hyoka</a>
+            <a className="logo">Hyoka</a>
           </Link>
-          <nav className="header-nav">
-            <Link href="/">
-              <a className="nav-link">Home</a>
-            </Link>
-            <Link href="/leaderboard">
-              <a className="nav-link">Leaderboard</a>
-            </Link>
-            <Link href="/how-it-works">
-              <a className="nav-link">How It Works</a>
-            </Link>
-            <Link href="/why-us">
-              <a className="nav-link">Why Us</a>
-            </Link>
-            <Link href="/pricing">
-              <a className="nav-link">Pricing</a>
-            </Link>
-            {user && (
-              <Link href="/dashboard">
-                <a className="nav-link">Dashboard</a>
-              </Link>
-            )}
+          <nav className="nav">
+            <Link href="/"><a className="nav-link">Home</a></Link>
+            <Link href="/leaderboard"><a className="nav-link">Leaderboard</a></Link>
+            <Link href="/how-it-works"><a className="nav-link">How It Works</a></Link>
+            <Link href="/pricing"><a className="nav-link">Pricing</a></Link>
+            {user && <Link href="/dashboard"><a className="nav-link">Dashboard</a></Link>}
           </nav>
         </div>
       </header>
 
-      <div className="app-layout">
-        {/* Left Sidebar */}
+      <div className="layout">
+        {/* Sidebar */}
         <aside className="sidebar">
           <div className="sidebar-section">
-            <h3 className="sidebar-title">Actions</h3>
-            <div className="action-buttons">
-              <Link href="/submit">
-                <a className="sidebar-button primary">Submit My Idea</a>
-              </Link>
-              <button 
-                onClick={() => setShowLoginModal(true)} 
-                className="sidebar-button secondary"
-              >
-                Login / Sign Up
-              </button>
-            </div>
+            <h3>Actions</h3>
+            <Link href="/submit">
+              <a className="btn-primary">Submit My Idea</a>
+            </Link>
+            <button 
+              onClick={() => setShowLoginModal(true)} 
+              className="btn-secondary"
+            >
+              Login
+            </button>
           </div>
 
           <div className="sidebar-section">
-            <h3 className="sidebar-title">Categories</h3>
-            <div className="nav-category">
-              <button
-                className={`nav-item ${activeCategory === 'all' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveCategory('all')
-                  setActiveGenre('all')
-                }}
-              >
-                <span className="nav-text">All Ideas</span>
-                <span className="nav-count">{ideas.length}</span>
-              </button>
-            </div>
+            <h3>Categories</h3>
+            
+            <button
+              className={`category-btn ${activeCategory === 'all' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveCategory('all')
+                setActiveGenre('all')
+              }}
+            >
+              <span>All Ideas</span>
+              <span className="count">{ideas.length}</span>
+            </button>
 
             {Object.entries(categories).map(([category, genres]) => (
-              <div key={category} className="nav-category">
+              <div key={category}>
                 <button
-                  className={`nav-item ${activeCategory === category ? 'active' : ''}`}
+                  className={`category-btn ${activeCategory === category ? 'active' : ''}`}
                   onClick={() => {
                     setActiveCategory(category as any)
                     setActiveGenre('all')
                     toggleCategory(category)
                   }}
                 >
-                  <span className="nav-text">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </span>
-                  <span className="nav-count">
-                    {ideas.filter(i => i.type === category).length}
-                  </span>
-                  <span className="expand-icon">
-                    {expandedCategories[category] ? '−' : '+'}
-                  </span>
+                  <span>{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                  <span className="count">{ideas.filter(i => i.type === category).length}</span>
+                  <span className="expand">{expandedCategories[category] ? '−' : '+'}</span>
                 </button>
                 
                 {expandedCategories[category] && (
                   <div className="genre-list">
-                    <button
-                      className={`genre-item ${activeGenre === 'all' ? 'active' : ''}`}
-                      onClick={() => setActiveGenre('all')}
-                    >
-                      All {category}
-                    </button>
                     {genres.map(genre => (
                       <button
                         key={genre}
-                        className={`genre-item ${activeGenre === genre ? 'active' : ''}`}
-                        onClick={() => setActiveGenre(genre)}
+                        className={`genre-btn ${activeGenre === genre ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveCategory(category as any)
+                          setActiveGenre(genre)
+                        }}
                       >
                         {genre}
                       </button>
@@ -359,94 +303,81 @@ export default function HomePage() {
           </div>
 
           <div className="sidebar-section">
-            <h3 className="sidebar-title">Platform Stats</h3>
-            <div className="stats-list">
-              <div className="stat-item">
+            <h3>Stats</h3>
+            <div className="stats">
+              <div className="stat">
                 <span className="stat-label">Total Ideas</span>
                 <span className="stat-value">15,847</span>
               </div>
-              <div className="stat-item">
-                <span className="stat-label">AI Evaluations</span>
-                <span className="stat-value">23,901</span>
+              <div className="stat">
+                <span className="stat-label">This Week</span>
+                <span className="stat-value">127</span>
               </div>
-              <div className="stat-item">
+              <div className="stat">
                 <span className="stat-label">Active Users</span>
                 <span className="stat-value">4,567</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">This Week</span>
-                <span className="stat-value">127 new</span>
               </div>
             </div>
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="main-content">
-          {/* Hero Section */}
-          <section className="hero-section">
-            <h1 className="hero-title">Get Discovered by Merit, Not Money</h1>
-            <p className="hero-subtitle">
+        {/* Main */}
+        <main className="main">
+          {/* Hero */}
+          <section className="hero">
+            <h1>Get Discovered by Merit, Not Money</h1>
+            <p>
               Advanced AI algorithms analyze market potential, innovation level, and execution feasibility. 
               Join 15,847 entrepreneurs who've gotten honest, data-driven feedback without spending on marketing.
             </p>
-            <div className="hero-proof">
-              <span className="proof-text">127 ideas submitted this week</span>
-              <span className="proof-divider">•</span>
-              <span className="proof-text">$2.3M in funding raised by top ideas</span>
-              <span className="proof-divider">•</span>
-              <span className="proof-text">89% accuracy rate</span>
+            <div className="hero-stats">
+              <span>127 ideas submitted this week</span>
+              <span>•</span>
+              <span>$2.3M raised by top ideas</span>
+              <span>•</span>
+              <span>89% accuracy rate</span>
             </div>
           </section>
 
           {/* Ideas Grid */}
-          <section className="ideas-section">
-            <div className="section-header">
-              <h2 className="section-title">
+          <section className="ideas">
+            <div className="ideas-header">
+              <h2>
                 {activeCategory === 'all' ? 'All Ideas' : 
                  activeGenre === 'all' ? 
                    `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Ideas` :
                    `${activeGenre} Ideas`}
               </h2>
-              <div className="section-meta">
-                <span className="result-count">{filteredIdeas.length} results</span>
-                <select className="sort-select">
-                  <option>Sort by AI Score</option>
-                  <option>Sort by Public Score</option>
-                  <option>Sort by Recent</option>
-                </select>
-              </div>
+              <span className="count">{filteredIdeas.length} results</span>
             </div>
 
-            <div className="ideas-grid">
+            <div className="grid">
               {filteredIdeas.map((idea) => (
-                <div key={idea.id} className="idea-card">
-                  <div className="card-rank-bar">
-                    <span className="rank-number">{idea.rank}</span>
-                  </div>
+                <div key={idea.id} className="card">
+                  <div className="rank-badge">{idea.rank}</div>
                   
                   <div className="card-content">
                     <div className="card-header">
-                      <h3 className="card-title">{idea.title}</h3>
-                      <div className="card-meta">
-                        <span className="card-author">by {idea.author}</span>
-                        <span className="card-genre">{idea.genre}</span>
-                        <span className="card-date">{idea.timestamp}</span>
+                      <h3>{idea.title}</h3>
+                      <div className="meta">
+                        <span>by {idea.author}</span>
+                        <span>{idea.genre}</span>
+                        <span>{idea.timestamp}</span>
                       </div>
                     </div>
                     
-                    <div className="card-score-main">
-                      <span className="main-score">{Math.round(idea.aiScore)}</span>
-                      <span className="score-label-main">AI Score</span>
+                    <div className="score-display">
+                      <span className="main-score">{idea.aiScore}</span>
+                      <span className="score-label">AI Score</span>
                     </div>
                     
-                    <p className="card-description">
+                    <p className="description">
                       {idea.expanded ? idea.desc : `${idea.desc.substring(0, 120)}...`}
                     </p>
                     
                     <div className="card-actions">
                       <button 
-                        className="expand-button"
+                        className="expand-btn"
                         onClick={() => toggleExpanded(idea.id)}
                       >
                         {idea.expanded ? 'Show Less' : 'Read More'}
@@ -454,65 +385,66 @@ export default function HomePage() {
                       
                       <div className="public-score">
                         <span className="public-value">{idea.publicScore.toFixed(1)}</span>
-                        <span className="public-label">({idea.publicVotes} votes)</span>
+                        <span className="vote-count">({idea.publicVotes} votes)</span>
                       </div>
                     </div>
                     
                     {idea.expanded && (
-                      <div className="detailed-scores">
-                        <div className="score-row">
-                          <span className="score-metric">Market Potential</span>
+                      <div className="detailed-metrics">
+                        <div className="metric">
+                          <span className="metric-label">Market</span>
                           <div className="metric-bar">
                             <div 
                               className="metric-fill" 
                               style={{ 
                                 width: `${idea.marketScore}%`,
-                                backgroundColor: idea.marketScore >= 75 ? '#10b981' : idea.marketScore >= 50 ? '#f59e0b' : '#ef4444'
+                                backgroundColor: getScoreColor(idea.marketScore)
                               }}
                             />
-                            <span className="metric-number" style={{ color: idea.marketScore >= 75 ? '#10b981' : idea.marketScore >= 50 ? '#f59e0b' : '#ef4444' }}>
-                              {Math.round(idea.marketScore)}
-                            </span>
                           </div>
+                          <span className="metric-score" style={{ color: getScoreColor(idea.marketScore) }}>
+                            {idea.marketScore}
+                          </span>
                         </div>
-                        <div className="score-row">
-                          <span className="score-metric">Innovation Level</span>
+                        
+                        <div className="metric">
+                          <span className="metric-label">Innovation</span>
                           <div className="metric-bar">
                             <div 
                               className="metric-fill" 
                               style={{ 
                                 width: `${idea.innovationScore}%`,
-                                backgroundColor: idea.innovationScore >= 75 ? '#10b981' : idea.innovationScore >= 50 ? '#f59e0b' : '#ef4444'
+                                backgroundColor: getScoreColor(idea.innovationScore)
                               }}
                             />
-                            <span className="metric-number" style={{ color: idea.innovationScore >= 75 ? '#10b981' : idea.innovationScore >= 50 ? '#f59e0b' : '#ef4444' }}>
-                              {Math.round(idea.innovationScore)}
-                            </span>
                           </div>
+                          <span className="metric-score" style={{ color: getScoreColor(idea.innovationScore) }}>
+                            {idea.innovationScore}
+                          </span>
                         </div>
-                        <div className="score-row">
-                          <span className="score-metric">Execution Difficulty</span>
+                        
+                        <div className="metric">
+                          <span className="metric-label">Execution</span>
                           <div className="metric-bar">
                             <div 
                               className="metric-fill" 
                               style={{ 
-                                width: `${idea.executionScore}%`,
+                                width: `${100 - idea.executionScore}%`,
                                 backgroundColor: idea.executionScore >= 75 ? '#ef4444' : idea.executionScore >= 50 ? '#f59e0b' : '#10b981'
                               }}
                             />
-                            <span className="metric-number" style={{ color: idea.executionScore >= 75 ? '#ef4444' : idea.executionScore >= 50 ? '#f59e0b' : '#10b981' }}>
-                              {Math.round(idea.executionScore)}
-                            </span>
                           </div>
+                          <span className="metric-score" style={{ color: idea.executionScore >= 75 ? '#ef4444' : idea.executionScore >= 50 ? '#f59e0b' : '#10b981' }}>
+                            {idea.executionScore}
+                          </span>
                         </div>
-                        <div className="vote-section">
-                          <button 
-                            className="vote-button"
-                            onClick={() => handleVote(idea.id)}
-                          >
-                            Vote on This Idea
-                          </button>
-                        </div>
+                        
+                        <button 
+                          className="vote-btn"
+                          onClick={() => handleVote(idea.id)}
+                        >
+                          Vote on This Idea
+                        </button>
                       </div>
                     )}
                   </div>
@@ -521,35 +453,24 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Explanation Section */}
-          <section className="explanation-section">
-            <h2 className="section-title">Advanced Neural Network Analysis</h2>
-            <div className="explanation-content">
-              <div className="explanation-block">
-                <h3 className="explanation-title">Three-Dimensional Scoring System</h3>
-                <p className="explanation-text">
-                  Our proprietary AI analyzes your idea using deep learning models trained on over 50,000 successful 
-                  and failed ventures. Every submission receives comprehensive evaluation across Market Potential, 
-                  Innovation Level, and Execution Difficulty using real-world business data and market intelligence.
-                </p>
+          {/* How It Works */}
+          <section className="how-it-works">
+            <h2>How AI Evaluation Works</h2>
+            <div className="process">
+              <div className="process-step">
+                <div className="step-number">1</div>
+                <h3>Submit Your Idea</h3>
+                <p>Describe your concept in 30-500 words. No marketing materials needed.</p>
               </div>
-              
-              <div className="explanation-block">
-                <h3 className="explanation-title">Real-Time Market Validation</h3>
-                <p className="explanation-text">
-                  Beyond AI analysis, ideas undergo community validation from verified entrepreneurs, investors, and 
-                  industry experts. This dual-layer approach combines algorithmic precision with human insight, 
-                  ensuring comprehensive evaluation that mirrors real market conditions.
-                </p>
+              <div className="process-step">
+                <div className="step-number">2</div>
+                <h3>AI Analysis</h3>
+                <p>Advanced algorithms evaluate market potential, innovation, and execution difficulty.</p>
               </div>
-              
-              <div className="explanation-block">
-                <h3 className="explanation-title">Transparent Merit-Based Ranking</h3>
-                <p className="explanation-text">
-                  No marketing budgets required. No connections needed. No pitch decks necessary. Ideas rise purely 
-                  on merit through our transparent scoring system. The platform has helped launch over 200 successful 
-                  startups with combined valuations exceeding $500 million.
-                </p>
+              <div className="process-step">
+                <div className="step-number">3</div>
+                <h3>Get Rankings</h3>
+                <p>Ideas are ranked transparently based on merit, not marketing spend.</p>
               </div>
             </div>
           </section>
@@ -560,498 +481,315 @@ export default function HomePage() {
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
 
       <style jsx>{`
-        /* Header Styles */
         .header {
-          background: #f0f2f4;
-          color: black;
-          padding: 16px 0;
+          background: #f5f5f5;
+          border-bottom: 1px solid #ddd;
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
-          border-bottom: 1px solid #e5e7eb;
+          height: 60px;
+          display: flex;
+          align-items: center;
         }
 
-        .header-content {
-          max-width: 1400px;
+        .container {
+          max-width: 1200px;
           margin: 0 auto;
-          padding: 0 40px;
+          padding: 0 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          width: 100%;
         }
 
-        .header-logo {
+        .logo {
           font-family: 'Vipnagorgialla', serif;
           font-size: 24px;
           font-weight: bold;
-          color: black;
+          color: #000;
           text-decoration: none;
         }
 
-        .header-nav {
+        .nav {
           display: flex;
-          align-items: center;
           gap: 24px;
         }
 
         .nav-link {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          color: black;
+          color: #333;
           text-decoration: none;
-          padding: 8px 0;
-          transition: all 0.2s;
-          background: none;
-          border: none;
-          cursor: pointer;
+          font-weight: 500;
+          font-size: 14px;
         }
 
         .nav-link:hover {
-          color: #4b5563;
+          color: #000;
         }
 
-        .nav-button {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          padding: 10px 20px;
-          background: white;
-          color: #000000;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-decoration: none;
-          display: inline-block;
-        }
-
-        .nav-button:hover {
-          background: #f0f0f0;
-          transform: translateY(-1px);
-        }
-
-        .nav-button.secondary {
-          background: transparent;
-          color: white;
-          border: 1px solid white;
-        }
-
-        .nav-button.secondary:hover {
-          background: white;
-          color: #000000;
-        }
-
-        .app-layout {
+        .layout {
+          margin-top: 60px;
           display: flex;
-          margin-top: 64px;
-          min-height: calc(100vh - 64px);
+          min-height: calc(100vh - 60px);
         }
 
-        /* Sidebar Styles */
         .sidebar {
           width: 280px;
-          background: white;
-          border-right: 1px solid #e5e7eb;
-          display: flex;
-          flex-direction: column;
+          background: #fff;
+          border-right: 1px solid #ddd;
           position: fixed;
-          height: calc(100vh - 64px);
+          height: calc(100vh - 60px);
           overflow-y: auto;
         }
 
         .sidebar-section {
-          padding: 24px 20px;
-          border-bottom: 1px solid #e5e7eb;
+          padding: 20px;
+          border-bottom: 1px solid #eee;
         }
 
-        .action-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-
-        .sidebar-button {
-          width: 100%;
-          padding: 12px 16px;
-          font-family: 'FoundersGrotesk', sans-serif;
+        .sidebar-section h3 {
           font-size: 14px;
           font-weight: 600;
-          border: none;
-          border-radius: 0;
+          color: #666;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+          display: block;
+          width: 100%;
+          padding: 12px;
+          background: #000;
+          color: #fff;
+          text-decoration: none;
+          text-align: center;
+          font-weight: 500;
+          margin-bottom: 8px;
+          transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+          background: #333;
+        }
+
+        .btn-secondary {
+          display: block;
+          width: 100%;
+          padding: 12px;
+          background: transparent;
+          color: #333;
+          border: 1px solid #ddd;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
-          text-decoration: none;
-          display: inline-block;
-          text-align: center;
         }
 
-        .sidebar-button.primary {
-          background: #000000;
-          color: white;
+        .btn-secondary:hover {
+          background: #f5f5f5;
         }
 
-        .sidebar-button.primary:hover {
-          background: #1f1f1f;
-        }
-
-        .sidebar-button.secondary {
-          background: transparent;
-          color: #4b5563;
-          border: 1px solid #d1d5db;
-        }
-
-        .sidebar-button.secondary:hover {
-          border-color: #9ca3af;
-          color: #374151;
-        }
-
-        .sidebar-title {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          color: #374151;
-          margin-bottom: 16px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .nav-category {
-          margin-bottom: 4px;
-        }
-
-        .nav-item {
-          width: 100%;
+        .category-btn {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 16px;
+          width: 100%;
+          padding: 8px 12px;
+          background: transparent;
           border: none;
-          background: none;
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          color: #4b5563;
-          cursor: pointer;
-          transition: all 0.2s;
           text-align: left;
-          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          margin-bottom: 2px;
+          transition: background 0.2s;
         }
 
-        .nav-item:hover,
-        .nav-item.active {
-          background: #f3f4f6;
-          color: #1f2937;
+        .category-btn:hover,
+        .category-btn.active {
+          background: #f0f0f0;
         }
 
-        .nav-text {
-          flex: 1;
-        }
-
-        .nav-count {
-          background: #e5e7eb;
-          color: #6b7280;
-          padding: 2px 8px;
-          border-radius: 12px;
+        .count {
+          background: #eee;
+          color: #666;
+          padding: 2px 6px;
+          border-radius: 10px;
           font-size: 11px;
           font-weight: 600;
-          margin-right: 8px;
         }
 
-        .nav-item.active .nav-count {
-          background: #3b82f6;
-          color: white;
+        .category-btn.active .count {
+          background: #000;
+          color: #fff;
         }
 
-        .expand-icon {
-          font-size: 14px;
-          font-weight: 700;
-          color: #9ca3af;
+        .expand {
+          font-weight: bold;
+          color: #999;
         }
 
         .genre-list {
           margin-left: 16px;
-          margin-top: 8px;
+          margin-top: 4px;
         }
 
-        .genre-item {
-          width: 100%;
-          padding: 8px 16px;
-          background: none;
-          border: none;
-          font-family: 'Sohne', sans-serif;
-          font-size: 13px;
-          color: #6b7280;
-          cursor: pointer;
-          text-align: left;
-          transition: all 0.2s;
-          border-radius: 4px;
+        .genre-btn {
           display: block;
+          width: 100%;
+          padding: 6px 12px;
+          background: transparent;
+          border: none;
+          text-align: left;
+          cursor: pointer;
+          font-size: 13px;
+          color: #666;
           margin-bottom: 2px;
+          transition: all 0.2s;
         }
 
-        .genre-item:hover,
-        .genre-item.active {
-          color: #3b82f6;
-          background: #eff6ff;
+        .genre-btn:hover,
+        .genre-btn.active {
+          background: #f0f0f0;
+          color: #000;
         }
 
-        .stats-list {
+        .stats {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 8px;
         }
 
-        .stat-item {
+        .stat {
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
 
         .stat-label {
-          font-family: 'Sohne', sans-serif;
           font-size: 13px;
-          color: #6b7280;
+          color: #666;
         }
 
         .stat-value {
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 13px;
           font-weight: 600;
-          color: #1f2937;
+          color: #000;
         }
 
-        /* Main Content Styles */
-        .main-content {
+        .main {
           flex: 1;
           margin-left: 280px;
-          background: #f0f2f4;
-        }
-
-        /* Hero Section */
-        .hero-section {
-          background: #f0f2f4;
-          padding: 60px 40px;
-          text-align: center;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .hero-title {
-          font-family: 'Vipnagorgialla', serif;
-          font-size: 48px;
-          font-weight: bold;
-          margin-bottom: 20px;
-          line-height: 1.2;
-          color: #1a1a1a;
-        }
-
-        .hero-subtitle {
-          font-family: 'Sohne', sans-serif;
-          font-size: 18px;
-          color: #4b5563;
-          max-width: 700px;
-          margin: 0 auto 32px;
-          line-height: 1.6;
-        }
-
-        .hero-actions {
-          display: flex;
-          justify-content: center;
-          gap: 16px;
-          margin-bottom: 32px;
-        }
-
-        .primary-cta {
-          background: #000000;
-          color: white;
-          padding: 16px 32px;
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-decoration: none;
-          display: inline-block;
-        }
-
-        .primary-cta:hover {
-          background: #1f1f1f;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .secondary-cta {
-          background: transparent;
-          color: #4b5563;
-          padding: 16px 32px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .secondary-cta:hover {
-          border-color: #9ca3af;
-          color: #374151;
-        }
-
-        .hero-proof {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 16px;
-          font-family: 'Sohne', sans-serif;
-          font-size: 14px;
-          color: #6b7280;
-        }
-
-        .proof-text {
-          font-weight: 500;
-        }
-
-        .proof-divider {
-          color: #d1d5db;
-        }
-
-        /* Ideas Section */
-        .ideas-section {
           padding: 40px;
         }
 
-        .section-header {
+        .hero {
+          text-align: center;
+          margin-bottom: 48px;
+          max-width: 800px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .hero h1 {
+          font-size: 36px;
+          font-weight: 700;
+          margin-bottom: 16px;
+          color: #000;
+        }
+
+        .hero p {
+          font-size: 16px;
+          color: #666;
+          margin-bottom: 24px;
+          line-height: 1.6;
+        }
+
+        .hero-stats {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+          font-size: 14px;
+          color: #888;
+        }
+
+        .ideas {
+          margin-bottom: 48px;
+        }
+
+        .ideas-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
-        .section-title {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 28px;
-          font-weight: 700;
-          color: #1f2937;
+        .ideas-header h2 {
+          font-size: 24px;
+          font-weight: 600;
+          color: #000;
         }
 
-        .section-meta {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .result-count {
-          font-family: 'Sohne', sans-serif;
+        .ideas-header .count {
           font-size: 14px;
-          color: #6b7280;
+          color: #666;
         }
 
-        .sort-select {
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-family: 'Sohne', sans-serif;
-          font-size: 13px;
-          background: white;
-          color: #374151;
-        }
-
-        /* Ideas Grid */
-        .ideas-grid {
+        .grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 24px;
         }
 
-        .idea-card {
-          background: white;
-          border-radius: 0;
-          overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          transition: all 0.3s;
+        .card {
+          background: #fff;
+          border: 1px solid #ddd;
           position: relative;
-          height: 200px;
-          border: 1px solid #e5e7eb;
+          overflow: hidden;
+          transition: all 0.2s;
         }
 
-        .idea-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        .card:hover {
+          border-color: #999;
+          transform: translateY(-1px);
         }
 
-        .card-rank-bar {
-          width: 8px;
-          height: 100%;
-          background: #000000;
-          position: absolute;
-          left: 0;
-          top: 0;
-        }
-
-        .rank-number {
+        .rank-badge {
           position: absolute;
           top: 12px;
           left: 12px;
-          background: #ef4444;
-          color: #000000;
+          background: #dc2626;
+          color: #000;
           padding: 4px 8px;
-          border-radius: 0;
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 12px;
           font-weight: 700;
-          min-width: 24px;
-          text-align: center;
+          z-index: 10;
         }
 
         .card-content {
           padding: 20px;
-          margin-left: 8px;
         }
 
         .card-header {
           margin-bottom: 16px;
         }
 
-        .card-title {
-          font-family: 'FoundersGrotesk', sans-serif;
+        .card-header h3 {
           font-size: 16px;
-          font-weight: 700;
-          color: #1f2937;
+          font-weight: 600;
+          color: #000;
           margin-bottom: 8px;
         }
 
-        .card-meta {
+        .meta {
           display: flex;
           gap: 12px;
-          font-family: 'Sohne', sans-serif;
           font-size: 12px;
-          color: #6b7280;
+          color: #666;
         }
 
-        .card-author {
-          font-weight: 500;
-        }
-
-        .card-genre {
-          background: #f3f4f6;
-          color: #4b5563;
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 500;
-        }
-
-        .card-date {
-          color: #9ca3af;
-        }
-
-        .card-score-main {
+        .score-display {
           display: flex;
           align-items: baseline;
           gap: 8px;
@@ -1059,22 +797,19 @@ export default function HomePage() {
         }
 
         .main-score {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 32px;
+          font-size: 28px;
           font-weight: 700;
-          color: #1f2937;
+          color: #000;
         }
 
-        .score-label-main {
-          font-family: 'Sohne', sans-serif;
+        .score-label {
           font-size: 12px;
-          color: #6b7280;
+          color: #666;
         }
 
-        .card-description {
-          font-family: 'Sohne', sans-serif;
+        .description {
           font-size: 14px;
-          color: #4b5563;
+          color: #666;
           line-height: 1.5;
           margin-bottom: 16px;
         }
@@ -1086,17 +821,16 @@ export default function HomePage() {
           margin-bottom: 16px;
         }
 
-        .expand-button {
+        .expand-btn {
           background: none;
           border: none;
-          color: #3b82f6;
-          font-family: 'Sohne', sans-serif;
+          color: #007acc;
           font-size: 13px;
           cursor: pointer;
           padding: 0;
         }
 
-        .expand-button:hover {
+        .expand-btn:hover {
           text-decoration: underline;
         }
 
@@ -1107,175 +841,138 @@ export default function HomePage() {
         }
 
         .public-value {
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 14px;
-          font-weight: 700;
-          color: #1f2937;
+          font-weight: 600;
+          color: #000;
         }
 
-        .public-label {
-          font-family: 'Sohne', sans-serif;
+        .vote-count {
           font-size: 11px;
-          color: #6b7280;
+          color: #666;
         }
 
-        .detailed-scores {
-          border-top: 1px solid #f3f4f6;
+        .detailed-metrics {
+          border-top: 1px solid #eee;
           padding-top: 16px;
-          margin-top: 16px;
         }
 
-        .score-row {
+        .metric {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          gap: 12px;
           margin-bottom: 12px;
         }
 
-        .score-metric {
-          font-family: 'Sohne', sans-serif;
-          font-size: 13px;
-          color: #6b7280;
-          width: 120px;
+        .metric-label {
+          font-size: 12px;
+          color: #666;
+          width: 80px;
         }
 
         .metric-bar {
           flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 12px;
+          height: 16px;
+          background: #f0f0f0;
+          border: 1px solid #000;
+          position: relative;
+          overflow: hidden;
         }
 
         .metric-fill {
-          flex: 1;
-          height: 20px;
-          border: 2px solid #000000;
-          position: relative;
-          background: #f3f4f6;
+          height: 100%;
+          transition: width 0.3s;
         }
 
-        .metric-number {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          min-width: 30px;
+        .metric-score {
+          font-size: 12px;
+          font-weight: 600;
+          min-width: 24px;
           text-align: right;
         }
 
-        .vote-section {
-          margin-top: 16px;
-          padding-top: 12px;
-          border-top: 1px solid #f3f4f6;
-        }
-
-        .vote-button {
+        .vote-btn {
           width: 100%;
-          background: #3b82f6;
-          color: white;
-          padding: 10px;
+          padding: 8px;
+          background: #007acc;
+          color: #fff;
           border: none;
-          border-radius: 6px;
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
+          margin-top: 8px;
+          transition: background 0.2s;
         }
 
-        .vote-button:hover {
-          background: #2563eb;
+        .vote-btn:hover {
+          background: #005fa3;
         }
 
-        /* Explanation Section */
-        .explanation-section {
-          padding: 60px 40px;
-          background: white;
-          border-top: 1px solid #e5e7eb;
+        .how-it-works {
+          background: #fff;
+          border: 1px solid #ddd;
+          padding: 40px;
         }
 
-        .explanation-content {
-          max-width: 1000px;
-          margin: 32px auto 0;
+        .how-it-works h2 {
+          font-size: 24px;
+          font-weight: 600;
+          text-align: center;
+          margin-bottom: 32px;
+          color: #000;
+        }
+
+        .process {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 40px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 32px;
         }
 
-        .explanation-block {
-          text-align: left;
+        .process-step {
+          text-align: center;
         }
 
-        .explanation-title {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 18px;
+        .step-number {
+          width: 40px;
+          height: 40px;
+          background: #000;
+          color: #fff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           font-weight: 700;
-          color: #1f2937;
-          margin-bottom: 12px;
+          font-size: 18px;
+          margin: 0 auto 16px;
         }
 
-        .explanation-text {
-          font-family: 'Sohne', sans-serif;
+        .process-step h3 {
+          font-size: 16px;
+          font-weight: 600;
+          margin-bottom: 8px;
+          color: #000;
+        }
+
+        .process-step p {
           font-size: 14px;
-          color: #4b5563;
-          line-height: 1.6;
+          color: #666;
+          line-height: 1.5;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-          .sidebar {
-            width: 240px;
-          }
-          
-          .main-content {
-            margin-left: 240px;
-          }
-          
-          .ideas-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          }
-        }
-
-        @media (max-width: 768px) {
-          .header-nav {
-            display: none;
-          }
-          
+        @media (max-width: 1024px) {
           .sidebar {
             transform: translateX(-100%);
           }
           
-          .main-content {
+          .main {
             margin-left: 0;
+            padding: 20px;
           }
           
-          .hero-section {
-            padding: 40px 20px;
-          }
-          
-          .hero-title {
-            font-size: 36px;
-          }
-          
-          .hero-actions {
-            flex-direction: column;
-            align-items: center;
-          }
-          
-          .hero-proof {
-            flex-direction: column;
-            gap: 8px;
-          }
-          
-          .ideas-section,
-          .explanation-section {
-            padding: 40px 20px;
-          }
-          
-          .ideas-grid {
+          .grid {
             grid-template-columns: 1fr;
           }
           
-          .explanation-content {
+          .process {
             grid-template-columns: 1fr;
             gap: 24px;
           }
@@ -1368,7 +1065,6 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         
         .modal-content {
           background: white;
-          border-radius: 8px;
           padding: 30px;
           width: 90%;
           max-width: 380px;
@@ -1383,26 +1079,24 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           border: none;
           font-size: 24px;
           cursor: pointer;
-          color: #475569;
+          color: #666;
         }
         
         h2 {
-          font-family: 'FoundersGrotesk', sans-serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #0F172A;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
           margin-bottom: 20px;
           text-align: center;
         }
         
         .modal-error {
-          background: #FFE5E5;
-          color: #CC0000;
+          background: #fee;
+          color: #c00;
           padding: 10px;
-          border-radius: 6px;
           margin-bottom: 15px;
-          font-family: 'Sohne', sans-serif;
           font-size: 13px;
+          border-left: 3px solid #c00;
         }
         
         form {
@@ -1413,33 +1107,28 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         
         input {
           padding: 10px;
-          border: 2px solid #E5E5E5;
-          border-radius: 6px;
-          font-family: 'Sohne', sans-serif;
+          border: 1px solid #ddd;
           font-size: 14px;
-          transition: border-color 0.2s;
         }
         
         input:focus {
           outline: none;
-          border-color: #3B82F6;
+          border-color: #007acc;
         }
         
         button[type="submit"] {
-          background: #3B82F6;
+          background: #000;
           color: white;
           padding: 10px;
           border: none;
-          border-radius: 6px;
-          font-family: 'FoundersGrotesk', sans-serif;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s;
         }
         
         button[type="submit"]:hover:not(:disabled) {
-          background: #2563EB;
+          background: #333;
         }
         
         button[type="submit"]:disabled {
@@ -1450,15 +1139,14 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         .modal-switch {
           text-align: center;
           margin-top: 15px;
-          font-family: 'Sohne', sans-serif;
           font-size: 13px;
-          color: #6B6B6B;
+          color: #666;
         }
         
         .modal-switch button {
           background: none;
           border: none;
-          color: #3B82F6;
+          color: #007acc;
           cursor: pointer;
           margin-left: 4px;
           text-decoration: underline;
