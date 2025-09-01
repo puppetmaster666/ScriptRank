@@ -38,7 +38,18 @@ export default function HomePage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
     })
-    return () => unsubscribe()
+    if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gray-900 mb-2">Loading Hyoka...</div>
+          <div className="text-gray-600">Preparing your idea evaluation platform</div>
+        </div>
+      </div>
+    )
+  }
+
+  return () => unsubscribe()
   }, [])
 
   const getMockIdeas = (): Idea[] => [
@@ -138,9 +149,11 @@ export default function HomePage() {
   ]
 
   useEffect(() => {
-    // Load mock data immediately
-    setIdeas(getMockIdeas())
-    setLoading(false)
+    // Load mock data immediately on client side only
+    if (typeof window !== 'undefined') {
+      setIdeas(getMockIdeas())
+      setLoading(false)
+    }
   }, [])
 
   const toggleExpanded = (ideaId: string) => {
@@ -192,11 +205,13 @@ export default function HomePage() {
       <div className="min-h-screen bg-gray-50 relative">
         {/* Animated Background */}
         <div className="fixed inset-0 z-0">
-          <img 
-            src="/bg11.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
+          <div 
+            className="absolute inset-0 w-full h-full opacity-20"
             style={{
+              backgroundImage: 'url("/bg11.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
               filter: 'blur(3px)',
               animation: 'drift 45s ease-in-out infinite',
             }}
