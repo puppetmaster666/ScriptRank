@@ -149,6 +149,13 @@ export default function HomePage() {
   ]
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
     // Load mock data immediately on client side only
     if (typeof window !== 'undefined') {
       setIdeas(getMockIdeas())
