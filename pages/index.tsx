@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 
@@ -118,23 +119,23 @@ const mockIdeas: Idea[] = [
 ]
 
 export default function HomePage() {
+  const [mounted, setMounted] = useState(false)
   const [user, setUser] = useState<User | null>(null)
-  const [ideas, setIdeas] = useState<Idea[]>([])
-  const [loading, setLoading] = useState(true)
+  const [ideas, setIdeas] = useState<Idea[]>(mockIdeas)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
     })
     return () => unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    setIdeas(mockIdeas)
-    setLoading(false)
-  }, [])
+  }, [mounted])
 
   const businessIdeas = ideas.filter(idea => idea.type === 'business')
   const gamesIdeas = ideas.filter(idea => idea.type === 'games')
@@ -166,15 +167,8 @@ export default function HomePage() {
     return 'text-red-500'
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900 mb-2">Loading Hyoka...</div>
-          <div className="text-gray-600">Preparing your idea evaluation platform</div>
-        </div>
-      </div>
-    )
+  if (!mounted) {
+    return null
   }
 
   return (
