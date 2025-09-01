@@ -1848,4 +1848,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
           color: #1d4ed8;
           text-decoration: underline;
         }
-      `}
+      `}</style>
+    </>
+  )
+}
