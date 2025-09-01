@@ -238,14 +238,14 @@ export default function HomePage() {
       <div className="min-h-screen bg-gray-50 relative">
         {/* Animated Background */}
         <div className="fixed inset-0 z-0">
-          <div 
-            className="absolute inset-0 opacity-20"
+          <img 
+            src="/bg11.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-20"
             style={{
-              backgroundImage: 'url(/bg11.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
               filter: 'blur(3px)',
               animation: 'drift 45s ease-in-out infinite',
+              transformOrigin: 'center center'
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/92 to-white/95" />
@@ -543,7 +543,7 @@ export default function HomePage() {
                     <h3 className="text-lg font-bold uppercase tracking-wide">Business</h3>
                   </div>
                   <div className="space-y-4">
-                    {businessIdeas.map((idea) => (
+                    {businessIdeas.slice(0, 5).map((idea) => (
                       <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -612,7 +612,7 @@ export default function HomePage() {
                     <h3 className="text-lg font-bold uppercase tracking-wide">Games</h3>
                   </div>
                   <div className="space-y-4">
-                    {gamesIdeas.map((idea) => (
+                    {gamesIdeas.slice(0, 5).map((idea) => (
                       <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -681,7 +681,7 @@ export default function HomePage() {
                     <h3 className="text-lg font-bold uppercase tracking-wide">Movies</h3>
                   </div>
                   <div className="space-y-4">
-                    {moviesIdeas.map((idea) => (
+                    {moviesIdeas.slice(0, 5).map((idea) => (
                       <div key={idea.id} className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
