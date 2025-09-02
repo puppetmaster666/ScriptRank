@@ -982,8 +982,6 @@ export default function HomePage() {
           </section>
         </main>
       </div>
-        </main>
-      </div>
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
