@@ -562,7 +562,6 @@ export default function HomePage() {
                         </div>
                       </div>
                     </article>
-                        
                         {idea.expanded && (
                           <div className="detailed-analysis">
                             <h4 className="analysis-title">Detailed Analysis</h4>
@@ -628,7 +627,6 @@ export default function HomePage() {
                               <button className="engage-btn secondary">Share Feedback</button>
                             </div>
                           </div>
-                        )}
                       </div>
                     </article>
                   </div>
