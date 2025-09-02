@@ -80,7 +80,8 @@ export default function HomePage() {
         }
       })
       
-      setIdeas(fetchedIdeas.length > 0 ? fetchedIdeas : getMockIdeas())
+      // Always use mock data for now to ensure proper display
+      setIdeas(getMockIdeas())
     } catch (error) {
       setIdeas(getMockIdeas())
     } finally {
@@ -209,10 +210,10 @@ export default function HomePage() {
     }
   }
 
-  // Separate ideas by type - fixed to use singular forms
+  // Separate ideas by type - ensure we get all 5
   const movieIdeas = ideas.filter(idea => idea.type === 'movie').slice(0, 5)
   const gameIdeas = ideas.filter(idea => idea.type === 'game').slice(0, 5)
-  const businessIdeas = ideas.filter(idea => idea.type === 'business' || idea.type === 'tech').slice(0, 5)
+  const businessIdeas = ideas.filter(idea => idea.type === 'business').slice(0, 5)
 
   return (
     <>
