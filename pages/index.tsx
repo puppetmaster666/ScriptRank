@@ -29,7 +29,7 @@ export default function HomePage() {
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const categories = {
     business: ['SaaS', 'E-commerce', 'Fintech', 'Healthcare', 'B2B Tools', 'Consumer Apps'],
@@ -105,7 +105,7 @@ export default function HomePage() {
       aiScore: 86, marketScore: 88, innovationScore: 82, executionScore: 85, publicScore: 8.7, publicVotes: 756, timestamp: '2024-01-25', expanded: false
     },
     {
-      id: '4', rank: 4, title: 'Neon Nights', type: 'movie', genre: 'Cyberpunk', author: 'Marcus Chen',
+      id: '4', rank: 4, title: 'Neon Nights', type: 'movie', genre: 'Action', author: 'Marcus Chen',
       desc: 'Neo-Tokyo 2087: A detective with memory implants must solve murders that haven\'t happened yet while the city\'s AR layer bleeds into reality, questioning what is real.',
       aiScore: 83, marketScore: 80, innovationScore: 89, executionScore: 79, publicScore: 8.3, publicVotes: 654, timestamp: '2024-01-24', expanded: false
     },
@@ -147,7 +147,7 @@ export default function HomePage() {
       aiScore: 94, marketScore: 96, innovationScore: 92, executionScore: 89, publicScore: 9.2, publicVotes: 847, timestamp: '2024-01-28', expanded: false
     },
     {
-      id: '12', rank: 2, title: 'GreenEats', type: 'business', genre: 'Sustainability', author: 'Emma Wilson',
+      id: '12', rank: 2, title: 'GreenEats', type: 'business', genre: 'Marketplace', author: 'Emma Wilson',
       desc: 'Zero-waste meal delivery using only reusable containers tracked by blockchain. Return containers get you discounts. Partners with local restaurants for sustainable dining.',
       aiScore: 88, marketScore: 85, innovationScore: 87, executionScore: 83, publicScore: 8.6, publicVotes: 756, timestamp: '2024-01-24', expanded: false
     },
@@ -157,7 +157,7 @@ export default function HomePage() {
       aiScore: 85, marketScore: 89, innovationScore: 78, executionScore: 86, publicScore: 8.4, publicVotes: 623, timestamp: '2024-01-25', expanded: false
     },
     {
-      id: '14', rank: 4, title: 'RentMyGarage', type: 'business', genre: 'Marketplace', author: 'Jake Martinez',
+      id: '14', rank: 4, title: 'RentMyGarage', type: 'business', genre: 'Real Estate', author: 'Jake Martinez',
       desc: 'Uber for storage space. Homeowners rent out garage space by the square foot, with insurance included. Smart locks provide secure 24/7 access for renters.',
       aiScore: 82, marketScore: 86, innovationScore: 76, executionScore: 84, publicScore: 8.1, publicVotes: 512, timestamp: '2024-01-26', expanded: false
     },
@@ -321,7 +321,13 @@ export default function HomePage() {
 
       <div className="app-layout">
         {/* Fixed Sidebar */}
-        <aside className="sidebar">
+        <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <button 
+            className="sidebar-toggle"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? '→' : '←'}
+          </button>
           <div className="sidebar-content">
             <div className="sidebar-section">
               <h3 className="sidebar-title">Quick Actions</h3>
@@ -424,26 +430,30 @@ export default function HomePage() {
         <main className="main-content">
           {/* Hero Section */}
           <section className="hero-section">
-            <h1 className="hero-title">
-              Get Your Ideas <span className="hero-highlight">Ranked by AI</span>
-            </h1>
-            <p className="hero-description">
-              Submit your movie script, game concept, or business idea and let our advanced AI evaluate its potential. 
-              Get instant scores on market viability, innovation, and execution complexity. 
-              Join thousands of creators getting their ideas validated.
-            </p>
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <span className="stat-number">47K+</span>
-                <span className="stat-label">Ideas Ranked</span>
-              </div>
-              <div className="hero-stat">
-                <span className="stat-number">94%</span>
-                <span className="stat-label">Accuracy</span>
-              </div>
-              <div className="hero-stat">
-                <span className="stat-number">$12M</span>
-                <span className="stat-label">Funded</span>
+            <div className="hero-content">
+              <h1 className="hero-title">
+                Get Your Ideas <span className="hero-highlight">Ranked by AI</span>
+              </h1>
+              <p className="hero-description">
+                Submit your movie script, game concept, or business idea and let our advanced AI evaluate its potential. 
+                Get instant scores on market viability, innovation, and execution complexity.
+              </p>
+              <div className="hero-features">
+                <div className="hero-feature">
+                  <span className="feature-icon">✓</span>
+                  <span className="feature-text">No Marketing Budget Needed</span>
+                  <span className="feature-sub">Unlike Kickstarter, just submit your idea</span>
+                </div>
+                <div className="hero-feature">
+                  <span className="feature-icon">✓</span>
+                  <span className="feature-text">Instant AI Evaluation</span>
+                  <span className="feature-sub">Get professional analysis in seconds</span>
+                </div>
+                <div className="hero-feature">
+                  <span className="feature-icon">✓</span>
+                  <span className="feature-text">Community Validation</span>
+                  <span className="feature-sub">Real users vote on your concept</span>
+                </div>
               </div>
             </div>
           </section>
@@ -599,6 +609,9 @@ export default function HomePage() {
                     </article>
                   </div>
                 ))}
+                <Link href="/leaderboard/movies">
+                  <button className="view-leaderboard-btn">View Full Movie Leaderboard</button>
+                </Link>
               </div>
 
               {/* Games Column */}
@@ -735,6 +748,9 @@ export default function HomePage() {
                     </article>
                   </div>
                 ))}
+                <Link href="/leaderboard/games">
+                  <button className="view-leaderboard-btn">View Full Games Leaderboard</button>
+                </Link>
               </div>
 
               {/* Business Column */}
@@ -870,6 +886,9 @@ export default function HomePage() {
                     </article>
                   </div>
                 ))}
+                <Link href="/leaderboard/business">
+                  <button className="view-leaderboard-btn">View Full Business Leaderboard</button>
+                </Link>
               </div>
             </div>
           </section>
@@ -1177,18 +1196,58 @@ export default function HomePage() {
           min-height: calc(100vh - 70px);
         }
 
-        /* Sidebar - Fixed */
+        /* Sidebar - Collapsible */
         .sidebar {
           width: 280px;
           background: white;
           border-right: 1px solid #e1e5e9;
           position: fixed;
           height: calc(100vh - 70px);
-          overflow-y: auto;
+          overflow-y: hidden;
+          transition: all 0.3s;
+          z-index: 100;
+        }
+
+        .sidebar::-webkit-scrollbar {
+          display: none;
+        }
+
+        .sidebar.collapsed {
+          width: 0;
+          border-right: none;
+        }
+
+        .sidebar-toggle {
+          position: absolute;
+          top: 20px;
+          right: -30px;
+          width: 30px;
+          height: 30px;
+          background: white;
+          border: 1px solid #e1e5e9;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          z-index: 101;
+          transition: all 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+          background: #f6f8fa;
         }
 
         .sidebar-content {
           padding: 24px;
+          overflow-y: auto;
+          height: 100%;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+          opacity: 0;
+          pointer-events: none;
         }
 
         .sidebar-section {
@@ -1384,70 +1443,86 @@ export default function HomePage() {
         .main-content {
           flex: 1;
           margin-left: 280px;
-          padding: 40px;
+          padding: 0;
+          transition: margin-left 0.3s;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+          margin-left: 0;
         }
 
         /* Hero Section */
         .hero-section {
-          margin-bottom: 48px;
-          padding: 40px;
-          background: linear-gradient(135deg, #4331f4 0%, #69f74d 100%);
-          border-radius: 20px;
+          background: #000000;
           color: white;
+          padding: 60px 40px;
+          margin-bottom: 40px;
+        }
+
+        .hero-content {
+          max-width: 1200px;
+          margin: 0 auto;
           text-align: center;
         }
 
         .hero-title {
-          font-family: 'HeroFont', sans-serif;
-          font-size: 48px;
-          font-weight: 900;
-          font-style: italic;
-          margin-bottom: 20px;
+          font-family: 'Futura', 'TitleFont', sans-serif;
+          font-size: 56px;
+          font-weight: bold;
+          margin-bottom: 24px;
           line-height: 1.2;
         }
 
         .hero-highlight {
-          display: inline-block;
-          background: rgba(255, 255, 255, 0.2);
-          padding: 0 12px;
-          border-radius: 8px;
+          color: #69f74d;
         }
 
         .hero-description {
           font-family: 'ContentFont', sans-serif;
-          font-size: 18px;
+          font-size: 20px;
           max-width: 700px;
-          margin: 0 auto 32px;
+          margin: 0 auto 40px;
           line-height: 1.6;
-          opacity: 0.95;
+          opacity: 0.9;
         }
 
-        .hero-stats {
+        .hero-features {
           display: flex;
           justify-content: center;
-          gap: 48px;
+          gap: 60px;
+          margin-top: 40px;
         }
 
-        .hero-stat {
-          text-align: center;
+        .hero-feature {
+          text-align: left;
+          max-width: 280px;
         }
 
-        .hero-stat .stat-number {
+        .feature-icon {
+          display: inline-block;
+          color: #69f74d;
+          font-size: 24px;
+          margin-bottom: 8px;
+        }
+
+        .feature-text {
           display: block;
           font-family: 'TitleFont', sans-serif;
-          font-size: 32px;
+          font-size: 18px;
           font-weight: bold;
           margin-bottom: 4px;
         }
 
-        .hero-stat .stat-label {
+        .feature-sub {
+          display: block;
           font-family: 'ContentFont', sans-serif;
           font-size: 14px;
-          opacity: 0.9;
+          opacity: 0.7;
         }
 
         /* Featured Section */
         .featured-section {
+          padding: 40px;
           margin-bottom: 64px;
         }
 
@@ -1559,7 +1634,9 @@ export default function HomePage() {
           overflow: hidden;
           transition: all 0.3s;
           position: relative;
-          min-height: 180px;
+          height: 200px;
+          display: flex;
+          flex-direction: column;
         }
 
         .idea-card:hover {
@@ -1584,6 +1661,29 @@ export default function HomePage() {
 
         .card-content {
           padding-top: 30px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .view-leaderboard-btn {
+          width: 100%;
+          padding: 12px;
+          margin-top: 20px;
+          background: #000000;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .view-leaderboard-btn:hover {
+          background: #1a1a1a;
+          transform: translateY(-1px);
         }
 
         .author-info {
