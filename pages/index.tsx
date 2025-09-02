@@ -238,7 +238,7 @@ export default function HomePage() {
         }
         
         @font-face {
-          font-family: 'HeroFont';
+          font-family: 'ArgentumSans';
           src: url('/fonts/ArgentumSans-BlackItalic.ttf') format('truetype');
           font-weight: 900;
           font-style: italic;
@@ -257,6 +257,16 @@ export default function HomePage() {
           color: #0d1117;
           line-height: 1.6;
           overflow-x: hidden;
+        }
+        
+        /* Hide ALL scrollbars */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+        
+        * {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
 
         ::selection {
@@ -321,7 +331,7 @@ export default function HomePage() {
       </header>
 
       <div className="app-layout">
-        {/* Fixed Sidebar */}
+        {/* Collapsible Sidebar */}
         <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <button 
             className="sidebar-toggle"
@@ -353,7 +363,7 @@ export default function HomePage() {
                     <a href="#">Thriller</a>
                     <a href="#">Comedy</a>
                     <a href="#">Horror</a>
-                    <a href="#">Documentary</a>
+                    <a href="#">Action</a>
                   </div>
                 </div>
                 <div className="category-item">
@@ -378,7 +388,7 @@ export default function HomePage() {
                     <a href="#">SaaS</a>
                     <a href="#">Marketplace</a>
                     <a href="#">B2B</a>
-                    <a href="#">Sustainability</a>
+                    <a href="#">Real Estate</a>
                     <a href="#">AI/ML</a>
                   </div>
                 </div>
@@ -433,7 +443,7 @@ export default function HomePage() {
           <section className="hero-section">
             <div className="hero-content">
               <h1 className="hero-title">
-                Get Your Ideas <span className="hero-highlight">Ranked by AI</span>
+                Get Your Ideas <span className="hero-highlight">Ranked</span>
               </h1>
               <p className="hero-description">
                 Submit your movie script, game concept, or business idea and let our advanced AI evaluate its potential. 
@@ -1204,24 +1214,19 @@ export default function HomePage() {
           border-right: 1px solid #e1e5e9;
           position: fixed;
           height: calc(100vh - 70px);
-          overflow-y: hidden;
-          transition: all 0.3s;
+          transition: transform 0.3s ease;
           z-index: 100;
-        }
-
-        .sidebar::-webkit-scrollbar {
-          display: none;
+          overflow: hidden;
         }
 
         .sidebar.collapsed {
-          width: 0;
-          border-right: none;
+          transform: translateX(-280px);
         }
 
         .sidebar-toggle {
           position: absolute;
           top: 20px;
-          right: -30px;
+          right: -40px;
           width: 30px;
           height: 30px;
           background: white;
@@ -1234,6 +1239,7 @@ export default function HomePage() {
           font-size: 14px;
           z-index: 101;
           transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .sidebar-toggle:hover {
@@ -1242,13 +1248,8 @@ export default function HomePage() {
 
         .sidebar-content {
           padding: 24px;
-          overflow-y: auto;
           height: 100%;
-        }
-
-        .sidebar.collapsed .sidebar-content {
-          opacity: 0;
-          pointer-events: none;
+          overflow: hidden;
         }
 
         .sidebar-section {
@@ -1308,6 +1309,7 @@ export default function HomePage() {
 
         .category-item:hover .genre-dropdown {
           display: block;
+          opacity: 1;
         }
 
         .genre-dropdown {
@@ -1319,14 +1321,16 @@ export default function HomePage() {
           border: 1px solid #e1e5e9;
           border-radius: 6px;
           min-width: 150px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          z-index: 100;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
           margin-left: 8px;
+          opacity: 0;
+          transition: opacity 0.2s;
         }
 
         .genre-dropdown a {
           display: block;
-          padding: 8px 16px;
+          padding: 10px 16px;
           color: #656d76;
           text-decoration: none;
           font-family: 'ContentFont', sans-serif;
@@ -1337,6 +1341,14 @@ export default function HomePage() {
         .genre-dropdown a:hover {
           background: #f6f8fa;
           color: #4331f4;
+        }
+
+        .genre-dropdown a:first-child {
+          border-radius: 6px 6px 0 0;
+        }
+
+        .genre-dropdown a:last-child {
+          border-radius: 0 0 6px 6px;
         }
 
         .category-filters {
@@ -1445,11 +1457,11 @@ export default function HomePage() {
           flex: 1;
           margin-left: 280px;
           padding: 0;
-          transition: margin-left 0.3s;
+          transition: margin-left 0.3s ease;
         }
 
         .sidebar.collapsed ~ .main-content {
-          margin-left: 0;
+          margin-left: 40px;
         }
 
         /* Hero Section */
@@ -1467,9 +1479,10 @@ export default function HomePage() {
         }
 
         .hero-title {
-          font-family: 'Futura', 'TitleFont', sans-serif;
+          font-family: 'ArgentumSans', sans-serif;
           font-size: 56px;
-          font-weight: bold;
+          font-weight: 900;
+          font-style: italic;
           margin-bottom: 24px;
           line-height: 1.2;
         }
