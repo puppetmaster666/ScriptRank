@@ -78,232 +78,6 @@ export default function HomePage() {
           timestamp: data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '2024-01-15',
           expanded: false
         }
-      `}</style>
-    </>
-  )
-}
-
-// Login Modal Component
-function LoginModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password)
-      } else {
-        await signInWithEmailAndPassword(auth, email, password)
-      }
-      onClose()
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-  
-  return (
-    <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close" onClick={onClose}>×</button>
-          <h2>{isSignUp ? 'Join ScriptRank' : 'Welcome Back'}</h2>
-          
-          {error && <div className="modal-error">{error}</div>}
-          
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
-            </button>
-          </form>
-          
-          <p className="modal-switch">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-            <button onClick={() => setIsSignUp(!isSignUp)}>
-              {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
-          </p>
-        </div>
-      </div>
-      
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(13, 17, 23, 0.8);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2000;
-          animation: fadeIn 0.2s ease-out;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .modal-content {
-          background: white;
-          border-radius: 12px;
-          padding: 32px;
-          width: 90%;
-          max-width: 400px;
-          position: relative;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          animation: slideUp 0.3s ease-out;
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .modal-close {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #656d76;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: all 0.2s;
-        }
-        
-        .modal-close:hover {
-          background: #f6f8fa;
-          color: #0d1117;
-        }
-        
-        h2 {
-          font-family: 'TitleFont', sans-serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #0d1117;
-          margin-bottom: 20px;
-          text-align: center;
-        }
-        
-        .modal-error {
-          background: #fef2f2;
-          color: #dc2626;
-          padding: 12px;
-          border-radius: 6px;
-          margin-bottom: 16px;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          border: 1px solid #fecaca;
-        }
-        
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        
-        input {
-          font-family: 'ContentFont', sans-serif;
-          padding: 12px 16px;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
-          font-size: 14px;
-          transition: all 0.2s;
-          background: #f6f8fa;
-        }
-        
-        input:focus {
-          outline: none;
-          border-color: #0d1117;
-          background: white;
-          box-shadow: 0 0 0 3px rgba(13, 17, 23, 0.1);
-        }
-        
-        button[type="submit"] {
-          font-family: 'ContentFont', sans-serif;
-          background: #0d1117;
-          color: white;
-          padding: 12px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        button[type="submit"]:hover:not(:disabled) {
-          background: #1a1f2e;
-          transform: translateY(-1px);
-        }
-        
-        button[type="submit"]:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-        
-        .modal-switch {
-          text-align: center;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #e1e5e9;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          color: #656d76;
-        }
-        
-        .modal-switch button {
-          background: none;
-          border: none;
-          color: #0d1117;
-          cursor: pointer;
-          margin-left: 4px;
-          font-weight: 500;
-          transition: color 0.2s;
-        }
-        
-        .modal-switch button:hover {
-          color: #1a1f2e;
-          text-decoration: underline;
-        }
       })
       
       // Always use mock data for now to ensure proper display
@@ -2366,3 +2140,233 @@ function LoginModal({ onClose }: { onClose: () => void }) {
             gap: 20px;
           }
         }
+      `}</style>
+    </>
+  )
+}
+
+// Login Modal Component
+function LoginModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password)
+      } else {
+        await signInWithEmailAndPassword(auth, email, password)
+      }
+      onClose()
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close" onClick={onClose}>×</button>
+          <h2>{isSignUp ? 'Join ScriptRank' : 'Welcome Back'}</h2>
+          
+          {error && <div className="modal-error">{error}</div>}
+          
+          <form onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+            </button>
+          </form>
+          
+          <p className="modal-switch">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            <button onClick={() => setIsSignUp(!isSignUp)}>
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+        </div>
+      </div>
+      
+      <style jsx>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(13, 17, 23, 0.8);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+          animation: fadeIn 0.2s ease-out;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .modal-content {
+          background: white;
+          border-radius: 12px;
+          padding: 32px;
+          width: 90%;
+          max-width: 400px;
+          position: relative;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .modal-close {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: #656d76;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: all 0.2s;
+        }
+        
+        .modal-close:hover {
+          background: #f6f8fa;
+          color: #0d1117;
+        }
+        
+        h2 {
+          font-family: 'TitleFont', sans-serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #0d1117;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+        
+        .modal-error {
+          background: #fef2f2;
+          color: #dc2626;
+          padding: 12px;
+          border-radius: 6px;
+          margin-bottom: 16px;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          border: 1px solid #fecaca;
+        }
+        
+        form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        input {
+          font-family: 'ContentFont', sans-serif;
+          padding: 12px 16px;
+          border: 1px solid #d0d7de;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.2s;
+          background: #f6f8fa;
+        }
+        
+        input:focus {
+          outline: none;
+          border-color: #0d1117;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(13, 17, 23, 0.1);
+        }
+        
+        button[type="submit"] {
+          font-family: 'ContentFont', sans-serif;
+          background: #0d1117;
+          color: white;
+          padding: 12px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        button[type="submit"]:hover:not(:disabled) {
+          background: #1a1f2e;
+          transform: translateY(-1px);
+        }
+        
+        button[type="submit"]:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        .modal-switch {
+          text-align: center;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 1px solid #e1e5e9;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          color: #656d76;
+        }
+        
+        .modal-switch button {
+          background: none;
+          border: none;
+          color: #0d1117;
+          cursor: pointer;
+          margin-left: 4px;
+          font-weight: 500;
+          transition: color 0.2s;
+        }
+        
+        .modal-switch button:hover {
+          color: #1a1f2e;
+          text-decoration: underline;
+        }
+      `}</style>
+    </>
+  )
+}
