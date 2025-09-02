@@ -551,15 +551,53 @@ export default function HomePage() {
                             className="expand-btn"
                             onClick={() => toggleExpanded(idea.id)}
                           >
-                            Read More
+                            {idea.expanded ? 'Show Less' : 'Read More'}
                           </button>
-                          <button 
-                            className="vote-btn"
-                            onClick={() => handleVote(idea.id)}
-                          >
-                            Vote
-                          </button>
+                          <div className="public-voting">
+                            <span className="public-score">
+                              {idea.publicScore.toFixed(1)} / 10
+                            </span>
+                            <button 
+                              className="vote-btn"
+                              onClick={() => handleVote(idea.id)}
+                            >
+                              Vote
+                            </button>
+                          </div>
                         </div>
+                        
+                        {idea.expanded && (
+                          <div className="expanded-content">
+                            <div className="full-description">
+                              <p>{idea.desc}</p>
+                            </div>
+                            
+                            <div className="detailed-scores">
+                              <div className="score-item">
+                                <span className="score-label">Market</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.marketScore) }}>
+                                  {idea.marketScore}%
+                                </span>
+                              </div>
+                              <div className="score-item">
+                                <span className="score-label">Innovation</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.innovationScore) }}>
+                                  {idea.innovationScore}%
+                                </span>
+                              </div>
+                              <div className="score-item">
+                                <span className="score-label">Execution</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.executionScore) }}>
+                                  {idea.executionScore}%
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="public-votes-info">
+                              <span>{idea.publicVotes} people have voted</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </article>
                   </div>
@@ -615,7 +653,7 @@ export default function HomePage() {
                         </div>
                         
                         <p className="idea-description">
-                          {idea.expanded ? idea.desc : `${idea.desc.substring(0, 120)}...`}
+                          {idea.desc.substring(0, 100)}...
                         </p>
                         
                         <div className="card-actions">
@@ -625,77 +663,48 @@ export default function HomePage() {
                           >
                             {idea.expanded ? 'Show Less' : 'Read More'}
                           </button>
-                          <button 
-                            className="vote-btn"
-                            onClick={() => handleVote(idea.id)}
-                          >
-                            Vote
-                          </button>
+                          <div className="public-voting">
+                            <span className="public-score">
+                              {idea.publicScore.toFixed(1)} / 10
+                            </span>
+                            <button 
+                              className="vote-btn"
+                              onClick={() => handleVote(idea.id)}
+                            >
+                              Vote
+                            </button>
+                          </div>
                         </div>
                         
                         {idea.expanded && (
-                          <div className="detailed-analysis">
-                            <h4 className="analysis-title">Detailed Analysis</h4>
+                          <div className="expanded-content">
+                            <div className="full-description">
+                              <p>{idea.desc}</p>
+                            </div>
                             
-                            <div className="metrics-breakdown">
-                              <div className="metric-row">
-                                <span className="metric-name">Market Potential</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.marketScore}%`,
-                                        backgroundColor: getScoreColor(idea.marketScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.marketScore) }}>
-                                    {idea.marketScore}%
-                                  </span>
-                                </div>
+                            <div className="detailed-scores">
+                              <div className="score-item">
+                                <span className="score-label">Market</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.marketScore) }}>
+                                  {idea.marketScore}%
+                                </span>
                               </div>
-                              
-                              <div className="metric-row">
-                                <span className="metric-name">Innovation Level</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.innovationScore}%`,
-                                        backgroundColor: getScoreColor(idea.innovationScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.innovationScore) }}>
-                                    {idea.innovationScore}%
-                                  </span>
-                                </div>
+                              <div className="score-item">
+                                <span className="score-label">Innovation</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.innovationScore) }}>
+                                  {idea.innovationScore}%
+                                </span>
                               </div>
-                              
-                              <div className="metric-row">
-                                <span className="metric-name">Execution</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.executionScore}%`,
-                                        backgroundColor: getScoreColor(idea.executionScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.executionScore) }}>
-                                    {idea.executionScore}%
-                                  </span>
-                                </div>
+                              <div className="score-item">
+                                <span className="score-label">Execution</span>
+                                <span className="score-value" style={{ color: getScoreColor(idea.executionScore) }}>
+                                  {idea.executionScore}%
+                                </span>
                               </div>
                             </div>
                             
-                            <div className="engagement-section">
-                              <button className="engage-btn primary">Support This Idea</button>
-                              <button className="engage-btn secondary">Share Feedback</button>
+                            <div className="public-votes-info">
+                              <span>{idea.publicVotes} people have voted</span>
                             </div>
                           </div>
                         )}
@@ -1589,10 +1598,9 @@ export default function HomePage() {
           border-radius: 34px;
           padding: 20px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-          overflow: hidden;
           transition: all 0.3s;
           position: relative;
-          height: 200px;
+          min-height: 240px;
           display: flex;
           flex-direction: column;
         }
@@ -1600,6 +1608,95 @@ export default function HomePage() {
         .idea-card:hover {
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
           transform: translateY(-2px);
+        }
+
+        .card-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          margin-top: auto;
+        }
+
+        .public-voting {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .public-score {
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          color: #4331f4;
+          font-weight: 600;
+        }
+
+        .expanded-content {
+          margin-top: 16px;
+          padding-top: 16px;
+          border-top: 1px solid #e1e5e9;
+          animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+          }
+        }
+
+        .full-description {
+          margin-bottom: 16px;
+        }
+
+        .full-description p {
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          color: #656d76;
+          line-height: 1.6;
+        }
+
+        .detailed-scores {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 12px;
+        }
+
+        .score-item {
+          flex: 1;
+          text-align: center;
+          padding: 8px;
+          background: #f6f8fa;
+          border-radius: 8px;
+        }
+
+        .score-label {
+          display: block;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 11px;
+          color: #656d76;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
+        }
+
+        .score-value {
+          display: block;
+          font-family: 'TitleFont', sans-serif;
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        .public-votes-info {
+          text-align: center;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 12px;
+          color: #8b949e;
         }
 
         .card-genre-badge {
