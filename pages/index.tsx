@@ -195,18 +195,28 @@ export default function HomePage() {
 
   const getScoreColor = (score: number) => {
     // Score is 0-100 (percentage)
-    if (score < 40) {
-      return '#dc2626' // Red
+    if (score < 50) {
+      // Red to yellow
+      const ratio = score / 50;
+      const r = 255;
+      const g = Math.round(255 * ratio);
+      return `rgb(${r}, ${g}, 0)`;
     } else if (score < 70) {
-      // Gradient from red to yellow to greenish
-      const ratio = (score - 40) / 30
-      const r = Math.round(220 - (220 - 105) * ratio)
-      const g = Math.round(38 + (247 - 38) * ratio)
-      const b = Math.round(38 + (77 - 38) * ratio)
-      return `rgb(${r}, ${g}, ${b})`
+      // Yellow to yellow-green
+      const ratio = (score - 50) / 20;
+      const r = Math.round(255 * (1 - ratio * 0.5));
+      const g = 255;
+      return `rgb(${r}, ${g}, 0)`;
+    } else if (score < 80) {
+      // Yellow-green to greenish
+      const ratio = (score - 70) / 10;
+      const r = Math.round(127 - 127 * ratio);
+      const g = Math.round(255 - 8 * ratio);
+      const b = Math.round(77 * ratio);
+      return `rgb(${r}, ${g}, ${b})`;
     } else {
-      // Greenish to bright green (#69f74d)
-      return '#69f74d'
+      // Green (#69f74d)
+      return '#69f74d';
     }
   }
 
@@ -525,7 +535,7 @@ export default function HomePage() {
                                 className="score-fill"
                                 style={{ 
                                   width: `${idea.aiScore}%`,
-                                  background: `linear-gradient(90deg, ${getScoreColor(idea.aiScore - 10)} 0%, ${getScoreColor(idea.aiScore)} 100%)`
+                                  background: getScoreColor(idea.aiScore)
                                 }}
                               />
                             </div>
@@ -533,7 +543,7 @@ export default function HomePage() {
                         </div>
                         
                         <p className="idea-description">
-                          {idea.expanded ? idea.desc : `${idea.desc.substring(0, 100)}...`}
+                          {idea.desc.substring(0, 100)}...
                         </p>
                         
                         <div className="card-actions">
@@ -541,7 +551,7 @@ export default function HomePage() {
                             className="expand-btn"
                             onClick={() => toggleExpanded(idea.id)}
                           >
-                            {idea.expanded ? 'Show Less' : 'Read More'}
+                            Read More
                           </button>
                           <button 
                             className="vote-btn"
@@ -550,6 +560,8 @@ export default function HomePage() {
                             Vote
                           </button>
                         </div>
+                      </div>
+                    </article>
                         
                         {idea.expanded && (
                           <div className="detailed-analysis">
