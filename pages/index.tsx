@@ -78,6 +78,232 @@ export default function HomePage() {
           timestamp: data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '2024-01-15',
           expanded: false
         }
+      `}</style>
+    </>
+  )
+}
+
+// Login Modal Component
+function LoginModal({ onClose }: { onClose: () => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password)
+      } else {
+        await signInWithEmailAndPassword(auth, email, password)
+      }
+      onClose()
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close" onClick={onClose}>×</button>
+          <h2>{isSignUp ? 'Join ScriptRank' : 'Welcome Back'}</h2>
+          
+          {error && <div className="modal-error">{error}</div>}
+          
+          <form onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+            </button>
+          </form>
+          
+          <p className="modal-switch">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            <button onClick={() => setIsSignUp(!isSignUp)}>
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+        </div>
+      </div>
+      
+      <style jsx>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(13, 17, 23, 0.8);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+          animation: fadeIn 0.2s ease-out;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .modal-content {
+          background: white;
+          border-radius: 12px;
+          padding: 32px;
+          width: 90%;
+          max-width: 400px;
+          position: relative;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .modal-close {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+          color: #656d76;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          transition: all 0.2s;
+        }
+        
+        .modal-close:hover {
+          background: #f6f8fa;
+          color: #0d1117;
+        }
+        
+        h2 {
+          font-family: 'TitleFont', sans-serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #0d1117;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+        
+        .modal-error {
+          background: #fef2f2;
+          color: #dc2626;
+          padding: 12px;
+          border-radius: 6px;
+          margin-bottom: 16px;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          border: 1px solid #fecaca;
+        }
+        
+        form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        input {
+          font-family: 'ContentFont', sans-serif;
+          padding: 12px 16px;
+          border: 1px solid #d0d7de;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.2s;
+          background: #f6f8fa;
+        }
+        
+        input:focus {
+          outline: none;
+          border-color: #0d1117;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(13, 17, 23, 0.1);
+        }
+        
+        button[type="submit"] {
+          font-family: 'ContentFont', sans-serif;
+          background: #0d1117;
+          color: white;
+          padding: 12px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        button[type="submit"]:hover:not(:disabled) {
+          background: #1a1f2e;
+          transform: translateY(-1px);
+        }
+        
+        button[type="submit"]:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        .modal-switch {
+          text-align: center;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 1px solid #e1e5e9;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 14px;
+          color: #656d76;
+        }
+        
+        .modal-switch button {
+          background: none;
+          border: none;
+          color: #0d1117;
+          cursor: pointer;
+          margin-left: 4px;
+          font-weight: 500;
+          transition: color 0.2s;
+        }
+        
+        .modal-switch button:hover {
+          color: #1a1f2e;
+          text-decoration: underline;
+        }
       })
       
       // Always use mock data for now to ensure proper display
@@ -228,7 +454,7 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>FlashRank - Make Me Famous | AI Idea Evaluation Platform</title>
+        <title>ScriptRank - Make Me Famous | AI Idea Evaluation Platform</title>
         <meta name="description" content="Where brilliant ideas meet rigorous AI analysis. Professional evaluation platform for entrepreneurs, creators, and innovators." />
       </Head>
 
@@ -352,7 +578,7 @@ export default function HomePage() {
         <div className="header-container">
           <div className="header-left">
             <Link href="/">
-              <a className="logo">FlashRank</a>
+              <a className="logo">ScriptRank</a>
             </Link>
             <nav className="main-nav">
               <Link href="/"><a className="nav-item">Home</a></Link>
@@ -633,216 +859,6 @@ export default function HomePage() {
                               <p>{idea.desc}</p>
                             </div>
                             
-                            <div className="detailed-scores">
-                              <div className="score-item">
-                                <span className="score-label">Market</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.marketScore) }}>
-                                  {idea.marketScore}%
-                                </span>
-                              </div>
-                              <div className="score-item">
-                                <span className="score-label">Innovation</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.innovationScore) }}>
-                                  {idea.innovationScore}%
-                                </span>
-                              </div>
-                              <div className="score-item">
-                                <span className="score-label">Execution</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.executionScore) }}>
-                                  {idea.executionScore}%
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="public-votes-info">
-                              <span>{idea.publicVotes} people have voted</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  </div>
-                ))}
-                <Link href="/leaderboard/movies">
-                  <button className="view-leaderboard-btn">View Full Movie Leaderboard</button>
-                </Link>
-              </div>
-
-              {/* Games Column */}
-              <div className="idea-column">
-                <div className="column-header">
-                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#69f74d" strokeWidth="2">
-                    <line x1="6" y1="12" x2="18" y2="12"></line>
-                    <line x1="12" y1="6" x2="12" y2="18"></line>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  </svg>
-                  <h3 className="column-title">Games</h3>
-                </div>
-                {gameIdeas.map((idea, index) => (
-                  <div key={idea.id} className="idea-wrapper">
-                    <div className="idea-header-outside">
-                      <span className="idea-rank">#{index + 1}</span>
-                      <span className="idea-title-outside">{idea.title}</span>
-                    </div>
-                    <article className="idea-card">
-                      <div className="card-genre-badge">{idea.genre}</div>
-                      
-                      <div className="card-content">
-                        <div className="author-info">
-                          <span className="author-name">by {idea.author}</span>
-                          <span className="publish-date">{idea.timestamp}</span>
-                        </div>
-                        
-                        <div className="score-overview">
-                          <div className="score-bar-container">
-                            <div className="score-bar-label">
-                              <span>AI Score</span>
-                              <span className="score-percentage" style={{ color: getScoreColor(idea.aiScore) }}>
-                                {idea.aiScore}%
-                              </span>
-                            </div>
-                            <div className="score-bar">
-                              <div 
-                                className="score-fill"
-                                style={{ 
-                                  width: `${idea.aiScore}%`,
-                                  background: `linear-gradient(90deg, ${getScoreColor(idea.aiScore - 10)} 0%, ${getScoreColor(idea.aiScore)} 100%)`
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="idea-description">
-                          {idea.desc.substring(0, 100)}...
-                        </p>
-                        
-                        <div className="card-actions">
-                          <button 
-                            className="expand-btn"
-                            onClick={() => toggleExpanded(idea.id)}
-                          >
-                            {idea.expanded ? 'Show Less' : 'Read More'}
-                          </button>
-                          <div className="public-voting">
-                            <span className="public-score">
-                              {idea.publicScore.toFixed(1)} / 10
-                            </span>
-                            <button 
-                              className="vote-btn"
-                              onClick={() => handleVote(idea.id)}
-                            >
-                              Vote
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {idea.expanded && (
-                          <div className="expanded-content">
-                            <div className="full-description">
-                              <p>{idea.desc}</p>
-                            </div>
-                            
-                            <div className="detailed-scores">
-                              <div className="score-item">
-                                <span className="score-label">Market</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.marketScore) }}>
-                                  {idea.marketScore}%
-                                </span>
-                              </div>
-                              <div className="score-item">
-                                <span className="score-label">Innovation</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.innovationScore) }}>
-                                  {idea.innovationScore}%
-                                </span>
-                              </div>
-                              <div className="score-item">
-                                <span className="score-label">Execution</span>
-                                <span className="score-value" style={{ color: getScoreColor(idea.executionScore) }}>
-                                  {idea.executionScore}%
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="public-votes-info">
-                              <span>{idea.publicVotes} people have voted</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  </div>
-                ))}
-                <Link href="/leaderboard/games">
-                  <button className="view-leaderboard-btn">View Full Games Leaderboard</button>
-                </Link>
-              </div>
-
-              {/* Business Column */}
-              <div className="idea-column">
-                <div className="column-header">
-                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#656d76" strokeWidth="2">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                  </svg>
-                  <h3 className="column-title">Business</h3>
-                </div>
-                {businessIdeas.map((idea, index) => (
-                  <div key={idea.id} className="idea-wrapper">
-                    <div className="idea-header-outside">
-                      <span className="idea-rank">#{index + 1}</span>
-                      <span className="idea-title-outside">{idea.title}</span>
-                    </div>
-                    <article className="idea-card">
-                      <div className="card-genre-badge">{idea.genre}</div>
-                      
-                      <div className="card-content">
-                        <div className="author-info">
-                          <span className="author-name">by {idea.author}</span>
-                          <span className="publish-date">{idea.timestamp}</span>
-                        </div>
-                        
-                        <div className="score-overview">
-                          <div className="score-bar-container">
-                            <div className="score-bar-label">
-                              <span>AI Score</span>
-                              <span className="score-percentage" style={{ color: getScoreColor(idea.aiScore) }}>
-                                {idea.aiScore}%
-                              </span>
-                            </div>
-                            <div className="score-bar">
-                              <div 
-                                className="score-fill"
-                                style={{ 
-                                  width: `${idea.aiScore}%`,
-                                  background: `linear-gradient(90deg, ${getScoreColor(idea.aiScore - 10)} 0%, ${getScoreColor(idea.aiScore)} 100%)`
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="idea-description">
-                          {idea.expanded ? idea.desc : `${idea.desc.substring(0, 120)}...`}
-                        </p>
-                        
-                        <div className="card-actions">
-                          <button 
-                            className="expand-btn"
-                            onClick={() => toggleExpanded(idea.id)}
-                          >
-                            {idea.expanded ? 'Show Less' : 'Read More'}
-                          </button>
-                          <button 
-                            className="vote-btn"
-                            onClick={() => handleVote(idea.id)}
-                          >
-                            Vote
-                          </button>
-                        </div>
-                        
-                        {idea.expanded && (
-                          <div className="detailed-analysis">
                             <h4 className="analysis-title">Detailed Analysis</h4>
                             
                             <div className="metrics-breakdown">
@@ -904,6 +920,313 @@ export default function HomePage() {
                             <div className="engagement-section">
                               <button className="engage-btn primary">Support This Idea</button>
                               <button className="engage-btn secondary">Share Feedback</button>
+                            </div>
+                            
+                            <div className="public-votes-info">
+                              <span>{idea.publicVotes} people have voted</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  </div>
+                ))}
+                <Link href="/leaderboard/movies">
+                  <button className="view-leaderboard-btn">View Full Movie Leaderboard</button>
+                </Link>
+              </div>
+
+              {/* Games Column */}
+              <div className="idea-column">
+                <div className="column-header">
+                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#69f74d" strokeWidth="2">
+                    <line x1="6" y1="12" x2="18" y2="12"></line>
+                    <line x1="12" y1="6" x2="12" y2="18"></line>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  </svg>
+                  <h3 className="column-title">Games</h3>
+                </div>
+                {gameIdeas.map((idea, index) => (
+                  <div key={idea.id} className="idea-wrapper">
+                    <div className="idea-header-outside">
+                      <span className="idea-rank">#{index + 1}</span>
+                      <span className="idea-title-outside">{idea.title}</span>
+                    </div>
+                    <article className="idea-card">
+                      <div className="card-genre-badge">{idea.genre}</div>
+                      
+                      <div className="card-content">
+                        <div className="author-info">
+                          <span className="author-name">by {idea.author}</span>
+                          <span className="publish-date">{idea.timestamp}</span>
+                        </div>
+                        
+                        <div className="score-overview">
+                          <div className="score-bar-container">
+                            <div className="score-bar-label">
+                              <span>AI Score</span>
+                              <span className="score-percentage" style={{ color: getScoreColor(idea.aiScore) }}>
+                                {idea.aiScore}%
+                              </span>
+                            </div>
+                            <div className="score-bar">
+                              <div 
+                                className="score-fill"
+                                style={{ 
+                                  width: `${idea.aiScore}%`,
+                                  background: getScoreColor(idea.aiScore)
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="idea-description">
+                          {idea.desc.substring(0, 100)}...
+                        </p>
+                        
+                        <div className="card-actions">
+                          <button 
+                            className="expand-btn"
+                            onClick={() => toggleExpanded(idea.id)}
+                          >
+                            {idea.expanded ? 'Show Less' : 'Read More'}
+                          </button>
+                          <div className="public-voting">
+                            <span className="public-score">
+                              {idea.publicScore.toFixed(1)} / 10
+                            </span>
+                            <button 
+                              className="vote-btn"
+                              onClick={() => handleVote(idea.id)}
+                            >
+                              Vote
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {idea.expanded && (
+                          <div className="expanded-content">
+                            <div className="full-description">
+                              <p>{idea.desc}</p>
+                            </div>
+                            
+                            <h4 className="analysis-title">Detailed Analysis</h4>
+                            
+                            <div className="metrics-breakdown">
+                              <div className="metric-row">
+                                <span className="metric-name">Market Potential</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.marketScore}%`,
+                                        backgroundColor: getScoreColor(idea.marketScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.marketScore) }}>
+                                    {idea.marketScore}%
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="metric-row">
+                                <span className="metric-name">Innovation Level</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.innovationScore}%`,
+                                        backgroundColor: getScoreColor(idea.innovationScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.innovationScore) }}>
+                                    {idea.innovationScore}%
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="metric-row">
+                                <span className="metric-name">Execution</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.executionScore}%`,
+                                        backgroundColor: getScoreColor(idea.executionScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.executionScore) }}>
+                                    {idea.executionScore}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="engagement-section">
+                              <button className="engage-btn primary">Support This Idea</button>
+                              <button className="engage-btn secondary">Share Feedback</button>
+                            </div>
+                            
+                            <div className="public-votes-info">
+                              <span>{idea.publicVotes} people have voted</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  </div>
+                ))}
+                <Link href="/leaderboard/games">
+                  <button className="view-leaderboard-btn">View Full Games Leaderboard</button>
+                </Link>
+              </div>
+
+              {/* Business Column */}
+              <div className="idea-column">
+                <div className="column-header">
+                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#656d76" strokeWidth="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                  <h3 className="column-title">Business</h3>
+                </div>
+                {businessIdeas.map((idea, index) => (
+                  <div key={idea.id} className="idea-wrapper">
+                    <div className="idea-header-outside">
+                      <span className="idea-rank">#{index + 1}</span>
+                      <span className="idea-title-outside">{idea.title}</span>
+                    </div>
+                    <article className="idea-card">
+                      <div className="card-genre-badge">{idea.genre}</div>
+                      
+                      <div className="card-content">
+                        <div className="author-info">
+                          <span className="author-name">by {idea.author}</span>
+                          <span className="publish-date">{idea.timestamp}</span>
+                        </div>
+                        
+                        <div className="score-overview">
+                          <div className="score-bar-container">
+                            <div className="score-bar-label">
+                              <span>AI Score</span>
+                              <span className="score-percentage" style={{ color: getScoreColor(idea.aiScore) }}>
+                                {idea.aiScore}%
+                              </span>
+                            </div>
+                            <div className="score-bar">
+                              <div 
+                                className="score-fill"
+                                style={{ 
+                                  width: `${idea.aiScore}%`,
+                                  background: getScoreColor(idea.aiScore)
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="idea-description">
+                          {idea.desc.substring(0, 100)}...
+                        </p>
+                        
+                        <div className="card-actions">
+                          <button 
+                            className="expand-btn"
+                            onClick={() => toggleExpanded(idea.id)}
+                          >
+                            {idea.expanded ? 'Show Less' : 'Read More'}
+                          </button>
+                          <div className="public-voting">
+                            <span className="public-score">
+                              {idea.publicScore.toFixed(1)} / 10
+                            </span>
+                            <button 
+                              className="vote-btn"
+                              onClick={() => handleVote(idea.id)}
+                            >
+                              Vote
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {idea.expanded && (
+                          <div className="expanded-content">
+                            <div className="full-description">
+                              <p>{idea.desc}</p>
+                            </div>
+                            
+                            <h4 className="analysis-title">Detailed Analysis</h4>
+                            
+                            <div className="metrics-breakdown">
+                              <div className="metric-row">
+                                <span className="metric-name">Market Potential</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.marketScore}%`,
+                                        backgroundColor: getScoreColor(idea.marketScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.marketScore) }}>
+                                    {idea.marketScore}%
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="metric-row">
+                                <span className="metric-name">Innovation Level</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.innovationScore}%`,
+                                        backgroundColor: getScoreColor(idea.innovationScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.innovationScore) }}>
+                                    {idea.innovationScore}%
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="metric-row">
+                                <span className="metric-name">Execution</span>
+                                <div className="metric-visual">
+                                  <div className="metric-bar">
+                                    <div 
+                                      className="metric-fill"
+                                      style={{ 
+                                        width: `${idea.executionScore}%`,
+                                        backgroundColor: getScoreColor(idea.executionScore)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="metric-score" style={{ color: getScoreColor(idea.executionScore) }}>
+                                    {idea.executionScore}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="engagement-section">
+                              <button className="engage-btn primary">Support This Idea</button>
+                              <button className="engage-btn secondary">Share Feedback</button>
+                            </div>
+                            
+                            <div className="public-votes-info">
+                              <span>{idea.publicVotes} people have voted</span>
                             </div>
                           </div>
                         )}
@@ -990,17 +1313,17 @@ export default function HomePage() {
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
 
       <style jsx>{`
-        /* Header Styles */
+        /* Header Styles - Simplified and Professional */
         .header {
-          background: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(225, 229, 233, 0.5);
+          background: white;
+          border-bottom: 1px solid var(--border);
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
-          height: 70px;
+          height: 64px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .header-container {
@@ -1016,36 +1339,34 @@ export default function HomePage() {
         .header-left {
           display: flex;
           align-items: center;
-          gap: 48px;
+          gap: 40px;
         }
 
         .logo {
           font-family: 'TitleFont', serif;
-          font-size: 28px;
+          font-size: 24px;
           font-weight: bold;
-          background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-green) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: var(--dark);
           text-decoration: none;
-          transition: all 0.3s;
+          transition: opacity 0.2s;
         }
 
         .logo:hover {
-          transform: scale(1.05);
+          opacity: 0.8;
         }
 
         .main-nav {
           display: flex;
-          gap: 32px;
+          gap: 28px;
         }
 
         .nav-item {
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 15px;
+          font-size: 14px;
           color: var(--grey-medium);
           text-decoration: none;
-          transition: all 0.3s;
+          transition: color 0.2s;
           position: relative;
         }
 
@@ -1053,25 +1374,10 @@ export default function HomePage() {
           color: var(--dark);
         }
 
-        .nav-item::after {
-          content: '';
-          position: absolute;
-          bottom: -6px;
-          left: 0;
-          width: 0;
-          height: 2px;
-          background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-green) 100%);
-          transition: width 0.3s;
-        }
-
-        .nav-item:hover::after {
-          width: 100%;
-        }
-
         .header-right {
           display: flex;
           align-items: center;
-          gap: 24px;
+          gap: 20px;
         }
 
         .search-container {
@@ -1080,218 +1386,178 @@ export default function HomePage() {
 
         .search-input {
           font-family: 'ContentFont', sans-serif;
-          width: 280px;
-          padding: 10px 16px;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
-          background: #f6f8fa;
-          font-size: 14px;
+          width: 240px;
+          padding: 8px 12px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: var(--bg-primary);
+          font-size: 13px;
           transition: all 0.2s;
         }
 
         .search-input:focus {
           outline: none;
-          border-color: #4331f4;
+          border-color: var(--primary-blue);
           background: white;
-          box-shadow: 0 0 0 3px rgba(67, 49, 244, 0.1);
         }
 
         .user-menu {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
         }
 
         .user-link {
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 14px;
-          color: #656d76;
+          font-size: 13px;
+          color: var(--grey-medium);
           text-decoration: none;
           transition: color 0.2s;
         }
 
         .user-link:hover {
-          color: #0d1117;
+          color: var(--dark);
         }
 
         .sign-out-btn {
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 14px;
-          padding: 8px 16px;
+          font-size: 13px;
+          padding: 8px 14px;
           background: transparent;
-          color: #656d76;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
+          color: var(--grey-medium);
+          border: 1px solid var(--border);
+          border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .sign-out-btn:hover {
-          background: #f6f8fa;
-          color: #0d1117;
+          background: var(--bg-hover);
+          color: var(--dark);
         }
 
         .auth-buttons {
           display: flex;
-          gap: 12px;
+          gap: 10px;
         }
 
         .login-btn {
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 14px;
-          padding: 10px 20px;
+          font-size: 13px;
+          padding: 8px 16px;
           background: transparent;
-          color: #0d1117;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
+          color: var(--dark);
+          border: 1px solid var(--border);
+          border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .login-btn:hover {
-          background: #f6f8fa;
+          background: var(--bg-hover);
         }
 
         .submit-btn {
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 14px;
-          padding: 10px 20px;
-          background: #4331f4;
+          font-size: 13px;
+          padding: 8px 16px;
+          background: var(--dark);
           color: white;
           text-decoration: none;
-          border-radius: 6px;
+          border-radius: 8px;
           transition: all 0.2s;
         }
 
         .submit-btn:hover {
-          background: #3628c7;
-          transform: translateY(-1px);
+          background: var(--dark-secondary);
         }
 
         .mobile-toggle {
           display: none;
-          background: none;
-          border: none;
-          cursor: pointer;
-          flex-direction: column;
-          gap: 4px;
-          padding: 8px;
-        }
-
-        .hamburger {
-          width: 20px;
-          height: 2px;
-          background: #0d1117;
-          transition: 0.3s;
         }
 
         .mobile-menu {
           display: none;
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border-bottom: 1px solid #e1e5e9;
-          padding: 20px;
-        }
-
-        .mobile-nav {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .mobile-nav-item {
-          font-family: 'ContentFont', sans-serif;
-          font-weight: 500;
-          font-size: 16px;
-          color: #656d76;
-          text-decoration: none;
-          padding: 12px 0;
-          border-bottom: 1px solid #f6f8fa;
         }
 
         /* App Layout */
         .app-layout {
           display: flex;
-          margin-top: 70px;
-          min-height: calc(100vh - 70px);
+          margin-top: 64px;
+          min-height: calc(100vh - 64px);
         }
 
-        /* Sidebar - Collapsible */
+        /* Sidebar - Simplified */
         .sidebar {
-          width: 280px;
+          width: 260px;
           background: white;
-          border-right: 1px solid #e1e5e9;
+          border-right: 1px solid var(--border);
           position: fixed;
-          height: calc(100vh - 70px);
+          height: calc(100vh - 64px);
           transition: transform 0.3s ease;
           z-index: 100;
-          overflow: hidden;
+          overflow-y: auto;
         }
 
         .sidebar.collapsed {
-          transform: translateX(-280px);
+          transform: translateX(-260px);
         }
 
         .sidebar-toggle {
           position: absolute;
           top: 20px;
-          right: -40px;
-          width: 30px;
-          height: 30px;
+          right: -36px;
+          width: 28px;
+          height: 28px;
           background: white;
-          border: 1px solid #e1e5e9;
-          border-radius: 50%;
+          border: 1px solid var(--border);
+          border-radius: 8px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 14px;
+          font-size: 12px;
           z-index: 101;
           transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .sidebar-toggle:hover {
-          background: #f6f8fa;
+          background: var(--bg-hover);
         }
 
         .sidebar-content {
-          padding: 24px;
-          height: 100%;
-          overflow: hidden;
+          padding: 20px;
         }
 
         .sidebar-section {
-          margin-bottom: 32px;
+          margin-bottom: 28px;
         }
 
         .sidebar-title {
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 13px;
-          color: #656d76;
+          font-size: 11px;
+          color: var(--grey-medium);
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .action-btn {
           display: block;
           width: 100%;
-          padding: 12px 16px;
+          padding: 10px 14px;
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 14px;
+          font-size: 13px;
           text-decoration: none;
           text-align: center;
-          border-radius: 6px;
+          border-radius: 8px;
           transition: all 0.2s;
           margin-bottom: 8px;
           border: none;
@@ -1299,23 +1565,22 @@ export default function HomePage() {
         }
 
         .action-btn.primary {
-          background: #4331f4;
+          background: var(--dark);
           color: white;
         }
 
         .action-btn.primary:hover {
-          background: #3628c7;
-          transform: translateY(-1px);
+          background: var(--dark-secondary);
         }
 
         .action-btn.secondary {
           background: transparent;
-          color: #0d1117;
-          border: 1px solid #d0d7de;
+          color: var(--dark);
+          border: 1px solid var(--border);
         }
 
         .action-btn.secondary:hover {
-          background: #f6f8fa;
+          background: var(--bg-hover);
         }
 
         /* Category Items with Dropdown */
@@ -1334,37 +1599,27 @@ export default function HomePage() {
           left: 100%;
           top: 0;
           background: white;
-          border: 1px solid #e1e5e9;
-          border-radius: 6px;
-          min-width: 150px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          min-width: 140px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           z-index: 1000;
           margin-left: 8px;
-          opacity: 0;
-          transition: opacity 0.2s;
         }
 
         .genre-dropdown a {
           display: block;
-          padding: 10px 16px;
-          color: #656d76;
+          padding: 8px 12px;
+          color: var(--grey-medium);
           text-decoration: none;
           font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
+          font-size: 12px;
           transition: all 0.2s;
         }
 
         .genre-dropdown a:hover {
-          background: #f6f8fa;
-          color: #4331f4;
-        }
-
-        .genre-dropdown a:first-child {
-          border-radius: 6px 6px 0 0;
-        }
-
-        .genre-dropdown a:last-child {
-          border-radius: 0 0 6px 6px;
+          background: var(--bg-hover);
+          color: var(--dark);
         }
 
         .category-filters {
@@ -1378,53 +1633,42 @@ export default function HomePage() {
           align-items: center;
           justify-content: space-between;
           width: 100%;
-          padding: 10px 12px;
+          padding: 8px 10px;
           background: transparent;
           border: none;
           border-radius: 6px;
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 14px;
-          color: #656d76;
+          font-size: 13px;
+          color: var(--grey-medium);
           cursor: pointer;
           transition: all 0.2s;
           text-align: left;
         }
 
-        .filter-btn:hover,
-        .filter-btn.active {
-          background: #f6f8fa;
-          color: #0d1117;
-        }
-
-        .filter-btn.active {
-          background: #eff6ff;
-          color: #4331f4;
+        .filter-btn:hover {
+          background: var(--bg-hover);
+          color: var(--dark);
         }
 
         .count {
-          background: #e1e5e9;
-          color: #656d76;
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-size: 11px;
+          background: var(--bg-hover);
+          color: var(--grey-medium);
+          padding: 2px 6px;
+          border-radius: 8px;
+          font-size: 10px;
           font-weight: 600;
-        }
-
-        .filter-btn.active .count {
-          background: #4331f4;
-          color: white;
         }
 
         .metrics-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 10px;
         }
 
         .metric-card {
-          background: #f6f8fa;
-          padding: 16px;
+          background: var(--bg-hover);
+          padding: 12px;
           border-radius: 8px;
           text-align: center;
         }
@@ -1432,23 +1676,22 @@ export default function HomePage() {
         .metric-value {
           display: block;
           font-family: 'TitleFont', sans-serif;
-          font-size: 18px;
-          font-weight: 900;
-          color: #0d1117;
-          margin-bottom: 4px;
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--dark);
+          margin-bottom: 2px;
         }
 
         .metric-label {
           font-family: 'ContentFont', sans-serif;
-          font-size: 11px;
-          color: #656d76;
-          font-weight: 500;
+          font-size: 10px;
+          color: var(--grey-medium);
         }
 
         .activity-feed {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
         }
 
         .activity-item {
@@ -1456,14 +1699,14 @@ export default function HomePage() {
           align-items: center;
           gap: 8px;
           font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
-          color: #656d76;
+          font-size: 12px;
+          color: var(--grey-medium);
         }
 
         .activity-dot {
           width: 6px;
           height: 6px;
-          background: #22c55e;
+          background: var(--primary-green);
           border-radius: 50%;
           flex-shrink: 0;
         }
@@ -1471,240 +1714,188 @@ export default function HomePage() {
         /* Main Content */
         .main-content {
           flex: 1;
-          margin-left: 280px;
-          padding: 0;
+          margin-left: 260px;
           transition: margin-left 0.3s ease;
         }
 
         .sidebar.collapsed ~ .main-content {
-          margin-left: 40px;
+          margin-left: 36px;
         }
 
         /* Hero Section */
         .hero-section {
           background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
           color: white;
-          padding: 80px 40px;
-          margin-bottom: 50px;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .hero-section::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          right: -20%;
-          width: 60%;
-          height: 200%;
-          background: radial-gradient(circle, var(--primary-blue) 0%, transparent 70%);
-          opacity: 0.1;
-          animation: float 20s ease-in-out infinite;
-        }
-        
-        .hero-section::after {
-          content: '';
-          position: absolute;
-          bottom: -50%;
-          left: -20%;
-          width: 60%;
-          height: 200%;
-          background: radial-gradient(circle, var(--primary-green) 0%, transparent 70%);
-          opacity: 0.1;
-          animation: float 25s ease-in-out infinite reverse;
+          padding: 60px 40px;
+          margin-bottom: 40px;
         }
 
         .hero-content {
           max-width: 1200px;
           margin: 0 auto;
           text-align: center;
-          position: relative;
-          z-index: 1;
         }
 
         .hero-title {
           font-family: 'ArgentumSans', sans-serif;
-          font-size: 64px;
+          font-size: 56px;
           font-weight: 900;
           font-style: italic;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
           line-height: 1.1;
-          animation: slideIn 0.8s ease;
         }
 
         .hero-highlight {
-          background: linear-gradient(90deg, var(--primary-green) 0%, var(--accent-teal) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: var(--primary-green);
         }
 
         .hero-description {
           font-family: 'ContentFont', sans-serif;
-          font-size: 20px;
+          font-size: 18px;
           max-width: 700px;
-          margin: 0 auto 48px;
-          line-height: 1.6;
+          margin: 0 auto 40px;
+          line-height: 1.5;
           opacity: 0.9;
-          animation: slideIn 0.8s ease 0.2s both;
         }
 
         .hero-features {
           display: flex;
           justify-content: center;
-          gap: 60px;
-          margin-top: 48px;
-          animation: slideIn 0.8s ease 0.4s both;
+          gap: 50px;
+          margin-top: 40px;
         }
 
         .hero-feature {
           text-align: left;
-          max-width: 280px;
-          padding: 20px;
+          max-width: 260px;
+          padding: 18px;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
+          border-radius: 12px;
           backdrop-filter: blur(10px);
-          transition: all 0.3s;
-        }
-        
-        .hero-feature:hover {
-          background: rgba(255, 255, 255, 0.08);
-          transform: translateY(-4px);
         }
 
         .feature-icon {
           display: inline-block;
           color: var(--primary-green);
-          font-size: 28px;
-          margin-bottom: 12px;
+          font-size: 24px;
+          margin-bottom: 10px;
         }
 
         .feature-text {
           display: block;
           font-family: 'TitleFont', sans-serif;
-          font-size: 18px;
+          font-size: 16px;
           font-weight: bold;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .feature-sub {
           display: block;
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
+          font-size: 13px;
           opacity: 0.7;
           line-height: 1.4;
         }
 
         /* Featured Section */
         .featured-section {
-          padding: 40px;
-          margin-bottom: 64px;
+          padding: 0 40px 40px;
         }
 
         .section-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 32px;
+          margin-bottom: 28px;
         }
 
         .section-title {
           font-family: 'TitleFont', sans-serif;
           font-weight: 700;
-          font-size: 28px;
-          color: #0d1117;
+          font-size: 24px;
+          color: var(--dark);
         }
 
         .section-controls {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
         }
 
         .results-count {
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          color: #656d76;
+          font-size: 13px;
+          color: var(--grey-medium);
         }
 
         .sort-select {
           font-family: 'ContentFont', sans-serif;
-          padding: 8px 12px;
-          border: 1px solid #d0d7de;
+          padding: 6px 10px;
+          border: 1px solid var(--border);
           border-radius: 6px;
           background: white;
-          font-size: 14px;
-          color: #656d76;
+          font-size: 13px;
+          color: var(--grey-medium);
         }
 
         /* Ideas Grid - 3 Columns */
         .ideas-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 36px;
+          gap: 32px;
         }
 
         .idea-column {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 20px;
         }
 
         .column-header {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 20px;
-          background: var(--bg-secondary);
-          border-radius: 16px;
+          gap: 12px;
+          padding: 16px;
+          background: white;
+          border-radius: 12px;
           border: 1px solid var(--border);
-          position: sticky;
-          top: 80px;
-          z-index: 10;
-          backdrop-filter: blur(10px);
         }
 
         .column-title {
           font-family: 'TitleFont', sans-serif;
-          font-size: 26px;
+          font-size: 20px;
           font-weight: bold;
           color: var(--dark);
         }
 
         .column-icon {
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
         }
 
         .idea-wrapper {
-          margin-bottom: 20px;
           animation: fadeIn 0.5s ease;
         }
 
         .idea-header-outside {
           display: flex;
           align-items: baseline;
-          gap: 12px;
-          margin-bottom: 8px;
-          padding-left: 8px;
+          gap: 10px;
+          margin-bottom: 6px;
+          padding-left: 6px;
         }
 
         .idea-rank {
           font-family: 'TitleFont', sans-serif;
-          font-size: 28px;
+          font-size: 24px;
           font-weight: bold;
-          background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-purple) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        
-        .idea-rank:first-child {
-          font-size: 32px;
+          color: var(--primary-blue);
         }
 
         .idea-title-outside {
           font-family: 'TitleFont', sans-serif;
-          font-size: 22px;
+          font-size: 18px;
           font-weight: bold;
           color: var(--dark);
           flex: 1;
@@ -1714,59 +1905,39 @@ export default function HomePage() {
         }
 
         .idea-card {
-          background: var(--bg-secondary);
+          background: white;
           border: 1px solid var(--border);
-          border-radius: 24px;
-          padding: 24px;
-          box-shadow: var(--shadow-sm);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 16px;
+          padding: 20px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          transition: all 0.2s ease;
           position: relative;
-          min-height: 260px;
+          min-height: 240px;
           display: flex;
           flex-direction: column;
         }
 
         .idea-card:hover {
-          box-shadow: var(--shadow-lg);
-          transform: translateY(-4px);
-          border-color: var(--primary-blue);
-        }
-        
-        .idea-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-green) 100%);
-          border-radius: 24px 24px 0 0;
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-        
-        .idea-card:hover::before {
-          opacity: 1;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
         }
 
         .card-genre-badge {
           position: absolute;
-          top: 20px;
-          left: 20px;
-          background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
+          top: 16px;
+          right: 16px;
+          background: var(--dark);
           color: white;
-          padding: 6px 14px;
-          border-radius: 20px;
+          padding: 4px 10px;
+          border-radius: 16px;
           font-family: 'ContentFont', sans-serif;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.8px;
-          box-shadow: var(--shadow-sm);
+          letter-spacing: 0.5px;
         }
 
         .card-content {
-          padding-top: 36px;
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -1776,24 +1947,24 @@ export default function HomePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .author-name {
           font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
+          font-size: 12px;
           color: var(--grey-medium);
           font-weight: 500;
         }
 
         .publish-date {
           font-family: 'ContentFont', sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           color: var(--grey-light);
         }
 
         .score-overview {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .score-bar-container {
@@ -1804,62 +1975,44 @@ export default function HomePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .score-bar-label span:first-child {
           font-family: 'ContentFont', sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           color: var(--grey-medium);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.3px;
           font-weight: 600;
         }
 
         .score-percentage {
           font-family: 'TitleFont', sans-serif;
-          font-size: 24px;
+          font-size: 20px;
           font-weight: bold;
         }
 
         .score-bar {
           width: 100%;
-          height: 12px;
+          height: 8px;
           background: var(--bg-hover);
           border-radius: 100px;
           overflow: hidden;
-          position: relative;
         }
 
         .score-fill {
           height: 100%;
           border-radius: 100px;
           transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-        }
-        
-        .score-fill::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-          animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
         }
 
         .idea-description {
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
+          font-size: 13px;
           color: var(--grey-dark);
-          line-height: 1.6;
-          margin-bottom: 16px;
+          line-height: 1.5;
+          margin-bottom: 12px;
           flex: 1;
         }
 
@@ -1867,7 +2020,7 @@ export default function HomePage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 16px;
+          padding-top: 12px;
           border-top: 1px solid var(--border);
         }
 
@@ -1876,55 +2029,52 @@ export default function HomePage() {
           border: none;
           color: var(--primary-blue);
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
+          font-size: 12px;
           cursor: pointer;
-          padding: 8px 0;
+          padding: 0;
           font-weight: 600;
-          transition: all 0.3s;
+          transition: opacity 0.2s;
         }
 
         .expand-btn:hover {
-          color: var(--accent-purple);
-          transform: translateX(4px);
+          opacity: 0.7;
         }
 
         .public-voting {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
         }
 
         .public-score {
           font-family: 'TitleFont', sans-serif;
-          font-size: 16px;
+          font-size: 14px;
           color: var(--primary-blue);
           font-weight: 700;
         }
 
         .vote-btn {
-          background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-purple) 100%);
+          background: var(--dark);
           color: white;
           border: none;
-          padding: 10px 20px;
-          border-radius: 20px;
+          padding: 6px 14px;
+          border-radius: 16px;
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 13px;
+          font-size: 11px;
           cursor: pointer;
-          transition: all 0.3s;
-          box-shadow: var(--shadow-sm);
+          transition: all 0.2s;
         }
 
         .vote-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
+          background: var(--dark-secondary);
         }
 
         .expanded-content {
-          margin-top: 20px;
-          padding-top: 20px;
+          margin-top: 16px;
+          padding-top: 16px;
           border-top: 1px solid var(--border);
-          animation: slideDown 0.4s ease;
+          animation: slideDown 0.3s ease;
         }
 
         @keyframes slideDown {
@@ -1934,156 +2084,45 @@ export default function HomePage() {
           }
           to {
             opacity: 1;
-            max-height: 500px;
+            max-height: 600px;
           }
         }
 
         .full-description {
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .full-description p {
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
+          font-size: 13px;
           color: var(--grey-dark);
-          line-height: 1.7;
-        }
-
-        .detailed-scores {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-
-        .score-item {
-          flex: 1;
-          text-align: center;
-          padding: 12px;
-          background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-primary) 100%);
-          border-radius: 12px;
-          border: 1px solid var(--border);
-        }
-
-        .score-label {
-          display: block;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 11px;
-          color: var(--grey-medium);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 6px;
-          font-weight: 600;
-        }
-
-        .score-value {
-          display: block;
-          font-family: 'TitleFont', sans-serif;
-          font-size: 20px;
-          font-weight: bold;
-        }
-
-        .public-votes-info {
-          text-align: center;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
-          color: var(--grey-light);
-          padding: 12px;
-          background: var(--bg-hover);
-          border-radius: 8px;
-        }
-
-        .view-leaderboard-btn {
-          width: 100%;
-          padding: 16px;
-          margin-top: 24px;
-          background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s;
-          box-shadow: var(--shadow-sm);
-        }
-
-        .view-leaderboard-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .card-actions {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .expand-btn {
-          background: none;
-          border: none;
-          color: #4331f4;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
-          cursor: pointer;
-          padding: 0;
-          font-weight: 500;
-        }
-
-        .expand-btn:hover {
-          text-decoration: underline;
-        }
-
-        .vote-btn {
-          background: #4331f4;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 6px;
-          font-family: 'ContentFont', sans-serif;
-          font-weight: 600;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .vote-btn:hover {
-          background: #3628c7;
-          transform: translateY(-1px);
-        }
-
-        /* Detailed Analysis */
-        .detailed-analysis {
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #e1e5e9;
+          line-height: 1.6;
         }
 
         .analysis-title {
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 16px;
-          color: #0d1117;
-          margin-bottom: 16px;
+          font-size: 14px;
+          color: var(--dark);
+          margin-bottom: 12px;
         }
 
         .metrics-breakdown {
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .metric-row {
           display: flex;
           align-items: center;
-          gap: 16px;
-          margin-bottom: 12px;
+          gap: 12px;
+          margin-bottom: 10px;
         }
 
         .metric-name {
           font-family: 'ContentFont', sans-serif;
-          font-size: 13px;
-          color: #656d76;
-          width: 120px;
+          font-size: 12px;
+          color: var(--grey-medium);
+          width: 100px;
           flex-shrink: 0;
         }
 
@@ -2091,42 +2130,41 @@ export default function HomePage() {
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
         }
 
         .metric-bar {
           flex: 1;
-          height: 20px;
-          background: #f6f8fa;
-          border-radius: 10px;
+          height: 16px;
+          background: var(--bg-hover);
+          border-radius: 8px;
           overflow: hidden;
-          border: 1px solid #e1e5e9;
         }
 
         .metric-fill {
           height: 100%;
           transition: width 0.3s ease;
-          border-radius: 10px;
+          border-radius: 8px;
         }
 
         .metric-score {
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 13px;
-          min-width: 40px;
+          font-size: 12px;
+          min-width: 36px;
         }
 
         .engagement-section {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
+          margin-bottom: 12px;
         }
 
         .engage-btn {
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 12px;
-          padding: 8px 12px;
+          font-size: 11px;
+          padding: 6px 10px;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s;
@@ -2134,38 +2172,67 @@ export default function HomePage() {
         }
 
         .engage-btn.primary {
-          background: #69f74d;
-          color: #0d1117;
+          background: var(--primary-green);
+          color: var(--dark);
         }
 
         .engage-btn.primary:hover {
-          background: #5ce63d;
+          opacity: 0.9;
         }
 
         .engage-btn.secondary {
-          background: #f6f8fa;
-          color: #656d76;
-          border: 1px solid #e1e5e9;
+          background: var(--bg-hover);
+          color: var(--grey-medium);
+          border: 1px solid var(--border);
         }
 
         .engage-btn.secondary:hover {
-          background: #e1e5e9;
+          background: var(--border);
+        }
+
+        .public-votes-info {
+          text-align: center;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 11px;
+          color: var(--grey-light);
+          padding: 8px;
+          background: var(--bg-hover);
+          border-radius: 6px;
+        }
+
+        .view-leaderboard-btn {
+          width: 100%;
+          padding: 12px;
+          margin-top: 20px;
+          background: var(--dark);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-family: 'ContentFont', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .view-leaderboard-btn:hover {
+          background: var(--dark-secondary);
         }
 
         /* How It Works */
         .how-it-works {
-          margin-bottom: 64px;
-          padding: 48px;
+          margin: 40px;
+          padding: 36px;
           background: white;
-          border: 1px solid #e1e5e9;
-          border-radius: 16px;
+          border: 1px solid var(--border);
+          border-radius: 12px;
         }
 
         .process-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 32px;
-          margin-top: 32px;
+          gap: 28px;
+          margin-top: 28px;
         }
 
         .process-step {
@@ -2173,79 +2240,80 @@ export default function HomePage() {
         }
 
         .step-icon {
-          width: 60px;
-          height: 60px;
-          background: #4331f4;
+          width: 52px;
+          height: 52px;
+          background: var(--dark);
           color: white;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-family: 'TitleFont', sans-serif;
-          font-size: 18px;
-          font-weight: 900;
-          margin: 0 auto 20px;
+          font-size: 16px;
+          font-weight: 700;
+          margin: 0 auto 16px;
         }
 
         .step-title {
           font-family: 'ContentFont', sans-serif;
           font-weight: 600;
-          font-size: 16px;
-          color: #0d1117;
-          margin-bottom: 12px;
+          font-size: 14px;
+          color: var(--dark);
+          margin-bottom: 8px;
         }
 
         .step-description {
           font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          color: #656d76;
-          line-height: 1.5;
+          font-size: 12px;
+          color: var(--grey-medium);
+          line-height: 1.4;
         }
 
         /* Platform Stats */
         .platform-stats {
-          background: #f6f8fa;
-          padding: 48px;
-          border-radius: 16px;
+          background: var(--bg-hover);
+          padding: 40px;
+          border-radius: 12px;
           text-align: center;
+          margin: 0 40px 40px;
         }
 
         .stats-showcase {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 32px;
-          margin-top: 32px;
+          gap: 28px;
+          margin-top: 28px;
         }
 
         .stat-block {
           background: white;
-          padding: 32px 24px;
-          border-radius: 12px;
-          border: 1px solid #e1e5e9;
+          padding: 24px 20px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
         }
 
         .big-number {
           display: block;
           font-family: 'TitleFont', sans-serif;
-          font-size: 36px;
+          font-size: 28px;
           font-weight: 900;
-          color: #0d1117;
-          margin-bottom: 8px;
+          color: var(--dark);
+          margin-bottom: 6px;
         }
 
         .stat-desc {
           display: block;
           font-family: 'ContentFont', sans-serif;
           font-weight: 500;
-          font-size: 14px;
-          color: #656d76;
-          margin-bottom: 8px;
+          font-size: 12px;
+          color: var(--grey-medium);
+          margin-bottom: 6px;
         }
 
         .stat-growth {
           font-family: 'ContentFont', sans-serif;
-          font-size: 12px;
-          color: #22c55e;
+          font-size: 11px;
+          color: var(--primary-green);
           font-weight: 500;
         }
 
@@ -2258,16 +2326,19 @@ export default function HomePage() {
 
         @media (max-width: 1200px) {
           .sidebar {
-            transform: translateX(-100%);
+            transform: translateX(-260px);
           }
           
           .main-content {
-            margin-left: 0;
-            padding: 20px;
+            margin-left: 36px;
           }
           
           .ideas-grid {
             grid-template-columns: 1fr;
+          }
+          
+          .process-grid {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
 
@@ -2276,16 +2347,17 @@ export default function HomePage() {
             display: none;
           }
           
-          .mobile-toggle {
-            display: flex;
-          }
-          
-          .mobile-menu {
-            display: block;
-          }
-          
           .search-input {
-            width: 200px;
+            width: 160px;
+          }
+          
+          .hero-title {
+            font-size: 36px;
+          }
+          
+          .hero-features {
+            flex-direction: column;
+            gap: 20px;
           }
           
           .process-grid,
@@ -2294,233 +2366,3 @@ export default function HomePage() {
             gap: 20px;
           }
         }
-      `}</style>
-    </>
-  )
-}
-
-// Login Modal Component
-function LoginModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password)
-      } else {
-        await signInWithEmailAndPassword(auth, email, password)
-      }
-      onClose()
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-  
-  return (
-    <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close" onClick={onClose}>×</button>
-          <h2>{isSignUp ? 'Join ScriptRank' : 'Welcome Back'}</h2>
-          
-          {error && <div className="modal-error">{error}</div>}
-          
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
-            </button>
-          </form>
-          
-          <p className="modal-switch">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-            <button onClick={() => setIsSignUp(!isSignUp)}>
-              {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
-          </p>
-        </div>
-      </div>
-      
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(13, 17, 23, 0.8);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2000;
-          animation: fadeIn 0.2s ease-out;
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .modal-content {
-          background: white;
-          border-radius: 12px;
-          padding: 32px;
-          width: 90%;
-          max-width: 400px;
-          position: relative;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          animation: slideUp 0.3s ease-out;
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .modal-close {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #656d76;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: all 0.2s;
-        }
-        
-        .modal-close:hover {
-          background: #f6f8fa;
-          color: #0d1117;
-        }
-        
-        h2 {
-          font-family: 'TitleFont', sans-serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #0d1117;
-          margin-bottom: 20px;
-          text-align: center;
-        }
-        
-        .modal-error {
-          background: #fef2f2;
-          color: #dc2626;
-          padding: 12px;
-          border-radius: 6px;
-          margin-bottom: 16px;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          border: 1px solid #fecaca;
-        }
-        
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        
-        input {
-          font-family: 'ContentFont', sans-serif;
-          padding: 12px 16px;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
-          font-size: 14px;
-          transition: all 0.2s;
-          background: #f6f8fa;
-        }
-        
-        input:focus {
-          outline: none;
-          border-color: #4331f4;
-          background: white;
-          box-shadow: 0 0 0 3px rgba(67, 49, 244, 0.1);
-        }
-        
-        button[type="submit"] {
-          font-family: 'ContentFont', sans-serif;
-          background: #4331f4;
-          color: white;
-          padding: 12px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        button[type="submit"]:hover:not(:disabled) {
-          background: #3628c7;
-          transform: translateY(-1px);
-        }
-        
-        button[type="submit"]:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-        
-        .modal-switch {
-          text-align: center;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #e1e5e9;
-          font-family: 'ContentFont', sans-serif;
-          font-size: 14px;
-          color: #656d76;
-        }
-        
-        .modal-switch button {
-          background: none;
-          border: none;
-          color: #4331f4;
-          cursor: pointer;
-          margin-left: 4px;
-          font-weight: 500;
-          transition: color 0.2s;
-        }
-        
-        .modal-switch button:hover {
-          color: #3628c7;
-          text-decoration: underline;
-        }
-      `}</style>
-    </>
-  )
-}
