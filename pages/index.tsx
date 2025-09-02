@@ -508,7 +508,7 @@ export default function HomePage() {
                   <h3 className="column-title">Movies</h3>
                 </div>
                 {movieIdeas.map((idea, index) => (
-                                      <div key={idea.id} className="idea-wrapper">
+                  <div key={idea.id} className="idea-wrapper">
                     <div className="idea-header-outside">
                       <span className="idea-rank">#{index + 1}</span>
                       <span className="idea-title-outside">{idea.title}</span>
@@ -560,73 +560,6 @@ export default function HomePage() {
                             Vote
                           </button>
                         </div>
-                      </div>
-                    </article>
-                        {idea.expanded && (
-                          <div className="detailed-analysis">
-                            <h4 className="analysis-title">Detailed Analysis</h4>
-                            
-                            <div className="metrics-breakdown">
-                              <div className="metric-row">
-                                <span className="metric-name">Market Potential</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.marketScore}%`,
-                                        backgroundColor: getScoreColor(idea.marketScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.marketScore) }}>
-                                    {idea.marketScore}%
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="metric-row">
-                                <span className="metric-name">Innovation Level</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.innovationScore}%`,
-                                        backgroundColor: getScoreColor(idea.innovationScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.innovationScore) }}>
-                                    {idea.innovationScore}%
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="metric-row">
-                                <span className="metric-name">Execution</span>
-                                <div className="metric-visual">
-                                  <div className="metric-bar">
-                                    <div 
-                                      className="metric-fill"
-                                      style={{ 
-                                        width: `${idea.executionScore}%`,
-                                        backgroundColor: getScoreColor(idea.executionScore)
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="metric-score" style={{ color: getScoreColor(idea.executionScore) }}>
-                                    {idea.executionScore}%
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="engagement-section">
-                              <button className="engage-btn primary">Support This Idea</button>
-                              <button className="engage-btn secondary">Share Feedback</button>
-                            </div>
-                          </div>
                       </div>
                     </article>
                   </div>
