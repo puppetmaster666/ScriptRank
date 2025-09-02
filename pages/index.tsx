@@ -558,9 +558,9 @@ export default function HomePage() {
 
             <div className="ideas-grid">
               {/* Movies Column */}
-              <div className="idea-column">
-                <div className="column-header">
-                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#4331f4" strokeWidth="2">
+              <div className="idea-column movies-column">
+                <div className="column-header movies-header">
+                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
                     <line x1="7" y1="2" x2="7" y2="22"></line>
                     <line x1="17" y1="2" x2="17" y2="22"></line>
@@ -571,11 +571,11 @@ export default function HomePage() {
                 {movieIdeas.map((idea, index) => (
                   <div key={idea.id} className="idea-wrapper">
                     <div className="idea-header-outside">
-                      <span className="idea-rank">#{index + 1}</span>
+                      <span className="idea-rank movies-rank">#{index + 1}</span>
                       <span className="idea-title-outside">{idea.title}</span>
                     </div>
-                    <article className="idea-card">
-                      <div className="card-genre-badge">{idea.genre}</div>
+                    <article className="idea-card movies-card">
+                      <div className="card-genre-badge movies-badge">{idea.genre}</div>
                       
                       <div className="card-content">
                         <div className="author-info">
@@ -711,9 +711,9 @@ export default function HomePage() {
               </div>
 
               {/* Games Column */}
-              <div className="idea-column">
-                <div className="column-header">
-                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#69f74d" strokeWidth="2">
+              <div className="idea-column games-column">
+                <div className="column-header games-header">
+                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="6" y1="12" x2="18" y2="12"></line>
                     <line x1="12" y1="6" x2="12" y2="18"></line>
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -723,11 +723,11 @@ export default function HomePage() {
                 {gameIdeas.map((idea, index) => (
                   <div key={idea.id} className="idea-wrapper">
                     <div className="idea-header-outside">
-                      <span className="idea-rank">#{index + 1}</span>
+                      <span className="idea-rank games-rank">#{index + 1}</span>
                       <span className="idea-title-outside">{idea.title}</span>
                     </div>
-                    <article className="idea-card">
-                      <div className="card-genre-badge">{idea.genre}</div>
+                    <article className="idea-card games-card">
+                      <div className="card-genre-badge games-badge">{idea.genre}</div>
                       
                       <div className="card-content">
                         <div className="author-info">
@@ -863,9 +863,9 @@ export default function HomePage() {
               </div>
 
               {/* Business Column */}
-              <div className="idea-column">
-                <div className="column-header">
-                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="#656d76" strokeWidth="2">
+              <div className="idea-column business-column">
+                <div className="column-header business-header">
+                  <svg className="column-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                   </svg>
@@ -874,11 +874,11 @@ export default function HomePage() {
                 {businessIdeas.map((idea, index) => (
                   <div key={idea.id} className="idea-wrapper">
                     <div className="idea-header-outside">
-                      <span className="idea-rank">#{index + 1}</span>
+                      <span className="idea-rank business-rank">#{index + 1}</span>
                       <span className="idea-title-outside">{idea.title}</span>
                     </div>
-                    <article className="idea-card">
-                      <div className="card-genre-badge">{idea.genre}</div>
+                    <article className="idea-card business-card">
+                      <div className="card-genre-badge business-badge">{idea.genre}</div>
                       
                       <div className="card-content">
                         <div className="author-info">
@@ -1624,6 +1624,26 @@ export default function HomePage() {
           display: flex;
           flex-direction: column;
           gap: 20px;
+          position: relative;
+        }
+
+        /* Column-specific backgrounds */
+        .movies-column {
+          background: linear-gradient(180deg, rgba(67, 49, 244, 0.02) 0%, transparent 100%);
+          padding: 10px;
+          border-radius: 20px;
+        }
+
+        .games-column {
+          background: linear-gradient(180deg, rgba(105, 247, 77, 0.02) 0%, transparent 100%);
+          padding: 10px;
+          border-radius: 20px;
+        }
+
+        .business-column {
+          background: linear-gradient(180deg, rgba(13, 17, 23, 0.02) 0%, transparent 100%);
+          padding: 10px;
+          border-radius: 20px;
         }
 
         .column-header {
@@ -1634,13 +1654,35 @@ export default function HomePage() {
           background: white;
           border-radius: 12px;
           border: 1px solid var(--border);
+          transition: all 0.3s ease;
+        }
+
+        /* Differentiated Column Headers */
+        .movies-header {
+          background: linear-gradient(135deg, #4331f4 0%, #5943ff 100%);
+          border: none;
+          color: white;
+          box-shadow: 0 4px 12px rgba(67, 49, 244, 0.2);
+        }
+
+        .games-header {
+          background: linear-gradient(135deg, #69f74d 0%, #52e535 100%);
+          border: none;
+          color: #0d1117;
+          box-shadow: 0 4px 12px rgba(105, 247, 77, 0.2);
+        }
+
+        .business-header {
+          background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 100%);
+          border: none;
+          color: white;
+          box-shadow: 0 4px 12px rgba(13, 17, 23, 0.2);
         }
 
         .column-title {
           font-family: 'TitleFont', sans-serif;
           font-size: 20px;
           font-weight: bold;
-          color: var(--dark);
         }
 
         .column-icon {
@@ -1664,7 +1706,19 @@ export default function HomePage() {
           font-family: 'TitleFont', sans-serif;
           font-size: 24px;
           font-weight: bold;
-          color: var(--primary-blue);
+        }
+
+        /* Color-coded rank numbers */
+        .movies-rank {
+          color: #4331f4;
+        }
+
+        .games-rank {
+          color: #52e535;
+        }
+
+        .business-rank {
+          color: #0d1117;
         }
 
         .idea-title-outside {
@@ -1691,16 +1745,40 @@ export default function HomePage() {
           flex-direction: column;
         }
 
+        /* Color-coded left borders for cards */
+        .movies-card {
+          border-left: 3px solid #4331f4;
+        }
+
+        .games-card {
+          border-left: 3px solid #69f74d;
+        }
+
+        .business-card {
+          border-left: 3px solid #0d1117;
+        }
+
         .idea-card:hover {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           transform: translateY(-2px);
+        }
+
+        .movies-card:hover {
+          box-shadow: 0 4px 16px rgba(67, 49, 244, 0.15);
+        }
+
+        .games-card:hover {
+          box-shadow: 0 4px 16px rgba(105, 247, 77, 0.15);
+        }
+
+        .business-card:hover {
+          box-shadow: 0 4px 16px rgba(13, 17, 23, 0.15);
         }
 
         .card-genre-badge {
           position: absolute;
           top: 16px;
           right: 16px;
-          background: var(--dark);
           color: white;
           padding: 4px 10px;
           border-radius: 16px;
@@ -1709,6 +1787,20 @@ export default function HomePage() {
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+        }
+
+        /* Color-coded genre badges */
+        .movies-badge {
+          background: #4331f4;
+        }
+
+        .games-badge {
+          background: #52e535;
+          color: #0d1117;
+        }
+
+        .business-badge {
+          background: #0d1117;
         }
 
         .card-content {
